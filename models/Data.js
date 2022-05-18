@@ -1,0 +1,72 @@
+const { DataTypes } = require("sequelize");
+
+module.exports = (sequelize) => {
+  const Data = sequelize.define("Data", {
+    aspect: DataTypes.INTEGER,
+    angle: DataTypes.INTEGER,
+    peakpower: DataTypes.INTEGER,
+    battery_size: DataTypes.INTEGER,
+    self_used_power: DataTypes.FLOAT,
+    fed_in_power: DataTypes.FLOAT,
+    consumption_avg_day: DataTypes.INTEGER,
+    consumption_year: DataTypes.INTEGER,
+    mon01_avg_prod: DataTypes.FLOAT,
+    mon01_avg_lost: DataTypes.FLOAT,
+    mon01_percentage_days_full: DataTypes.FLOAT,
+    mon01_percentage_days_empty: DataTypes.FLOAT,
+    mon02_avg_prod: DataTypes.FLOAT,
+    mon02_avg_lost: DataTypes.FLOAT,
+    mon02_percentage_days_full: DataTypes.FLOAT,
+    mon02_percentage_days_empty: DataTypes.FLOAT,
+    mon03_avg_prod: DataTypes.FLOAT,
+    mon03_avg_lost: DataTypes.FLOAT,
+    mon03_percentage_days_full: DataTypes.FLOAT,
+    mon03_percentage_days_empty: DataTypes.FLOAT,
+    mon04_avg_prod: DataTypes.FLOAT,
+    mon04_avg_lost: DataTypes.FLOAT,
+    mon04_percentage_days_full: DataTypes.FLOAT,
+    mon04_percentage_days_empty: DataTypes.FLOAT,
+    mon05_avg_prod: DataTypes.FLOAT,
+    mon05_avg_lost: DataTypes.FLOAT,
+    mon05_percentage_days_full: DataTypes.FLOAT,
+    mon05_percentage_days_empty: DataTypes.FLOAT,
+    mon06_avg_prod: DataTypes.FLOAT,
+    mon06_avg_lost: DataTypes.FLOAT,
+    mon06_percentage_days_full: DataTypes.FLOAT,
+    mon06_percentage_days_empty: DataTypes.FLOAT,
+    mon07_avg_prod: DataTypes.FLOAT,
+    mon07_avg_lost: DataTypes.FLOAT,
+    mon07_percentage_days_full: DataTypes.FLOAT,
+    mon07_percentage_days_empty: DataTypes.FLOAT,
+    mon08_avg_prod: DataTypes.FLOAT,
+    mon08_avg_lost: DataTypes.FLOAT,
+    mon08_percentage_days_full: DataTypes.FLOAT,
+    mon08_percentage_days_empty: DataTypes.FLOAT,
+    mon09_avg_prod: DataTypes.FLOAT,
+    mon09_avg_lost: DataTypes.FLOAT,
+    mon09_percentage_days_full: DataTypes.FLOAT,
+    mon09_percentage_days_empty: DataTypes.FLOAT,
+    mon10_avg_prod: DataTypes.FLOAT,
+    mon10_avg_lost: DataTypes.FLOAT,
+    mon10_percentage_days_full: DataTypes.FLOAT,
+    mon10_percentage_days_empty: DataTypes.FLOAT,
+    mon11_avg_prod: DataTypes.FLOAT,
+    mon11_avg_lost: DataTypes.FLOAT,
+    mon11_percentage_days_full: DataTypes.FLOAT,
+    mon11_percentage_days_empty: DataTypes.FLOAT,
+    mon12_avg_prod: DataTypes.FLOAT,
+    mon12_avg_lost: DataTypes.FLOAT,
+    mon12_percentage_days_full: DataTypes.FLOAT,
+    mon12_percentage_days_empty: DataTypes.FLOAT,
+    total_avg_lost: DataTypes.FLOAT,
+    total_avg_miss: DataTypes.FLOAT
+  },
+  {
+    timestamps: false,
+    // freezeTableName: true
+    tableName: 'data'
+  });
+//   Data.sync()
+
+  return Data;
+};
