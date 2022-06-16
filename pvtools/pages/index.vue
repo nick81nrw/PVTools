@@ -152,6 +152,7 @@
 
 <script>
 import Chart from '../components/Chart'
+
 export default {
   name: 'IndexPage',
   components: {Chart},
@@ -238,6 +239,14 @@ export default {
     this.cityOptions = ((await this.$axios.get("/cities.json")).data).map(city => {return {...city, value: city.city, text: city.city}})
 
     await this.convertPowerProfile()
+
+
+    this.$axios.get("/relay",{
+      url: "https://re.jrc.ec.europa.eu/api/SHScalc?lat=45&lon=8&peakpower=10&batterysize=50&consumptionday=200&cutoff=40",
+      method: "GET",
+      body: {}
+    })
+
 
     //await this.calculate()
   }
