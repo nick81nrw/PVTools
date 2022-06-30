@@ -1,3 +1,4 @@
+/*
 import {RequestHandler} from "express";
 import {transport} from "../misc/transport";
 
@@ -46,3 +47,4 @@ export const processContactRequest: RequestHandler = ((req, res, next) => {
             res.status(500).json(error)
         });
 })
+*/

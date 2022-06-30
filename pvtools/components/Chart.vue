@@ -37,7 +37,7 @@ export default {
     },
     height: {
       type: Number,
-      default: 400
+      default: 100
     },
     cssClasses: {
       default: '',
@@ -50,16 +50,44 @@ export default {
     plugins: {
       type: Object,
       default: () => {}
+    },
+    labels: {
+      type: Array,
+      default: []
+    },
+    datasets: {
+      type: Array,
+      default: []
     }
   },
   data() {
     return {
-      chartData: {
+      /*chartData: {
         labels: [ 'January', 'February', 'March' ],
         datasets: [ { data: [40, 20, 12] } ]
-      },
+      },*/
       chartOptions: {
-        responsive: true
+        responsive: true,
+        scales: {
+          y1:{
+            type: 'linear',
+            display: true,
+            position: 'left'
+          },
+          y2: {
+            type: 'linear',
+            display: true,
+            position: 'right'
+          }
+        }
+      }
+    }
+  },
+  computed: {
+    chartData(){
+      return {
+        labels: this.labels,
+        datasets: this.datasets
       }
     }
   }

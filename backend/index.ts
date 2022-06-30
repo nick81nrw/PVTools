@@ -1,7 +1,8 @@
 import express from "express"
 import * as bodyParser from "body-parser"
+import {relayAPIRequest} from "./api/relay";
 
-import {processContactRequest} from "./api/contact";
+//import {processContactRequest} from "./api/contact";
 
 /**
  * Setup some things so the frontend can communicate with the backend
@@ -22,7 +23,9 @@ app.get("/", (req, res, next) => {
   res.send("PV Tools")
 })
 
-app.post("/contact", processContactRequest)
+//app.post("/contact", processContactRequest)
+
+app.post("/relay", relayAPIRequest)
 
 /**
  * Start server
