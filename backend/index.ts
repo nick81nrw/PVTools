@@ -1,3 +1,4 @@
+import path from "path";
 import express from "express"
 import * as bodyParser from "body-parser"
 import {relayAPIRequest} from "./api/relay";
@@ -19,8 +20,11 @@ app.use(bodyParser.json())
 /**
  * Open endpoints
  */
+
+app.use(express.static(path.join(__dirname, '..', '..', 'pvtools', 'dist')))
+
 app.get("/", (req, res, next) => {
-  res.send("PV Tools")
+  res.sendFile(path.join(__dirname, '..', '..', 'pvtools', 'dist', 'index.html'))
 })
 
 //app.post("/contact", processContactRequest)
