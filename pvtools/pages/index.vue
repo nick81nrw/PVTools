@@ -309,9 +309,8 @@ export default {
             }
 
             let amortization = (size/1000 * this.input.batteryCostsPerKwh + this.input.installationCostsWithoutBattery) / costSavings
-
-            let batteryAmortization = costSavings - this.costSavingsWithoutBattery === 0 ? 0 : (size * this.input.installationCostsWithoutBattery/1000)/(costSavings - this.costSavingsWithoutBattery)
-
+            let batteryAmortization = costSavings - this.costSavingsWithoutBattery === 0 ? 0 : (size * this.input.batteryCostsPerKwh/1000)/(costSavings - this.costSavingsWithoutBattery)
+	   // this.gereratedData.splice(0)
             this.generatedData.push({
               size,
               selfUsedPower,
