@@ -6,7 +6,8 @@ Parameters object:
     batterySoC: 3450 (watthours)
     batterySocMax: 5500 (watthours)
     batterySocMin: 100 (watthours)
-    batteryEfficiency: 0.99 (99%)
+    batteryEfficiency / batteryLoadEfficiency: 0.99 (99%)
+    batteryUnloadEfficiency (optinal): 0.99 (99%)
 Return object:
     newBatterySoc: 3560 (watthours)
     selfUsagePowerPv: 3550 (watthours) PV-power, that used for own consumption
@@ -24,10 +25,13 @@ missing calculations parameters:
 
 
 
-const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocMax, batterySocMin, batteryEfficiency} ) => {
+const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocMax, batterySocMin, batteryEfficiency, batteryLoadEfficiency, batteryUnloadEfficiency} ) => {
     let selfUsagePowerPv, selfUsagePowerBattery, selfUsagePower, newBatterySoc, feedInPowerGrid, consumptionGrid, batteryLoad
-    const batteryLost = 1 - batteryEfficiency + 1
     
+    batteryLoadEfficiency = batteryLoadEfficiency || batteryEfficiency
+    batteryUnloadEfficiency = batteryUnloadEfficiency || batteryEfficiency
+
+
     if (powerGeneration > powerConsumption) {
         // if power generaton is more then consumption, self used power is used complete and battery SoC will be calculated
         selfUsagePowerPv = powerConsumption
@@ -40,16 +44,15 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
             feedInPowerGrid = excessPower
             newBatterySoc = batterySoc
             batteryLoad = 0
-        } else if (batterySoc + (excessPower * batteryEfficiency) > batterySocMax) {
+        } else if (batterySoc + (excessPower * batteryLoadEfficiency) > batterySocMax) {
             // if power would overload the battery, power split into feed in and battery loading
             batteryLoad = batterySocMax - batterySoc
-            // (excessPower - feedInPowerGrid) 
-            feedInPowerGrid = (excessPower - (batterySocMax - batterySoc)) * batteryEfficiency
-            newBatterySoc = batterySoc + batteryLoad
+            feedInPowerGrid = (excessPower - (batterySocMax - batterySoc)) * batteryLoadEfficiency // feedin ist reduced due the missing LoadEfficiency in battery Load
+            newBatterySoc = batterySocMax
         } else {
-            // if battery hat enough capacity to save the power, no feed in, all power save in battry
+            // if battery hat enough capacity to save the power, no feed in, all power save in battery
             feedInPowerGrid = 0
-            batteryLoad = excessPower * batteryEfficiency
+            batteryLoad = excessPower * batteryLoadEfficiency
             newBatterySoc = batterySoc + batteryLoad
         }
         
@@ -63,26 +66,26 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
 
         if (batterySoc == batterySocMin) {
             // if battery is empty, full grid consumption
-            consumptionGrid = (excessLoad - batterySoc + batterySocMin) 
+            consumptionGrid = excessLoad
             newBatterySoc = batterySocMin
             batteryLoad = 0
             selfUsagePowerBattery = 0
 
-        } else if (batterySoc - (excessLoad * batteryLost) < batterySocMin) {
+        } else if (batterySoc - (excessLoad / batteryUnloadEfficiency) < batterySocMin) {
             // if battery will be empty, grid consumption and battery will be splitted 
             
-            consumptionGrid = (excessLoad - batterySoc + batterySocMin) * batteryLost
+            consumptionGrid = (excessLoad - batterySoc + batterySocMin) / batteryUnloadEfficiency
             newBatterySoc = batterySocMin
             batteryLoad = batterySocMin - batterySoc
             selfUsagePowerBattery = batterySoc - batterySocMin
             
             // battrySoc load  batterymin
             //    200     500     100
-            // 400 consumption (load(*batteryLost) - batterySoc + batterySocMin )
+            // 400 consumption (load(/batteryUnloadEfficiency) - batterySoc + batterySocMin )
         } else {
             // if battery has enough power, only use battery
             consumptionGrid = 0
-            batteryLoad = excessLoad * batteryLost * -1
+            batteryLoad = excessLoad / batteryUnloadEfficiency * -1
             selfUsagePowerBattery = excessLoad
             newBatterySoc = batterySoc + batteryLoad
         }

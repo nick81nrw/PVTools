@@ -21,6 +21,27 @@ test('pv generation is more than consumption, battery is loading', () => {
     })
 })
 
+test('pv generation is more than consumption, battery load efficiency diff than unload', () => {
+    const data = energyFlow({   
+                powerGeneration: 5000, 
+                powerConsumption: 4000, 
+                batterySoc: 5000, 
+                batterySocMax: 10000, 
+                batterySocMin: 100, 
+                batteryLoadEfficiency: .95,
+                batteryEfficiency: .99 // unload as default
+            })
+    expect(data).toEqual({
+        newBatterySoc: 1000 * .95 + 5000,
+        selfUsagePower: 4000,
+        selfUsagePowerPv: 4000,
+        selfUsagePowerBattery: 0,
+        feedInPowerGrid: 0,
+        batteryLoad: 1000 * .95,
+        consumptionGrid: 0
+    })
+})
+
 test('pv generation is more than consumption, battery is full, power is feed in', () => {
     const data = energyFlow({   
                 powerGeneration: 5000, 
@@ -71,12 +92,33 @@ test('pv generation is less than consumption, battery is discharging', () => {
                 batteryEfficiency: .99
             })
     expect(data).toEqual({
-        newBatterySoc: 5000 - 1000 * 1.01,
+        newBatterySoc: 5000 - 1000 / 0.99,
         selfUsagePower: 6000,
         selfUsagePowerPv: 5000,
         selfUsagePowerBattery: 1000,
         feedInPowerGrid: 0,
-        batteryLoad: -1000 * 1.01,
+        batteryLoad: -1000 / 0.99,
+        consumptionGrid: 0
+    })
+})
+
+test('pv generation is less than consumption, battery unload efficiency is differnt then load', () => {
+    const data = energyFlow({   
+                powerGeneration: 5000, 
+                powerConsumption: 6000, 
+                batterySoc: 5000, 
+                batterySocMax: 10000, 
+                batterySocMin: 100, 
+                batteryEfficiency: .99,
+                batteryUnloadEfficiency: .80
+            })
+    expect(data).toEqual({
+        newBatterySoc: 5000 - 1000 / 0.80,
+        selfUsagePower: 6000,
+        selfUsagePowerPv: 5000,
+        selfUsagePowerBattery: 1000,
+        feedInPowerGrid: 0,
+        batteryLoad: -1000 / 0.80,
         consumptionGrid: 0
     })
 })
@@ -117,6 +159,7 @@ test('pv generation is less than consumption, battery is nearly empty, diff cuns
         selfUsagePowerBattery: 500,
         feedInPowerGrid: 0,
         batteryLoad: -500,
-        consumptionGrid: 505
+        consumptionGrid: 500 / 0.99
     })
 })
+
