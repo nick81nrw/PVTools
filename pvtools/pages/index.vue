@@ -22,10 +22,14 @@
             <b-form-group
               label="Adresse:"
             >
-              <b-form-input
-                v-model="inputAddressSearchString"
-                @focusout="getCoordinatesByAddress"
-              />
+              <b-input-group
+                append="Straße, Stadt"
+              >
+                <b-form-input
+                  v-model="inputAddressSearchString"
+                  @focusout="getCoordinatesByAddress"
+                />
+              </b-input-group>
             </b-form-group>
 
             <b-form-group
@@ -47,20 +51,28 @@
             <b-form-group
               label="Ausrichtung:"
             >
-              <b-form-input
-                v-model="input.aspect"
-                type="number"
-                min="0"
-                max="359"
-              />
+              <b-input-group
+                append="° Grad Azimuth"
+              >
+                <b-form-input
+                  v-model="input.aspect"
+                  type="number"
+                  min="0"
+                  max="359"
+                />
+              </b-input-group>
             </b-form-group>
             <b-form-group
               label="Neigung:"
             >
-              <b-form-input
-                v-model="input.angle"
-                type="number"
-              />
+              <b-input-group
+                append="° Grad"
+              >
+                <b-form-input
+                  v-model="input.angle"
+                  type="number"
+                />
+              </b-input-group>
             </b-form-group>
             <b-form-group
               label="Installierte Leistung"
@@ -102,7 +114,7 @@
               label="Stromkosten:"
             >
               <b-input-group
-                append="€"
+                append="€ / kWh"
               >
                 <b-input
                   v-model="input.consumptionCosts"
@@ -116,7 +128,7 @@
               label="Einspeisevergütung:"
             >
               <b-input-group
-                append="€"
+                append="€ / kWh"
               >
                 <b-input
                   v-model="input.feedInCompensation"
@@ -127,7 +139,7 @@
               </b-input-group>
             </b-form-group>
             <b-form-group
-              label="Installationskosten:"
+              label="Installationskosten ohne Akku:"
             >
               <b-input-group
                 append="€"
@@ -189,10 +201,10 @@
         <th>Eingespeister Strom / Jahr</th>
         <th>Eigenverbrauchsquote</th>
         <th>Autarkie</th>
-        <th>Ersparnis / Jahr</th>
         <th>Ersparnis / Jahr durch Akku</th>
-        <th>Amortization</th>
-        <th>Speicher Amortization</th>
+        <th>Amortisation nur Speicher</th>
+        <th>Ersparnis / Jahr Anlage</th>
+        <th>Amortisation Anlage</th>
       </tr>
       <tr
         v-for="item in generatedData"
@@ -203,10 +215,10 @@
         <td>{{item.fedInPower.toFixed(2)}} kWh</td>
         <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
         <td>{{item.selfUseRate.toFixed(2)}} %</td>
-        <td>{{item.costSavings.toFixed(2)}} €</td>
         <td>{{item.costSavingsBattery.toFixed(2)}} €</td>
-        <td>{{item.amortization.toFixed(2)}} Jahre</td>
         <td>{{item.batteryAmortization.toFixed(2)}} Jahre</td>
+        <td>{{item.costSavings.toFixed(2)}} €</td>
+        <td>{{item.amortization.toFixed(2)}} Jahre</td>
       </tr>
     </table>
   </b-container>
