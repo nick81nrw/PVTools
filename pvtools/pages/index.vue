@@ -413,14 +413,11 @@
 
 <script>
 import Chart from '../components/Chart'
-import {showAt, hideAt} from  'vue-breakpoints'
 
 export default {
   name: 'IndexPage',
   components: {
-    Chart,
-    showAt,
-    hideAt
+    Chart
   },
   data(){
     return {
