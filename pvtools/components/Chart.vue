@@ -6,9 +6,6 @@
     :dataset-id-key="datasetIdKey"
     :plugins="plugins"
     :css-classes="cssClasses"
-    :styles="styles"
-    :width="width"
-    :height="height"
   />
 </template>
 
@@ -37,16 +34,16 @@ export default {
     },
     height: {
       type: Number,
-      default: 100
+      default: `100px`
     },
     cssClasses: {
       default: '',
       type: String
-    },
+    },/*
     styles: {
       type: Object,
       default: () => {}
-    },
+    },*/
     plugins: {
       type: Object,
       default: () => {}
@@ -68,6 +65,7 @@ export default {
       },*/
       chartOptions: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           y1:{
             type: 'linear',
@@ -78,6 +76,12 @@ export default {
             type: 'linear',
             display: true,
             position: 'right'
+          },
+          x: {
+            title: {
+              text: "Speichergröße",
+              display: true
+            }
           }
         }
       }

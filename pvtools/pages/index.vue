@@ -12,11 +12,11 @@
         >Daten eingeben</b-button>
       </b-col>
     </b-row>
-    <b-collapse
+<!--    <b-collapse
       visible
       id="inputCollapse"
     >
-      <b-row>
+      <b-row cols="1" cols-md="2">
         <b-col>
           <b-form>
             <b-form-group
@@ -181,58 +181,250 @@
 
         </b-col>
       </b-row>
-    </b-collapse>
+    </b-collapse>-->
+
+    <b-row cols="1" cols-md="2">
+      <b-col>
+        <b-collapse
+          id="inputCollapse"
+          visible
+        >
+          <b-form>
+            <b-form-group
+              label="Adresse:"
+            >
+              <b-input-group
+                append="Straße, Stadt"
+              >
+                <b-form-input
+                  v-model="inputAddressSearchString"
+                  @focusout="getCoordinatesByAddress"
+                />
+              </b-input-group>
+            </b-form-group>
+
+            <b-form-group
+              label="Koordinaten:"
+              v-if="adressData.lon && adressData.lat"
+            >
+              <b-input-group>
+                <b-form-input
+                  readonly
+                  v-model="adressData.lat"
+                />
+                <b-form-input
+                  readonly
+                  v-model="adressData.lon"
+                />
+              </b-input-group>
+
+            </b-form-group>
+            <b-form-group
+              label="Ausrichtung:"
+            >
+              <b-input-group
+                append="° Grad Azimuth"
+              >
+                <b-form-input
+                  v-model="input.aspect"
+                  type="number"
+                  min="0"
+                  max="359"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Neigung:"
+            >
+              <b-input-group
+                append="° Grad"
+              >
+                <b-form-input
+                  v-model="input.angle"
+                  type="number"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Installierte Leistung"
+            >
+              <b-input-group
+                append="Wp"
+              >
+                <b-input
+                  v-model="input.peakpower"
+                  min="0"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Jährlicher Stromverbrauch:"
+            >
+              <b-input-group
+                append="kWh"
+              >
+                <b-input
+                  v-model="input.yearlyConsumption"
+                  min="0"
+                />
+              </b-input-group>
+            </b-form-group>
+          </b-form>
+        </b-collapse>
+      </b-col>
+      <b-col>
+        <b-collapse
+          id="inputCollapse"
+          visible
+        >
+          <b-form>
+            <b-form-group
+              label="Lastprofil:"
+            >
+              <b-form-select
+                v-model="input.consumptionProfile"
+                :options="consumptionProfiles"
+              />
+            </b-form-group>
+            <b-form-group
+              label="Stromkosten:"
+            >
+              <b-input-group
+                append="€ / kWh"
+              >
+                <b-input
+                  v-model="input.consumptionCosts"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Einspeisevergütung:"
+            >
+              <b-input-group
+                append="€ / kWh"
+              >
+                <b-input
+                  v-model="input.feedInCompensation"
+                  min="0"
+                  type="number"
+                  step="0.0001"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Installationskosten ohne Akku:"
+            >
+              <b-input-group
+                append="€"
+              >
+                <b-input
+                  v-model="input.installationCostsWithoutBattery"
+                  min="0"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Speicherkosten pro kWh:"
+            >
+              <b-input-group
+                append="€"
+              >
+                <b-input
+                  v-model="input.batteryCostsPerKwh"
+                  min="0"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-button-group>
+              <b-button
+                variant="primary"
+                @click="generateData"
+                :disabled="!adressData.lat && !adressData.lon"
+              >
+                Berechnen
+              </b-button>
+              <b-button
+                variant="danger"
+                disabled
+              >
+                Zurücksetzen
+              </b-button>
+            </b-button-group>
+          </b-form>
+        </b-collapse>
+      </b-col>
+    </b-row>
 
     <b-row>
       <b-col>
-        <Chart
-          id="chart"
-          v-if="generatedData.length > 0"
-          :labels="generatedData.map(item => item.size)"
-          :datasets="[{ data: generatedData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'blue'},{ data: generatedData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red',}]"
-        />
+        <div
+          id="chartContainer"
+        >
+          <Chart
+            id="chart"
+            v-if="displayData.length > 0"
+            :labels="displayData[displayData.length - 1].map(item => item.size)"
+            :datasets="[{ data: displayData[displayData.length - 1].map(item => item.selfUseRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'blue'},{ data: displayData[displayData.length - 1].map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red',}]"
+
+          />
+        </div>
+
+
       </b-col>
     </b-row>
 <!--    {{generatedData}}-->
-    <table v-if="generatedData.length > 0" class="mt-3">
-      <tr>
-        <th>Speichergröße</th>
-        <th>Selbstgenutzer Strom / Jahr</th>
-        <th>Eingespeister Strom / Jahr</th>
-        <th>Eigenverbrauchsquote</th>
-        <th>Autarkie</th>
-        <th>Ersparnis / Jahr durch Akku</th>
-        <th>Amortisation nur Speicher</th>
-        <th>Ersparnis / Jahr Anlage</th>
-        <th>Amortisation Anlage</th>
-      </tr>
-      <tr
-        v-for="item in generatedData"
-        :key="item.size"
-      >
-        <td>{{(item.size/1000).toFixed(0)}} kWh</td>
-        <td>{{item.selfUsedPower.toFixed(2)}} kWh</td>
-        <td>{{item.fedInPower.toFixed(2)}} kWh</td>
-        <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
-        <td>{{item.selfUseRate.toFixed(2)}} %</td>
-        <td>{{item.costSavingsBattery.toFixed(2)}} €</td>
-        <td>{{item.batteryAmortization.toFixed(2)}} Jahre</td>
-        <td>{{item.costSavings.toFixed(2)}} €</td>
-        <td>{{item.amortization.toFixed(2)}} Jahre</td>
-      </tr>
-    </table>
+    <div
+      id="tableContainer"
+    >
+      <table v-if="displayData.length > 0" class="mt-3">
+        <tr>
+          <th>Speichergröße</th>
+          <th>Selbstgenutzer Strom / Jahr</th>
+          <th>Eingespeister Strom / Jahr</th>
+          <th>Eigenverbrauchsquote</th>
+          <th>Autarkie</th>
+          <th>Ersparnis / Jahr durch Akku</th>
+          <th>Amortisation nur Speicher</th>
+          <th>Ersparnis / Jahr Anlage</th>
+          <th>Amortisation Anlage</th>
+        </tr>
+        <tr
+          v-for="item in displayData[displayData.length - 1]"
+          :key="item.size"
+        >
+          <td>{{(item.size/1000).toFixed(0)}} kWh</td>
+          <td>{{item.selfUsedPower.toFixed(2)}} kWh</td>
+          <td>{{item.fedInPower.toFixed(2)}} kWh</td>
+          <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
+          <td>{{item.selfUseRate.toFixed(2)}} %</td>
+          <td>{{item.costSavingsBattery.toFixed(2)}} €</td>
+          <td>{{item.batteryAmortization.toFixed(2)}} Jahre</td>
+          <td>{{item.costSavings.toFixed(2)}} €</td>
+          <td>{{item.amortization.toFixed(2)}} Jahre</td>
+        </tr>
+      </table>
+    </div>
+
   </b-container>
 </template>
 
 <script>
 import Chart from '../components/Chart'
+import {showAt, hideAt} from  'vue-breakpoints'
 
 export default {
   name: 'IndexPage',
-  components: {Chart},
+  components: {
+    Chart,
+    showAt,
+    hideAt
+  },
   data(){
     return {
-      generatedData: [],
+      displayData: [],
       batterySizes: [
         1,
         2000,
@@ -286,13 +478,16 @@ export default {
       ],
       inputAddressSearchString: "",
       adressData: {},
-      costSavingsWithoutBattery: 0
+      costSavingsWithoutBattery: 0,
+      screenHeight: 0,
     }
   },
   methods: {
+
     async generateData(){
-      await this.batterySizes.forEach(size => {
-        this.$axios.post("/relay",{
+      let generatedData = []
+      await Promise.all(this.batterySizes.map(size => {
+        return this.$axios.post("/relay",{
           url: this.buildQueryString({
             aspect: this.input.aspect ,
             angle: this.input.angle,
@@ -306,38 +501,52 @@ export default {
           method: "GET",
           body: {}
         })
-          .then(result => {
-            //TODO: Doku
+        .then(response => response.data)
+      }))
+        .then(data => {
+          //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
+          let selfUsedPower = data[0].outputs.monthly.reduce((p,c) => p + c.E_d,0) * 30.4 / 1000
+          //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
+          let fedInPower = data[0].outputs.monthly.reduce((p,c) => p + c.E_lost_d,0) * 30.4 / 1000
 
-            //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
-            let selfUsedPower = result.data.outputs.monthly.reduce((p,c) => p + c.E_d,0) * 30.4 / 1000
-            //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
-            let fedInPower = result.data.outputs.monthly.reduce((p,c) => p + c.E_lost_d,0) * 30.4 / 1000
+          let costSavings = fedInPower * this.input.feedInCompensation + selfUsedPower * this.input.consumptionCosts
 
-            let costSavings = fedInPower * this.input.feedInCompensation + selfUsedPower * this.input.consumptionCosts
+          this.costSavingsWithoutBattery = costSavings
 
-            if(size == 1){
-              this.costSavingsWithoutBattery = costSavings
-            }
+          return data
 
-            let amortization = (size/1000 * this.input.batteryCostsPerKwh + this.input.installationCostsWithoutBattery) / costSavings
-            let batteryAmortization = costSavings - this.costSavingsWithoutBattery === 0 ? 0 : (size * this.input.batteryCostsPerKwh/1000)/(costSavings - this.costSavingsWithoutBattery)
-	   // this.gereratedData.splice(0)
-            this.generatedData.push({
-              size,
-              selfUsedPower,
-              fedInPower,
-              costSavings,
-              amortization,
-              batteryAmortization,
-              costSavingsBattery: costSavings - this.costSavingsWithoutBattery,
-              selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
-              selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
+        })
+          .then(data => {
+            data.forEach(rawSize => {
+              //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
+              let selfUsedPower = rawSize.outputs.monthly.reduce((p,c) => p + c.E_d,0) * 30.4 / 1000
+              //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
+              let fedInPower = rawSize.outputs.monthly.reduce((p,c) => p + c.E_lost_d,0) * 30.4 / 1000
+
+              let costSavings = fedInPower * this.input.feedInCompensation + selfUsedPower * this.input.consumptionCosts
+              let batterySize = rawSize.inputs.battery.capacity
+
+              let amortization = (batterySize/1000 * this.input.batteryCostsPerKwh + this.input.installationCostsWithoutBattery) / costSavings
+              let batteryAmortization = costSavings - this.costSavingsWithoutBattery === 0 ? 0 : (batterySize * this.input.batteryCostsPerKwh/1000)/(costSavings - this.costSavingsWithoutBattery)
+              // this.gereratedData.splice(0)
+              generatedData.push({
+                size: batterySize,
+                selfUsedPower,
+                fedInPower,
+                costSavings,
+                amortization,
+                batteryAmortization,
+                costSavingsBattery: costSavings - this.costSavingsWithoutBattery,
+                selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
+                selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
+              })
+
+              //generatedData = generatedData.sort((a,b) => a.size - b.size)
             })
 
-            this.generatedData = this.generatedData.sort((a,b) => a.size - b.size)
           })
-      })
+
+      this.displayData.push(generatedData)
 
       this.$root.$emit('bv::toggle::collapse', 'inputCollapse')
 
@@ -388,6 +597,9 @@ export default {
       //console.log(string)
       return string
     }
+  },
+  mounted() {
+    this.screenHeight = window.screen.height
   }
 }
 </script>
@@ -404,8 +616,20 @@ table {
 th,td {
   border: 1px solid black;
 }
+th {
+  vertical-align: top;
+}
 
 td {
   text-align: right;
+}
+
+#tableContainer {
+  overflow-x: scroll;
+}
+
+#chartContainer {
+  max-width: 100vw;
+  max-height: 50vh;
 }
 </style>
