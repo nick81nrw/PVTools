@@ -8,6 +8,10 @@ Parameters object:
     batterySocMin: 100 (watthours)
     batteryEfficiency / batteryLoadEfficiency: 0.99 (99%)
     batteryUnloadEfficiency (optinal): 0.99 (99%)
+    maxPowerGenerationInverter (optional): 2500 (watts)
+    maxPowerGenerationBattery: (optional): 3400 (watts)
+    maxPowerLoadBattery (optional): 2300 (watts)
+    maxPowerFeedIn (optional): 8500 (watts) for feedIn regulations (70% rule in germany)
 Return object:
     newBatterySoc: 3560 (watthours)
     selfUsagePowerPv: 3550 (watthours) PV-power, that used for own consumption
@@ -17,21 +21,52 @@ Return object:
     batteryLoad: 2520 / -2520 (watthours) load/unload battery
     consumptionGrid: 2450 (watthours) 
 
+    missedFeedInPowerGrid, missedInverterPower, missedBatteryPower;
+
 
 missing calculations parameters:
-    - Max power generation inverter
-    - Max load/unload power battery
+
+missing return values:
+    missed feedin power wehen maxPowerFeedIn is set
+    missed PV power, when maxPowerGenerationInverter is set
+    missed battery power, when maxPowerLoadBattery or maxPowerGenerationBattery is set
 */
 
 
 
-const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocMax, batterySocMin, batteryEfficiency, batteryLoadEfficiency, batteryUnloadEfficiency} ) => {
-    let selfUsagePowerPv, selfUsagePowerBattery, selfUsagePower, newBatterySoc, feedInPowerGrid, consumptionGrid, batteryLoad
+const energyFlow = ( {
+        powerGeneration, 
+        powerConsumption, 
+        batterySoc, 
+        batterySocMax, 
+        batterySocMin, 
+        batteryEfficiency, 
+        batteryLoadEfficiency, 
+        batteryUnloadEfficiency,
+        maxPowerGenerationInverter,
+        maxPowerGenerationBattery,
+        maxPowerLoadBattery,
+        maxPowerFeedIn
+    } ) => {
     
+    let selfUsagePowerPv, selfUsagePowerBattery, selfUsagePower, 
+        newBatterySoc, feedInPowerGrid, consumptionGrid, batteryLoad,
+        missedFeedInPowerGrid, missedInverterPower, missedBatteryPower;
+    
+    missedFeedInPowerGrid = 0
+    missedInverterPower = 0
+    missedBatteryPower = 0
+
     batteryLoadEfficiency = batteryLoadEfficiency || batteryEfficiency
     batteryUnloadEfficiency = batteryUnloadEfficiency || batteryEfficiency
 
 
+    if (maxPowerGenerationInverter && maxPowerGenerationInverter < powerGeneration) {
+        
+        missedInverterPower = powerGeneration - maxPowerGenerationInverter
+        powerGeneration = maxPowerGenerationInverter
+    }
+    
     if (powerGeneration > powerConsumption) {
         // if power generaton is more then consumption, self used power is used complete and battery SoC will be calculated
         selfUsagePowerPv = powerConsumption
@@ -47,12 +82,17 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
         } else if (batterySoc + (excessPower * batteryLoadEfficiency) > batterySocMax) {
             // if power would overload the battery, power split into feed in and battery loading
             batteryLoad = batterySocMax - batterySoc
-            feedInPowerGrid = (excessPower - (batterySocMax - batterySoc)) * batteryLoadEfficiency // feedin ist reduced due the missing LoadEfficiency in battery Load
-            newBatterySoc = batterySocMax
+            if (maxPowerLoadBattery && maxPowerLoadBattery < batteryLoad) {batteryLoad = maxPowerLoadBattery}
+            feedInPowerGrid = (excessPower - (batteryLoad)) * batteryLoadEfficiency // feedin ist reduced due the missing LoadEfficiency in battery Load
+            newBatterySoc = batterySoc + batteryLoad
         } else {
-            // if battery hat enough capacity to save the power, no feed in, all power save in battery
+            // if battery has enough capacity to save the power, no feed in, all power save in battery
             feedInPowerGrid = 0
             batteryLoad = excessPower * batteryLoadEfficiency
+            if (maxPowerLoadBattery && maxPowerLoadBattery < batteryLoad) {
+                batteryLoad = maxPowerLoadBattery
+                feedInPowerGrid = (excessPower - batteryLoad) * batteryLoadEfficiency
+            }
             newBatterySoc = batterySoc + batteryLoad
         }
         
@@ -71,13 +111,20 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
             batteryLoad = 0
             selfUsagePowerBattery = 0
 
-        } else if (batterySoc - (excessLoad / batteryUnloadEfficiency) < batterySocMin) {
+        } else if (batterySoc - ((excessLoad) / batteryUnloadEfficiency) < batterySocMin) {
             // if battery will be empty, grid consumption and battery will be splitted 
             
             consumptionGrid = (excessLoad - batterySoc + batterySocMin) / batteryUnloadEfficiency
             newBatterySoc = batterySocMin
             batteryLoad = batterySocMin - batterySoc
             selfUsagePowerBattery = batterySoc - batterySocMin
+            if(maxPowerGenerationBattery && maxPowerGenerationBattery < batteryLoad *-1 ) {
+                batteryLoad = maxPowerGenerationBattery / batteryUnloadEfficiency *-1
+                consumptionGrid = excessLoad - maxPowerGenerationBattery
+                selfUsagePowerBattery = maxPowerGenerationBattery
+                newBatterySoc = batterySoc + batteryLoad
+            }
+            
             
             // battrySoc load  batterymin
             //    200     500     100
@@ -87,6 +134,11 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
             consumptionGrid = 0
             batteryLoad = excessLoad / batteryUnloadEfficiency * -1
             selfUsagePowerBattery = excessLoad
+            if(maxPowerGenerationBattery && maxPowerGenerationBattery < batteryLoad *-1 ) {
+                batteryLoad = maxPowerGenerationBattery / batteryUnloadEfficiency *-1
+                consumptionGrid = excessLoad - maxPowerGenerationBattery
+                selfUsagePowerBattery = maxPowerGenerationBattery
+            }
             newBatterySoc = batterySoc + batteryLoad
         }
 
@@ -103,6 +155,14 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
 
     // 
     selfUsagePower = selfUsagePowerPv + selfUsagePowerBattery
+    if (maxPowerFeedIn < feedInPowerGrid) {
+        missedFeedInPowerGrid = feedInPowerGrid - maxPowerFeedIn
+        feedInPowerGrid = maxPowerFeedIn
+
+        console.log(missedFeedInPowerGrid)
+        console.log(maxPowerFeedIn)
+        console.log(feedInPowerGrid)
+    }
 
     return {
         newBatterySoc,
@@ -111,7 +171,10 @@ const energyFlow = ( {powerGeneration, powerConsumption, batterySoc, batterySocM
         selfUsagePowerBattery,
         feedInPowerGrid,
         batteryLoad,
-        consumptionGrid
+        consumptionGrid,
+        missedInverterPower,
+        missedBatteryPower,
+        missedFeedInPowerGrid,
     }
 
 }
