@@ -4,6 +4,17 @@
       <b-col>
         <h1>PVTools</h1>
       </b-col>
+      <b-col
+        align-v="baseline"
+        cols="auto" 
+      >
+        <form action="https://www.paypal.com/donate" method="post" target="_blank" class="paypal">
+          <input type="hidden" name="hosted_button_id" value="RTXEPF475DBVA" />
+          <input type="image" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_LG.gif" border="0" name="submit" title="Unterstütze unsere Arbeit!" alt="Spenden mit dem PayPal-Button" />
+          <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" />
+        </form>
+        <p>Nutze "PV-Onlinerechner"</p>
+      </b-col>
     </b-row>
     <b-row>
       <b-col>
@@ -487,5 +498,8 @@ td {
 #chartContainer {
   max-width: 100vw;
   max-height: 50vh;
+}
+.paypal {
+  margin-top: 10px;
 }
 </style>
