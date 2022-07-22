@@ -1,5 +1,14 @@
+/**
+ * @return {Object) Functions: energyFlow, calculateConsumption, normalizeHourlyRadiation
+ * 
+ */
 
-/*
+
+/**
+ * Calculate consumption per hour from a load profile, year and an yearly consumption
+ * @param  {Int} powerGeneration             watts for one hour
+ * @return {Object}                         {newBatterySoc: 3560, ...}
+ 
 Parameters object:
     powerGeneration: 503 (watts for one hour)
     powerConsumption: 433 (watts for one hour)
@@ -159,9 +168,9 @@ const energyFlow = ( {
         missedFeedInPowerGrid = feedInPowerGrid - maxPowerFeedIn
         feedInPowerGrid = maxPowerFeedIn
 
-        console.log(missedFeedInPowerGrid)
-        console.log(maxPowerFeedIn)
-        console.log(feedInPowerGrid)
+        // console.log(missedFeedInPowerGrid)
+        // console.log(maxPowerFeedIn)
+        // console.log(feedInPowerGrid)
     }
 
     return {
@@ -179,6 +188,145 @@ const energyFlow = ( {
 
 }
 
+/**
+ * Calculate consumption per hour from a load profile, year and an yearly consumption
+ * @param  {Object} loadProfile             Loadprofile Object {name: "SLPH0", values: [{ month: 1, weekDay: 1, dayHour: 0, partPerMonth: 0.004096433, partPerYear: 0.000406886 },...]}
+ * @param  {Int}   year                     The year which should be calculated (leap year in mind)
+ * @param  {Int}   consumptionKwhPerYear    Consumption in this year in kWh
+ * @return {Object}                         {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
+ */
+
+const calculateConsumption = (loadProfile, year = 2021, consumptionKwhPerYear) => {
+
+    const consumptionWattHours = consumptionKwhPerYear * 1000
+
+    const daysFebruary = new Date(year, 2, 0).getDate()
+    
+    const months = [1,2,3,4,5,6,7,8,9,10,11,12]
+    const monthLength = [31, daysFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 
-module.exports = energyFlow
+    let dayIndex = new Date(`01 Jan ${year} 08:00:00 GMT`).getDay()
+
+    let result = {}
+    
+    months.map((month, i) => {
+        
+        const mLength = monthLength[i]
+        Array.from(Array(mLength).keys()).map(day => {
+            day += 1
+            Array.from(Array(24).keys()).map(hour => {
+                const timeString = `${year}${('00' + (month)).slice(-2)}${('00' + day).slice(-2)}:${('00' + hour).slice(-2)}`
+                const partPerYear = loadProfile.values.find(e => {
+                    return e.month == month && e.weekDay == dayIndex && e.dayHour == hour
+                }).partPerYear 
+                P = (partPerYear * consumptionWattHours)
+                if (timeString == '20200501:14') console.log(P, partPerYear, dayIndex, month, hour, consumptionWattHours, consumptionWattHours * P)
+                if (result[timeString]) { //should not be run.
+                    result[timeString].P += P
+                } else {
+                    result[timeString] = {P}
+                }
+            })
+            dayIndex == 6 ? dayIndex = 0 : dayIndex += 1
+
+        })
+        
+        
+
+    })
+    return result
+   
+
+}
+
+/**
+ * normalize the hourly radiation from pvgis API
+ * @param  {Array[Array]} hourlyRadiationArrays An Array with power generation e.g. two: [ [{ "time": "20200101:0010", "P": 20.0, ... },{ "time": "20200101:0110", "P": 20.0, ... }],[...] ]
+ * @return {Array[Object]} Array with Objects in Fomrat [ [{"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}], [{...}, ...] ]
+*/
+
+const normalizeHourlyRadiation = hourlyRadiationArrays => {
+
+    const normRadiation = hourlyRadiationArrays.map(radiationArray => {
+        return radiationArray.reduce((prev, curr) => {
+            const dateHour = curr.time.split(':')[0] + ':' + curr.time.split(':')[1].substr(0,2)
+            if (prev[dateHour]) {
+                prev[dateHour].P += curr.P
+            } else {
+                prev[dateHour] = {P: curr.P}
+            }
+
+            return prev
+        },{})
+    })
+
+    return normRadiation
+}
+
+
+/**
+ * merge powerGeneration to one summerized object
+ * @param  {Array[Object]} powerGenerationArray An Array with power generation e.g. two: [ {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}, {...} ]
+ * @return {Object} Array with Objects in Fomrat {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
+*/
+
+const mergePowerGeneration = powerGenerationArray => {
+    if (powerGenerationArray.length == 1) return powerGenerationArray[0]
+
+    return powerGenerationArray.reduce((prev, curr) => {
+
+        for (const [key, value] of Object.entries(curr)) {
+
+            if (prev[key]) {
+                prev[key].P += value.P
+            } else {
+                prev[key] = {P: value.P}
+            }
+        }
+
+        return prev
+    }, {})
+
+}
+
+
+/**
+ * generate the order of days for one year
+ * @param  {Int} year A year: 2020
+ * @return {Array} Array with DayTime  ["20200101:00","20200101:01","20200101:02", ... ,"20201231:23"]
+*/
+
+const generateDayTimeOrder = year => {
+    const daysFebruary = new Date(year, 2, 0).getDate()
+    const months = [1,2,3,4,5,6,7,8,9,10,11,12]
+    const monthLength = [31, daysFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+    const timeString = []
+
+    months.map((month, i) => {
+        
+        const mLength = monthLength[i]
+        Array.from(Array(mLength).keys()).map(day => {
+            day += 1
+            Array.from(Array(24).keys()).map(hour => {
+                timeString.push(`${year}${('00' + (month)).slice(-2)}${('00' + day).slice(-2)}:${('00' + hour).slice(-2)}`)
+                
+            })
+            
+
+        })
+        
+        
+
+    })
+    return timeString
+}
+
+module.exports = {
+    energyFlow,
+    calculateConsumption,
+    normalizeHourlyRadiation,
+    mergePowerGeneration,
+    generateDayTimeOrder
+}
