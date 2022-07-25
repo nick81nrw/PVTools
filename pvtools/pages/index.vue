@@ -8,12 +8,12 @@
         align-v="baseline"
         cols="auto" 
       >
-        <form action="https://www.paypal.com/donate" method="post" target="_blank" class="paypal">
+         <form action="https://www.paypal.me/akkudoktor" method="post" target="_blank" class="paypal">
           <input type="hidden" name="hosted_button_id" value="RTXEPF475DBVA" />
-          <input type="image" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_LG.gif" border="0" name="submit" title="Unterstütze unsere Arbeit!" alt="Spenden mit dem PayPal-Button" />
+          <input type="image" src="/btn_support_LG.gif" border="0" name="submit" title="Unterstütze unsere Arbeit!" alt="Spenden mit dem PayPal-Button" />
           <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" />
         </form>
-        <p>Nutze "PV-Onlinerechner"</p>
+        <p>Nutze als Grund: "PV-Tool"</p>
       </b-col>
     </b-row>
     <b-row>
@@ -67,7 +67,7 @@
                 append="° Grad Azimuth"
               >
                 <b-form-input
-                  v-model="input.aspect"
+                  v-model.number="input.aspect"
                   type="number"
                   min="0"
                   max="359"
@@ -81,7 +81,7 @@
                 append="° Grad"
               >
                 <b-form-input
-                  v-model="input.angle"
+                  v-model.number="input.angle"
                   type="number"
                 />
               </b-input-group>
@@ -93,8 +93,9 @@
                 append="Wp"
               >
                 <b-input
-                  v-model="input.peakpower"
+                  v-model.number="input.peakpower"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -105,8 +106,9 @@
                 append="kWh"
               >
                 <b-input
-                  v-model="input.yearlyConsumption"
+                  v-model.number="input.yearlyConsumption"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -134,7 +136,7 @@
                 append="€ / kWh"
               >
                 <b-input
-                  v-model="input.consumptionCosts"
+                  v-model.number="input.consumptionCosts"
                   type="number"
                   min="0"
                   step="0.01"
@@ -148,7 +150,7 @@
                 append="€ / kWh"
               >
                 <b-input
-                  v-model="input.feedInCompensation"
+                  v-model.number="input.feedInCompensation"
                   min="0"
                   type="number"
                   step="0.0001"
@@ -162,8 +164,9 @@
                 append="€"
               >
                 <b-input
-                  v-model="input.installationCostsWithoutBattery"
+                  v-model.number="input.installationCostsWithoutBattery"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -174,8 +177,9 @@
                 append="€"
               >
                 <b-input
-                  v-model="input.batteryCostsPerKwh"
+                  v-model.number="input.batteryCostsPerKwh"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -451,9 +455,8 @@ export default {
               let costSavings = fedInPower * this.input.feedInCompensation + selfUsedPower * this.input.consumptionCosts
               let batterySize = rawSize.inputs.battery.capacity
 
-              let amortization = (batterySize/1000 * this.input.batteryCostsPerKwh + this.input.installationCostsWithoutBattery) / costSavings
+              let amortization = ((batterySize/1000 * this.input.batteryCostsPerKwh) + this.input.installationCostsWithoutBattery) / costSavings;
               let batteryAmortization = costSavings - this.costSavingsWithoutBattery === 0 ? 0 : (batterySize * this.input.batteryCostsPerKwh/1000)/(costSavings - this.costSavingsWithoutBattery)
-              // this.gereratedData.splice(0)
               generatedData.push({
                 size: batterySize,
                 selfUsedPower,
