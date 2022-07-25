@@ -242,7 +242,7 @@
           v-for="item in displayData[displayData.length - 1]"
           :key="item.size"
         >
-          <td>{{(item.size/1000).toFixed(0)}} kWh</td>
+          <td>{{(item.size/1000).toFixed(1)}} kWh</td>
           <td>{{item.selfUsedPower.toFixed(2)}} kWh</td>
           <td>{{item.fedInPower.toFixed(2)}} kWh</td>
           <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
@@ -272,6 +272,9 @@ export default {
       displayData: [],
       batterySizes: [
         1,
+        500,
+        1000,
+        1500,
         2000,
         4000,
         6000,
@@ -468,8 +471,10 @@ export default {
                 amortization,
                 batteryAmortization,
                 costSavingsBattery: costSavings - this.costSavingsWithoutBattery,
-                selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
-                selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
+                // selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
+                // selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
+                selfUseRate: selfUsedPower / this.input.yearlyConsumption * 100,
+                selfSufficiencyRate: selfUsedPower / (selfUsedPower + fedInPower) * 100
               })
 
               //generatedData = generatedData.sort((a,b) => a.size - b.size)

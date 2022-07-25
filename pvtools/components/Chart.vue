@@ -34,7 +34,7 @@ export default {
     },
     height: {
       type: Number,
-      default: `100px`
+      default: 100
     },
     cssClasses: {
       default: '',
