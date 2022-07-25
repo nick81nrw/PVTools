@@ -8,12 +8,12 @@
         align-v="baseline"
         cols="auto" 
       >
-        <form action="https://www.paypal.com/donate" method="post" target="_blank" class="paypal">
+         <form action="https://www.paypal.me/akkudoktor" method="post" target="_blank" class="paypal">
           <input type="hidden" name="hosted_button_id" value="RTXEPF475DBVA" />
-          <input type="image" src="https://www.paypalobjects.com/de_DE/DE/i/btn/btn_donate_LG.gif" border="0" name="submit" title="Unterstütze unsere Arbeit!" alt="Spenden mit dem PayPal-Button" />
+          <input type="image" src="/btn_support_LG.gif" border="0" name="submit" title="Unterstütze unsere Arbeit!" alt="Spenden mit dem PayPal-Button" />
           <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" />
         </form>
-        <p>Nutze "PV-Onlinerechner"</p>
+        <p>Nutze als Grund: "PV-Tool"</p>
       </b-col>
     </b-row>
     <b-row>
