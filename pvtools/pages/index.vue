@@ -67,7 +67,7 @@
                 append="° Grad Azimuth"
               >
                 <b-form-input
-                  v-model="input.aspect"
+                  v-model.number="input.aspect"
                   type="number"
                   min="0"
                   max="359"
@@ -81,8 +81,10 @@
                 append="° Grad"
               >
                 <b-form-input
-                  v-model="input.angle"
+                  v-model.number="input.angle"
                   type="number"
+                  min="0"
+                  max="90"
                 />
               </b-input-group>
             </b-form-group>
@@ -93,8 +95,9 @@
                 append="Wp"
               >
                 <b-input
-                  v-model="input.peakpower"
+                  v-model.number="input.peakpower"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -105,8 +108,9 @@
                 append="kWh"
               >
                 <b-input
-                  v-model="input.yearlyConsumption"
+                  v-model.number="input.yearlyConsumption"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -134,7 +138,7 @@
                 append="€ / kWh"
               >
                 <b-input
-                  v-model="input.consumptionCosts"
+                  v-model.number="input.consumptionCosts"
                   type="number"
                   min="0"
                   step="0.01"
@@ -148,7 +152,7 @@
                 append="€ / kWh"
               >
                 <b-input
-                  v-model="input.feedInCompensation"
+                  v-model.number="input.feedInCompensation"
                   min="0"
                   type="number"
                   step="0.0001"
@@ -162,8 +166,9 @@
                 append="€"
               >
                 <b-input
-                  v-model="input.installationCostsWithoutBattery"
+                  v-model.number="input.installationCostsWithoutBattery"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
@@ -174,8 +179,9 @@
                 append="€"
               >
                 <b-input
-                  v-model="input.batteryCostsPerKwh"
+                  v-model.number="input.batteryCostsPerKwh"
                   min="0"
+                  type="number"
                 />
               </b-input-group>
             </b-form-group>
