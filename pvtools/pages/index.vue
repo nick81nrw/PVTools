@@ -40,7 +40,7 @@
                 <b-form-input
                   v-model="inputAddressSearchString"
                   @focusout="getCoordinatesByAddress"
-                  placeholder="z.B. Hauptstraße 12, Frankfurt Oder"
+                  placeholder="z.B. 50667 Köln"
                   v-b-tooltip.hover title='Beim verlassen des Feldes wird der Standort gesucht'
                 />
               </b-input-group>
@@ -135,6 +135,7 @@
                 v-model="input.consumptionProfile"
                 :options="consumptionProfiles"
               />
+              <NuxtLink to="/consumptionProfiles">Infos zu den Lastprofilen</NuxtLink>
             </b-form-group>
             <b-form-group
               label="Stromkosten:"
@@ -359,7 +360,7 @@ export default {
         {
           value: 2,
           
-          text: "SLP H0 +10% Mittags",
+          text: " ",
           H_00: 0.029064195,
           H_01: 0.022303546,
           H_02: 0.018725847,
