@@ -35,11 +35,13 @@
               label="Adresse:"
             >
               <b-input-group
-                append="Straße, Stadt"
+                append="Straße, PLZ Stadt"
               >
                 <b-form-input
                   v-model="inputAddressSearchString"
                   @focusout="getCoordinatesByAddress"
+                  placeholder="z.B. Hauptstraße 12, Frankfurt Oder"
+                  v-b-tooltip.hover title='Beim verlassen des Feldes wird der Standort gesucht'
                 />
               </b-input-group>
             </b-form-group>
@@ -71,6 +73,7 @@
                   type="number"
                   min="0"
                   max="359"
+                  v-b-tooltip.hover title="0 = Süden, 90 = Westen, -90 = Osten"
                 />
               </b-input-group>
             </b-form-group>
@@ -85,6 +88,7 @@
                   type="number"
                   min="0"
                   max="90"
+                  v-b-tooltip.hover title="0 = waargerecht, 90 = senkrecht"
                 />
               </b-input-group>
             </b-form-group>
@@ -98,6 +102,7 @@
                   v-model.number="input.peakpower"
                   min="0"
                   type="number"
+                  v-b-tooltip.hover title='Bei 10kWp muss "10000" eingetragen werden'
                 />
               </b-input-group>
             </b-form-group>
