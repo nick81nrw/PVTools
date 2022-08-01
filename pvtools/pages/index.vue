@@ -297,7 +297,7 @@ export default {
         yearlyConsumption: 5000,
         consumptionProfile: 0,
         consumptionCosts: 0.32,
-        feedInCompensation: 0.069,
+        feedInCompensation: 0.086,
         installationCostsWithoutBattery: 10000,
         batteryCostsPerKwh: 500
       },
