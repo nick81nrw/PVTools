@@ -11,9 +11,20 @@ import {relayAPIRequest} from "./api/relay";
 const app = express()
 const cors = require('cors')
 
-app.use(cors({
-  origin: true
-}))
+const ENV = process.env.NODE_ENV || 'development'
+
+if (ENV === 'production') {
+  app.use(cors({
+    origin: 'https://pvtools.sektorsonne.de'
+  }))
+
+} else {
+  app.use(cors({
+    origin: true
+  }))
+  
+}
+
 
 app.use(bodyParser.json())
 
