@@ -83,7 +83,7 @@ export default {
             position: 'right',
             ticks: {
               callback(value) {
-                return value + ' %'
+                return value + ' Jahre'
               }
             }
           },
