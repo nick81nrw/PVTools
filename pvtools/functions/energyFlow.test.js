@@ -346,7 +346,7 @@ describe('PV < Consumption', () => {
 
 
 
-describe.only('calculate power consumption', () => {
+describe('calculate power consumption', () => {
 
     
     test('check length (365 * 24h = 8760 datasets)', () => {
