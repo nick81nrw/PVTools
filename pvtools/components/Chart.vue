@@ -34,7 +34,7 @@ export default {
     },
     height: {
       type: Number,
-      default: `100px`
+      default: 100
     },
     cssClasses: {
       default: '',
@@ -70,12 +70,22 @@ export default {
           y1:{
             type: 'linear',
             display: true,
-            position: 'left'
+            position: 'left',
+            ticks: {
+              callback(value) {
+                return value + ' %'
+              }
+            }
           },
           y2: {
             type: 'linear',
             display: true,
-            position: 'right'
+            position: 'right',
+            ticks: {
+              callback(value) {
+                return value + ' Jahre'
+              }
+            }
           },
           x: {
             title: {

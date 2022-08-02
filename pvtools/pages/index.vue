@@ -4,6 +4,9 @@
       <b-col>
         <h1>PVTools</h1>
       </b-col>
+      <b-col>
+        <iframe frameborder="0" scrolling="no" marginheight="0" marginwidth="0" width="200" height="100" type="text/html" src="https://www.youtube.com/embed/FKSDynkXchY?autoplay=0&fs=1&iv_load_policy=3&showinfo=0&rel=0&cc_load_policy=0&start=0&end=0"></iframe>
+      </b-col>
       <b-col
         align-v="baseline"
         cols="auto" 
@@ -35,11 +38,13 @@
               label="Adresse:"
             >
               <b-input-group
-                append="Straße, Stadt"
+                append="Straße, PLZ Stadt"
               >
                 <b-form-input
                   v-model="inputAddressSearchString"
                   @focusout="getCoordinatesByAddress"
+                  placeholder="z.B. 50667 Köln"
+                  v-b-tooltip.hover title='Beim verlassen des Feldes wird der Standort gesucht'
                 />
               </b-input-group>
             </b-form-group>
@@ -71,6 +76,7 @@
                   type="number"
                   min="0"
                   max="359"
+                  v-b-tooltip.hover title="0 = Süden, 90 = Westen, -90 = Osten"
                 />
               </b-input-group>
             </b-form-group>
@@ -83,6 +89,9 @@
                 <b-form-input
                   v-model.number="input.angle"
                   type="number"
+                  min="0"
+                  max="90"
+                  v-b-tooltip.hover title="0 = waargerecht, 90 = senkrecht"
                 />
               </b-input-group>
             </b-form-group>
@@ -96,6 +105,7 @@
                   v-model.number="input.peakpower"
                   min="0"
                   type="number"
+                  v-b-tooltip.hover title='Bei 10kWp muss "10000" eingetragen werden'
                 />
               </b-input-group>
             </b-form-group>
@@ -128,6 +138,7 @@
                 v-model="input.consumptionProfile"
                 :options="consumptionProfiles"
               />
+              <NuxtLink to="/consumptionProfiles">Infos zu den Lastprofilen</NuxtLink>
             </b-form-group>
             <b-form-group
               label="Stromkosten:"
@@ -240,7 +251,7 @@
           v-for="item in displayData[displayData.length - 1]"
           :key="item.size"
         >
-          <td>{{(item.size/1000).toFixed(0)}} kWh</td>
+          <td>{{(item.size/1000).toFixed(1)}} kWh</td>
           <td>{{item.selfUsedPower.toFixed(2)}} kWh</td>
           <td>{{item.fedInPower.toFixed(2)}} kWh</td>
           <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
@@ -270,6 +281,9 @@ export default {
       displayData: [],
       batterySizes: [
         1,
+        500,
+        1000,
+        1500,
         2000,
         4000,
         6000,
@@ -286,7 +300,7 @@ export default {
         yearlyConsumption: 5000,
         consumptionProfile: 0,
         consumptionCosts: 0.32,
-        feedInCompensation: 0.069,
+        feedInCompensation: 0.086,
         installationCostsWithoutBattery: 10000,
         batteryCostsPerKwh: 500
       },
@@ -349,7 +363,7 @@ export default {
         {
           value: 2,
           
-          text: "SLP H0 +10% Mittags",
+          text: " ",
           H_00: 0.029064195,
           H_01: 0.022303546,
           H_02: 0.018725847,
@@ -465,8 +479,10 @@ export default {
                 amortization,
                 batteryAmortization,
                 costSavingsBattery: costSavings - this.costSavingsWithoutBattery,
-                selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
-                selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
+                // selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
+                // selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
+                selfUseRate: selfUsedPower / this.input.yearlyConsumption * 100,
+                selfSufficiencyRate: selfUsedPower / (selfUsedPower + fedInPower) * 100
               })
 
               //generatedData = generatedData.sort((a,b) => a.size - b.size)

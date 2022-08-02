@@ -4,9 +4,9 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    title: 'pvtools',
+    title: 'PVTool @AkkuDoktor - Berechne die Größe deines Speichers selbst',
     htmlAttrs: {
-      lang: 'en'
+      lang: 'de'
     },
     meta: [
       { charset: 'utf-8' },
@@ -45,7 +45,7 @@ export default {
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-     baseURL: 'https://pvtools.sektorsonne.de',
+     baseURL: process.env.NODE_ENV == 'production' ? 'https://pvtools.sektorsonne.de' : 'http://localhost:8082',
     //  baseURL: 'http://localhost:8082',
   },
 
