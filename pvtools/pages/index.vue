@@ -264,7 +264,7 @@
       </table>
     </div>
 
-  <NuxtLink to="/impress">Impressum</NuxtLink>
+  <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
   </b-container>
 </template>
 
