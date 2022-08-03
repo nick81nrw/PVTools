@@ -19,6 +19,9 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
+# .env files containing sensitive data
+.env
+
 # nyc test coverage
 .nyc_output
 
