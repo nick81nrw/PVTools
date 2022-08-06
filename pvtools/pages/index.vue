@@ -363,7 +363,7 @@ export default {
         {
           value: 2,
           
-          text: " ",
+          text: "SLP H0 +10% Mittags",
           H_00: 0.029064195,
           H_01: 0.022303546,
           H_02: 0.018725847,
