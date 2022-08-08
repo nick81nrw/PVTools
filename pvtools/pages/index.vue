@@ -9,7 +9,7 @@
       </b-col>
       <b-col
         align-v="baseline"
-        cols="auto" 
+        cols="auto"
       >
          <form action="https://www.paypal.me/akkudoktor" method="post" target="_blank" class="paypal">
           <input type="hidden" name="hosted_button_id" value="RTXEPF475DBVA" />
@@ -65,6 +65,13 @@
               </b-input-group>
 
             </b-form-group>
+            <b-alert
+              v-else-if="adressData == 'no_address'"
+              variant="danger"
+              show
+            >
+              Die eingegebende Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.
+            </b-alert>
             <b-form-group
               label="Ausrichtung:"
             >
@@ -333,7 +340,7 @@ export default {
           H_23: 0.039751399,
         },
         {
-          value: 1, 
+          value: 1,
           text:"SLP H0",
           H_00: 0.029064195,
           H_01: 0.022303546,
@@ -362,7 +369,7 @@ export default {
         },
         {
           value: 2,
-          
+
           text: "SLP H0 +10% Mittags",
           H_00: 0.029064195,
           H_01: 0.022303546,
@@ -417,10 +424,10 @@ export default {
           H_22: 0.031313248,
           H_23: 0.039751399,
         }
-        
+
       ],
       inputAddressSearchString: "",
-      adressData: {},
+      adressData: "",
       costSavingsWithoutBattery: 0,
       screenHeight: 0,
     }
@@ -497,13 +504,21 @@ export default {
 
     },
     async getCoordinatesByAddress() {
-      this.adressData = (await this.$axios.post("/relay", {
+      let osmReturn = (await this.$axios.post("/relay", {
         url: "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=" + this.inputAddressSearchString,
         method: "GET",
         body: {}
-      })).data[0]
+      })).data
 
-      this.inputAddressSearchString = this.adressData.display_name
+      console.log(osmReturn)
+
+      if(osmReturn.length == 0){
+        this.adressData = "no_address"
+        console.log("Detected Wrong")
+      } else if(osmReturn[0]) {
+        this.adressData = osmReturn[0]
+        this.inputAddressSearchString = this.adressData.display_name
+      }
     },
     convertPowerProfile(profileId){
       let profile = this.consumptionProfiles.find(item =>  item.value === profileId)
