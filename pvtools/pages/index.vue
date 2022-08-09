@@ -505,7 +505,7 @@ export default {
     },
     async getCoordinatesByAddress() {
       let osmReturn = (await this.$axios.post("/relay", {
-        url: "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=" + this.inputAddressSearchString,
+        url: "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=" + encodeURIComponent(this.inputAddressSearchString),
         method: "GET",
         body: {}
       })).data
