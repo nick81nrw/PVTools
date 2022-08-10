@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./backend
+    volumes:
+      # - pvt:/home/mic/PVTools
+      - ./backend:/pvtools/be
+    env_file:
+      - sensitive_info.env
+    environment:
+      - REQUEST_PORT=8082
+      - NODE_ENV=development
+      # - ${NODE_ENV-development}
+      # - ${LETSENCRYPT_HOST?LETSENCRYPT_HOST is not defined in .env file}
+      # - ${LETSENCRYPT_EMAIL?LETSENCRYPT_EMAIL is not defined in .env file}
+    expose:
+      - 8082
+    ports:
+      - 8082:8082
+    command: npm start
+    networks:
+      - pvtools_net
+
+  pvtools:
+    build: ./pvtools
+    volumes:
+      # - pvt:/home/mic/PVTools
+      - ./pvtools:/pvtools/fe
+    environment:
+      - CLIENT_PORT=${CLIENT_PORT-3000}
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    depends_on:
+      - backend
+    command: npm start
+    networks:
+      - pvtools_net
+
+volumes:
+  pvt: {}
+
+networks:
+  pvtools_net:
+    driver: bridge
+    ipam:
+      driver: default
