@@ -66,8 +66,8 @@ const energyFlow = ( {
     missedInverterPower = 0
     missedBatteryPower = 0
 
-    batteryLoadEfficiency = batteryLoadEfficiency || batteryEfficiency
-    batteryUnloadEfficiency = batteryUnloadEfficiency || batteryEfficiency
+    batteryLoadEfficiency = batteryLoadEfficiency || batteryEfficiency || 1
+    batteryUnloadEfficiency = batteryUnloadEfficiency || batteryEfficiency || 1
 
 
     if (maxPowerGenerationInverter && maxPowerGenerationInverter < powerGeneration) {
@@ -196,48 +196,61 @@ const energyFlow = ( {
  * @return {Object}                         {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
  */
 
-const calculateConsumption = (loadProfile, year = 2021, consumptionKwhPerYear) => {
+const calculateConsumption = ({year, consumptionYear, profile, profileBase = 1000, factorFunction}) => {
 
-    const consumptionWattHours = consumptionKwhPerYear * 1000
-
-    const daysFebruary = new Date(year, 2, 0).getDate()
+    // IF profil is based on 1000kWh per year, it must be multiplied by difference of real consumption (e.g. 5000kWh = multiplier 5x)
+    const consumptionFactor = consumptionYear / profileBase
+    let currentDay = new Date(Date.UTC(year,    0, 1,0,0))
+    const lastDay = new Date(Date.UTC(year + 1, 0, 1,0,0))
     
-    const months = [1,2,3,4,5,6,7,8,9,10,11,12]
-    const monthLength = [31, daysFebruary, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    const days = {}
+    // Needed for factorFunction "Standardlastprofil BDEW"
+    let dayTimer = 1
 
+    while (currentDay <= lastDay) {
+        
+        
+        let currentProfile = profile
+        .find(season => new Date(season.till + "/" + year ) >= currentDay) // TODO/BUG: this finds the next season one day earlier (03/21 is falsy at currentDay 03/21)
 
-    let dayIndex = new Date(`01 Jan ${year} 08:00:00 GMT`).getDay()
-
-    let result = {}
+        if (!currentProfile) {                  //TODO/BUG: The date "till: 12/31" aren't find correctly.
+            currentProfile = profile
+            .find(season => season.last)
     
-    months.map((month, i) => {
-        
-        const mLength = monthLength[i]
-        Array.from(Array(mLength).keys()).map(day => {
-            day += 1
-            Array.from(Array(24).keys()).map(hour => {
-                const timeString = `${year}${('00' + (month)).slice(-2)}${('00' + day).slice(-2)}:${('00' + hour).slice(-2)}`
-                const partPerYear = loadProfile.values.find(e => {
-                    return e.month == month && e.weekDay == dayIndex && e.dayHour == hour
-                }).partPerYear 
-                P = (partPerYear * consumptionWattHours)
-                if (timeString == '20200501:14') console.log(P, partPerYear, dayIndex, month, hour, consumptionWattHours, consumptionWattHours * P)
-                if (result[timeString]) { //should not be run.
-                    result[timeString].P += P
-                } else {
-                    result[timeString] = {P}
-                }
-            })
-            dayIndex == 6 ? dayIndex = 0 : dayIndex += 1
+        } 
 
-        })
-        
-        
+        for (let hour = 0; hour < 24; hour++) {
 
-    })
-    return result
-   
+            const timeString = `${year}${('00' + (currentDay.getMonth() + 1)).slice(-2)}${('00' + (currentDay.getDate())).slice(-2)}:${('00' + hour).slice(-2)}`
+            let consumption
+            switch (currentDay.getDay()) {      // find the right day for profile | 0 = sun, 1 = mon, ..., 6 = sat
+                case 0:
+                    consumption = currentProfile.profileDays['sun'][hour] || currentProfile.profileDays['default'][hour] 
+                    break;
+                case 6:
+                    consumption = currentProfile.profileDays['sat'][hour] || currentProfile.profileDays['default'][hour] 
+                    break;
+                    
+                default:
+                    consumption = currentProfile.profileDays['weekdays'][hour] || currentProfile.profileDays['default'][hour] 
+                    break;
+            }
+            
+            if (factorFunction){                // if function set, use function for "Standardlastprofil BDEW"
 
+                days[timeString] = {P:factorFunction(dayTimer, consumption * consumptionFactor)} 
+            }
+            else {
+                
+                days[timeString] = {P:consumption * consumptionFactor}
+            }
+            
+        }
+        currentDay.setDate(currentDay.getDate() + 1)    // set one day after
+        dayTimer++
+
+    } 
+    return days
 }
 
 /**
@@ -246,10 +259,9 @@ const calculateConsumption = (loadProfile, year = 2021, consumptionKwhPerYear) =
  * @return {Array[Object]} Array with Objects in Fomrat [ [{"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}], [{...}, ...] ]
 */
 
-const normalizeHourlyRadiation = hourlyRadiationArrays => {
+const normalizeHourlyRadiation = hourlyRadiationArray => {
 
-    const normRadiation = hourlyRadiationArrays.map(radiationArray => {
-        return radiationArray.reduce((prev, curr) => {
+    const normRadiation = hourlyRadiationArray.reduce((prev, curr) => {
             const dateHour = curr.time.split(':')[0] + ':' + curr.time.split(':')[1].substr(0,2)
             if (prev[dateHour]) {
                 prev[dateHour].P += curr.P
@@ -259,7 +271,6 @@ const normalizeHourlyRadiation = hourlyRadiationArrays => {
 
             return prev
         },{})
-    })
 
     return normRadiation
 }
@@ -323,10 +334,34 @@ const generateDayTimeOrder = year => {
     return timeString
 }
 
+/**
+ * generate array with merged power generation + calculated power conszmption within day time aray
+ * @param  {Int} year A year: 2020
+ * @return {Array} Array with DayTime  ["20200101:00","20200101:01","20200101:02", ... ,"20201231:23"]
+*/
+
+const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
+    return generateDayTimeOrder(year).reduce((prev, curr) => {
+        if (powerGeneration[curr] && consumption[curr]){
+            return [...prev, 
+                {
+                    dayTime: curr,
+                    P: powerGeneration[curr].P,
+                    consumption: consumption[curr].P
+                }
+            ]
+        }
+        else {
+            return prev
+        }
+    },[])
+    
+}
+
 module.exports = {
     energyFlow,
     calculateConsumption,
     normalizeHourlyRadiation,
     mergePowerGeneration,
-    generateDayTimeOrder
+    generateDayTimeValues
 }

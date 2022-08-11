@@ -1,10 +1,10 @@
-const {energyFlow, calculateConsumption, normalizeHourlyRadiation, mergePowerGeneration, generateDayTimeOrder} = require('./energyFlow')
+const {energyFlow, calculateConsumption, normalizeHourlyRadiation, mergePowerGeneration} = require('./energyFlow')
 
-const loadProfile = require('./SLPH0')[0]
 const seriescalc = require('./seriescalc.json')
 const seriescalc2 = require('./seriescalc2.json')
 
-const normalizedHR = normalizeHourlyRadiation([seriescalc.outputs.hourly, seriescalc2.outputs.hourly])
+const normalizedHR = normalizeHourlyRadiation(seriescalc.outputs.hourly)
+const normalizedHR2 = normalizeHourlyRadiation(seriescalc2.outputs.hourly)
 
 describe('PV > Consumption',() => {
     test('pv generation is more than consumption, battery is loading', () => {
@@ -346,55 +346,18 @@ describe('PV < Consumption', () => {
 
 
 
-describe('calculate power consumption', () => {
-
-    
-    test('check length (365 * 24h = 8760 datasets)', () => {
-        const result = calculateConsumption(loadProfile)
-        expect(Object.values(result).length).toBe(8760)
-    })
-    test('check length of leap year (366 * 24h = 8784 datasets)', () => {
-        const result = calculateConsumption(loadProfile, 2012)
-        expect(Object.values(result).length).toBe(8784)
-    })
-    test('check power consumption of one day/hour', () => {
-        const result = calculateConsumption(loadProfile, 2021, 10000)
-        //{ month: 1, weekDay: 5, dayHour: 18, partPerMonth: 0.008098458, partPerYear: 0.000804395 },
-        expect(result['20210115:18'].P).toBe(10000 * 1000 * 0.000804395)
-    })
-    test('check power consumption of one day/hour on leap year', () => {
-        const result = calculateConsumption(loadProfile, 2012, 10000)
-        //{ month: 1, weekDay: 5, dayHour: 18, partPerMonth: 0.008098458, partPerYear: 0.000804395 },
-        expect(result['20120229:18'].P).toBe(10000 * 1000 * 0.000791455)
-    })
-    test('check sum of year consumption', () => {
-        const result = calculateConsumption(loadProfile, 2021, 4500)
-        const sum = Object.values(result).reduce((prev, curr) => prev + curr.P,0)
-        expect(sum).toBe(4500000)
-
-    })
-})
-
-
-
-
-
 describe('norm hourly radiation', () => {
     
-    test('first result is an object', () => {
-        expect(typeof normalizedHR[0]).toBe('object')
+    test('result is an object', () => {
+        expect(typeof normalizedHR).toBe('object')
     })
     test('all results is are object', () => {
-        normalizedHR.forEach(e => {
+        [normalizedHR, normalizedHR2].forEach(e => {
             expect(typeof e).toBe('object')
         });
     })
-    test('results has the correct length', () => {
-        expect(normalizedHR.length).toBe(2)
-       
-    })
     test('results should be the right length in leap year 2020', () => {
-        expect(Object.keys(normalizedHR[0]).length).toBe(366 * 24)
+        expect(Object.keys(normalizedHR).length).toBe(366 * 24)
     })
     test('results conatain the right power generation', () => {
         // {
@@ -406,7 +369,7 @@ describe('norm hourly radiation', () => {
         //     "WS10m": 0.69,
         //     "Int": 0.0
         //   },
-        expect(normalizedHR[0]['20200308:13'].P).toBe(3065.16)
+        expect(normalizedHR['20200308:13'].P).toBe(3065.16)
     })
 
 
@@ -416,8 +379,8 @@ describe('norm hourly radiation', () => {
 
 
 describe('merge powergeneration arrays', () => {
-    const result = mergePowerGeneration(normalizedHR)
-    const oneResult = mergePowerGeneration([normalizedHR[0]])
+    const result = mergePowerGeneration([normalizedHR,normalizedHR2])
+    const oneResult = mergePowerGeneration([normalizedHR])
 
     // normalizedHR.map(obj => console.log(obj['20200515:14']))
 
@@ -445,115 +408,96 @@ describe('merge powergeneration arrays', () => {
 
 
 
-describe('generate das time array', () => {
-    test('date time order length is 24 hour times day of year 2020 with 366 days ', () => {
-        const dayTimeOrder = generateDayTimeOrder(2020)
-        expect(dayTimeOrder.length).toBe(366*24) //leap year
-    })
-    test('date time order length is 24 hour times day of year 2021 with 365 days ', () => {
-        const dayTimeOrder2 = generateDayTimeOrder(2021)
-        expect(dayTimeOrder2.length).toBe(365*24) //normal year
-    })
-    test('date time order are sorted in ascending order', () => {
-        const dayTimeOrder = generateDayTimeOrder(2020)
-        let order = 1
-        dayTimeOrder.reduce((prev, curr) => {
-            if (prev <= curr) order = 0
-        })
-
-        expect(order).toBe(0) 
-    })
-})
 
 
-describe('integration tests energyFlow', () => {
-    const consumption = calculateConsumption(loadProfile, 2020, 4500)
-    const mergedPowerGeneration = mergePowerGeneration(normalizedHR)
-    const dayTimeOrder = generateDayTimeOrder(2020)
+// describe.skip('integration tests energyFlow', () => {
+//     const consumption = calculateConsumption(loadProfile, 2020, 4500)
+//     const mergedPowerGeneration = mergePowerGeneration(normalizedHR)
+//     const dayTimeOrder = generateDayTimeOrder(2020)
 
-    test('test one energy flow result', () => {
+//     test('test one energy flow result', () => {
 
-        const dayTime = '20200518:18'
-        // console.log(consumption[dayTime])
-        const result = energyFlow({
-            powerGeneration: mergedPowerGeneration[dayTime].P, //473.34000000000003
-            powerConsumption: consumption[dayTime].P, //3093.3675000000003
-            batterySoc:5000, 
-            batterySocMax: 10000, 
-            batterySocMin: 100, 
-            batteryEfficiency: .99, 
-        })
-        expect(consumption[dayTime].P).toBe(3093.3675000000003)
-        expect(mergedPowerGeneration[dayTime].P).toBe(473.34000000000003)
-        expect(result).toEqual({
-               "batteryLoad": -4900,
-               "consumptionGrid": 1515.9696969696975,
-               "feedInPowerGrid": 0,
-               "missedBatteryPower": 0,
-               "missedFeedInPowerGrid": 0,
-               "missedInverterPower": 0,
-               "newBatterySoc": 100,
-               "selfUsagePower": 5373.34,
-               "selfUsagePowerBattery": 4900,
-               "selfUsagePowerPv": 473.34000000000003,
-             })
+//         const dayTime = '20200518:18'
+//         // console.log(consumption[dayTime])
+//         const result = energyFlow({
+//             powerGeneration: mergedPowerGeneration[dayTime].P, //473.34000000000003
+//             powerConsumption: consumption[dayTime].P, //3093.3675000000003
+//             batterySoc:5000, 
+//             batterySocMax: 10000, 
+//             batterySocMin: 100, 
+//             batteryEfficiency: .99, 
+//         })
+//         expect(consumption[dayTime].P).toBe(3093.3675000000003)
+//         expect(mergedPowerGeneration[dayTime].P).toBe(473.34000000000003)
+//         expect(result).toEqual({
+//                "batteryLoad": -4900,
+//                "consumptionGrid": 1515.9696969696975,
+//                "feedInPowerGrid": 0,
+//                "missedBatteryPower": 0,
+//                "missedFeedInPowerGrid": 0,
+//                "missedInverterPower": 0,
+//                "newBatterySoc": 100,
+//                "selfUsagePower": 5373.34,
+//                "selfUsagePowerBattery": 4900,
+//                "selfUsagePowerPv": 473.34000000000003,
+//              })
 
-    })
+//     })
     
-    test('test a year in energy flow', () => {
+//     test('test a year in energy flow', () => {
         
-        let yearSum = {
-            "batteryLoad": 0,
-            "consumptionGrid": 0,
-            "feedInPowerGrid": 0,
-            "missedBatteryPower": 0,
-            "missedFeedInPowerGrid": 0,
-            "missedInverterPower": 0,
-            "newBatterySoc": 0,
-            "selfUsagePower": 0,
-            "selfUsagePowerBattery": 0,
-            "selfUsagePowerPv": 0,
-        }
+//         let yearSum = {
+//             "batteryLoad": 0,
+//             "consumptionGrid": 0,
+//             "feedInPowerGrid": 0,
+//             "missedBatteryPower": 0,
+//             "missedFeedInPowerGrid": 0,
+//             "missedInverterPower": 0,
+//             "newBatterySoc": 0,
+//             "selfUsagePower": 0,
+//             "selfUsagePowerBattery": 0,
+//             "selfUsagePowerPv": 0,
+//         }
 
-        dayTimeOrder.forEach(key => {
+//         dayTimeOrder.forEach(key => {
 
-            const result = energyFlow({
-                powerGeneration: mergedPowerGeneration[key].P, 
-                powerConsumption: consumption[key].P, 
-                batterySoc: yearSum.newBatterySoc, 
-                batterySocMax: 20000, 
-                batterySocMin: 100, 
-                batteryEfficiency: .99, 
-            })
+//             const result = energyFlow({
+//                 powerGeneration: mergedPowerGeneration[key].P, 
+//                 powerConsumption: consumption[key].P, 
+//                 batterySoc: yearSum.newBatterySoc, 
+//                 batterySocMax: 20000, 
+//                 batterySocMin: 100, 
+//                 batteryEfficiency: .99, 
+//             })
 
-            yearSum.batteryLoad = yearSum.batteryLoad + result.batteryLoad
-            yearSum.consumptionGrid = yearSum.consumptionGrid + result.consumptionGrid
-            yearSum.feedInPowerGrid = yearSum.feedInPowerGrid + result.feedInPowerGrid
-            yearSum.missedBatteryPower = yearSum.missedBatteryPower + result.missedBatteryPower
-            yearSum.missedFeedInPowerGrid = yearSum.missedFeedInPowerGrid + result.missedFeedInPowerGrid
-            yearSum.missedInverterPower = yearSum.missedInverterPower + result.missedInverterPower
-            yearSum.selfUsagePower = yearSum.selfUsagePower + result.selfUsagePower
-            yearSum.selfUsagePowerBattery = yearSum.selfUsagePowerBattery + result.selfUsagePowerBattery
-            yearSum.selfUsagePowerPv = yearSum.selfUsagePowerPv + result.selfUsagePowerPv
-            yearSum.newBatterySoc = result.newBatterySoc
+//             yearSum.batteryLoad = yearSum.batteryLoad + result.batteryLoad
+//             yearSum.consumptionGrid = yearSum.consumptionGrid + result.consumptionGrid
+//             yearSum.feedInPowerGrid = yearSum.feedInPowerGrid + result.feedInPowerGrid
+//             yearSum.missedBatteryPower = yearSum.missedBatteryPower + result.missedBatteryPower
+//             yearSum.missedFeedInPowerGrid = yearSum.missedFeedInPowerGrid + result.missedFeedInPowerGrid
+//             yearSum.missedInverterPower = yearSum.missedInverterPower + result.missedInverterPower
+//             yearSum.selfUsagePower = yearSum.selfUsagePower + result.selfUsagePower
+//             yearSum.selfUsagePowerBattery = yearSum.selfUsagePowerBattery + result.selfUsagePowerBattery
+//             yearSum.selfUsagePowerPv = yearSum.selfUsagePowerPv + result.selfUsagePowerPv
+//             yearSum.newBatterySoc = result.newBatterySoc
         
             
-        })
-        // expect(mergedPowerGeneration[dayTime].P).toBe(207450)
-        // expect(consumption[dayTime].P).toBe(6874.150000000001)
-        expect(yearSum).toEqual({
-               "batteryLoad": 100,
-               "consumptionGrid": 7017443.115791865,
-               "feedInPowerGrid": 3488849.343801145,
-               "missedBatteryPower": 0,
-               "missedFeedInPowerGrid": 0,
-               "missedInverterPower": 0,
-               "newBatterySoc": 100,
-               "selfUsagePower": 12522855.128756072,
-               "selfUsagePowerBattery": 5269271.398256048,
-               "selfUsagePowerPv": 7253583.730499969
-             })
+//         })
+//         // expect(mergedPowerGeneration[dayTime].P).toBe(207450)
+//         // expect(consumption[dayTime].P).toBe(6874.150000000001)
+//         expect(yearSum).toEqual({
+//                "batteryLoad": 100,
+//                "consumptionGrid": 7017443.115791865,
+//                "feedInPowerGrid": 3488849.343801145,
+//                "missedBatteryPower": 0,
+//                "missedFeedInPowerGrid": 0,
+//                "missedInverterPower": 0,
+//                "newBatterySoc": 100,
+//                "selfUsagePower": 12522855.128756072,
+//                "selfUsagePowerBattery": 5269271.398256048,
+//                "selfUsagePowerPv": 7253583.730499969
+//              })
 
-    })
+//     })
 
-})
+// })
