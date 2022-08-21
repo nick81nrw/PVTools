@@ -12,5 +12,4 @@ COPY . .
 
 CMD ["npm", "start"]
 
-
-# docker build ./backend -t pvtback:0.99 
+# docker build ./backend -t pvtback:0.99

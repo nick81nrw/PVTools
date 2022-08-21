@@ -3,9 +3,6 @@ version: "3.8"
 services:
   backend:
     build: ./backend
-    volumes:
-      # - pvt:/home/mic/PVTools
-      - ./backend:/pvtools/be
     env_file:
       - sensitive_info.env
     environment:
@@ -18,30 +15,12 @@ services:
       - 8082
     ports:
       - 8082:8082
-    command: npm start
-    networks:
-      - pvtools_net
 
   pvtools:
     build: ./pvtools
-    volumes:
-      # - pvt:/home/mic/PVTools
-      - ./pvtools:/pvtools/fe
     expose:
       - 80
     ports:
       - 8080:80
     depends_on:
       - backend
-    command: npm start
-    networks:
-      - pvtools_net
-
-volumes:
-  pvt: {}
-
-networks:
-  pvtools_net:
-    driver: bridge
-    ipam:
-      driver: default
