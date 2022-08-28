@@ -9,7 +9,7 @@
       </b-col>
       <b-col
         align-v="baseline"
-        cols="auto" 
+        cols="auto"
       >
          <form action="https://www.paypal.me/akkudoktor" method="post" target="_blank" class="paypal">
           <input type="hidden" name="hosted_button_id" value="RTXEPF475DBVA" />
@@ -66,50 +66,6 @@
 
             </b-form-group>
             <b-form-group
-              label="Ausrichtung:"
-            >
-              <b-input-group
-                append="° Grad Azimuth"
-              >
-                <b-form-input
-                  v-model.number="input.aspect"
-                  type="number"
-                  min="0"
-                  max="359"
-                  v-b-tooltip.hover title="0 = Süden, 90 = Westen, -90 = Osten"
-                />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group
-              label="Neigung:"
-            >
-              <b-input-group
-                append="° Grad"
-              >
-                <b-form-input
-                  v-model.number="input.angle"
-                  type="number"
-                  min="0"
-                  max="90"
-                  v-b-tooltip.hover title="0 = waargerecht, 90 = senkrecht"
-                />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group
-              label="Installierte Leistung"
-            >
-              <b-input-group
-                append="Wp"
-              >
-                <b-input
-                  v-model.number="input.peakpower"
-                  min="0"
-                  type="number"
-                  v-b-tooltip.hover title='Bei 10kWp muss "10000" eingetragen werden'
-                />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group
               label="Jährlicher Stromverbrauch:"
             >
               <b-input-group
@@ -121,24 +77,6 @@
                   type="number"
                 />
               </b-input-group>
-            </b-form-group>
-          </b-form>
-        </b-collapse>
-      </b-col>
-      <b-col>
-        <b-collapse
-          id="inputCollapse"
-          visible
-        >
-          <b-form>
-            <b-form-group
-              label="Lastprofil:"
-            >
-              <b-form-select
-                v-model="input.consumptionProfile"
-                :options="consumptionProfiles"
-              />
-              <NuxtLink to="/consumptionProfiles">Infos zu den Lastprofilen</NuxtLink>
             </b-form-group>
             <b-form-group
               label="Stromkosten:"
@@ -194,7 +132,104 @@
                 />
               </b-input-group>
             </b-form-group>
+
+
+          </b-form>
+        </b-collapse>
+      </b-col>
+      <b-col>
+        <b-collapse
+          id="inputCollapse"
+          visible
+        >
+          <b-form>
+            <!--<b-form-group
+              label="Lastprofil:"
+            >
+              <b-form-select
+                v-model="input.consumptionProfile"
+                :options="consumptionProfiles"
+              />
+              <NuxtLink to="/consumptionProfiles">Infos zu den Lastprofilen</NuxtLink>
+            </b-form-group>-->
+
+            <b-form-group
+              label="Ausrichtung:"
+            >
+              <b-input-group
+                append="° Grad Azimuth"
+              >
+                <b-form-input
+                  v-model.number="roofInput.aspect"
+                  type="number"
+                  min="0"
+                  max="359"
+                  v-b-tooltip.hover title="0 = Süden, 90 = Westen, -90 = Osten"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Neigung:"
+            >
+              <b-input-group
+                append="° Grad"
+              >
+                <b-form-input
+                  v-model.number="roofInput.angle"
+                  type="number"
+                  min="0"
+                  max="90"
+                  v-b-tooltip.hover title="0 = waargerecht, 90 = senkrecht"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Installierte Leistung"
+            >
+              <b-input-group
+                append="Wp"
+              >
+                <b-input
+                  v-model.number="roofInput.peakpower"
+                  min="0"
+                  type="number"
+                  v-b-tooltip.hover title='Bei 10kWp muss "10000" eingetragen werden'
+                />
+              </b-input-group>
+            </b-form-group>
+
             <b-button-group>
+              <b-button
+                @click="input.roofs.push(roofInput)
+                roofInput = {angle:0,aspect:0,peakPower:0}"
+              >
+                + Dach
+              </b-button>
+            </b-button-group>
+
+            <b-list-group class="mt-3">
+              <div
+                v-for="roof in input.roofs"
+                :key="roof.aspect + roof.angle + roof.peakpower"
+              >
+                <b-list-group-item
+                  button
+                  :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower"
+                >
+                  {{roof.aspect}}° - {{roof.angle}}° - {{roof.peakpower}} Wp
+                </b-list-group-item>
+                <b-collapse
+                  :id="'roof' + roof.aspect + roof.angle + roof.peakpower"
+                  accordion="roofs"
+                  visible
+                >
+                  {{'roof' + roof.aspect + roof.angle + roof.peakpower}}
+                </b-collapse>
+              </div>
+            </b-list-group>
+
+
+            <b-button-group class="mt-3">
               <b-button
                 variant="primary"
                 @click="generateData"
@@ -270,6 +305,14 @@
 
 <script>
 import Chart from '../components/Chart'
+import axios from "axios";
+import {
+  calculateConsumption,
+  generateDayTimeValues,
+  mergePowerGeneration,
+  normalizeHourlyRadiation
+} from "@/functions/energyFlow";
+import {factorFunction, PROFILEBASE, SLPH0} from "@/functions/SLP";
 
 export default {
   name: 'IndexPage',
@@ -294,15 +337,25 @@ export default {
         16000
       ],
       input: {
-        aspect: 0,
-        angle: 30,
-        peakpower: 8000,
+        roofs: [
+          {
+            aspect: 0,
+            angle: 30,
+            peakpower: 8000,
+          }
+        ],
         yearlyConsumption: 5000,
         consumptionProfile: 0,
         consumptionCosts: 0.32,
         feedInCompensation: 0.086,
         installationCostsWithoutBattery: 10000,
-        batteryCostsPerKwh: 500
+        batteryCostsPerKwh: 500,
+        year: 2020
+      },
+      roofInput: {
+        aspect: 0,
+        angle:0,
+        peakpower: 0
       },
       consumptionProfiles: [
         {
@@ -333,7 +386,7 @@ export default {
           H_23: 0.039751399,
         },
         {
-          value: 1, 
+          value: 1,
           text:"SLP H0",
           H_00: 0.029064195,
           H_01: 0.022303546,
@@ -362,7 +415,7 @@ export default {
         },
         {
           value: 2,
-          
+
           text: " ",
           H_00: 0.029064195,
           H_01: 0.022303546,
@@ -417,7 +470,7 @@ export default {
           H_22: 0.031313248,
           H_23: 0.039751399,
         }
-        
+
       ],
       inputAddressSearchString: "",
       adressData: {},
@@ -493,6 +546,55 @@ export default {
       this.displayData.push(generatedData)
 
       this.$root.$emit('bv::toggle::collapse', 'inputCollapse')
+
+    },
+    async generateDataNew(){
+      let roofs = this.input.roofs
+
+      let normResults = []
+
+      for (const roof of roofs) {
+        const string1url = `https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?lat=${this.adressData.lat}&lon=${this.adressData.lon}&outputformat=json&startyear=${this.input.year}&endyear=${this.input.year}&pvcalculation=1&peakpower=${roof.peakpower}&loss=12&angle=${roof.angle}&aspect=${roof.aspect}`
+
+        let results1 = await axios.get(string1url).then(res => res.data)
+
+        let normResult1 = normalizeHourlyRadiation(results1.outputs.hourly)
+
+        normResults.push(normResult1)
+      }
+
+
+      //const string1url = 'https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=10&loss=12&angle=25&aspect=0'
+      //const string2url = 'https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=5&loss=12&angle=35&aspect=-90'
+
+      //let results1 = await axios.get(string1url).then(res => res.data)
+      //let results2 = await axios.get(string2url).then(res => res.data)
+
+
+      //let normResult1 = normalizeHourlyRadiation(results1.outputs.hourly)
+      //let normResult2 = normalizeHourlyRadiation(results2.outputs.hourly)
+
+      let mergedPower = mergePowerGeneration(normResults)
+
+      let consumption = calculateConsumption({year:this.input.year,consumptionYear:this.input.yearlyConsumption,profile:SLPH0, profileBase:PROFILEBASE, factorFunction})
+      let powerGenAndConsumption = generateDayTimeValues({consumption,powerGeneration:mergedPower, year: this.input.year})
+
+      let newSoc = 5000
+
+      const energyFlowData = powerGenAndConsumption.map(genConsumption => {
+        const hourFlow = energyFlow({
+          powerGeneration:genConsumption.P,
+          powerConsumption:genConsumption.consumption,
+          batterySoc: newSoc,
+          batterySocMax: 5000,
+          batterySocMin:100
+        })
+        newSoc = hourFlow.newBatterySoc
+        return hourFlow
+      })
+
+      const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev,0) / 1000
+      const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev,0) / 1000
 
     },
     async getCoordinatesByAddress() {
