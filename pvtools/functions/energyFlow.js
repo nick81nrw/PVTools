@@ -21,6 +21,7 @@ Parameters object:
     maxPowerGenerationBattery: (optional): 3400 (watts)
     maxPowerLoadBattery (optional): 2300 (watts)
     maxPowerFeedIn (optional): 8500 (watts) for feedIn regulations (70% rule in germany)
+    dayTime (optional): to identify this time
 Return object:
     newBatterySoc: 3560 (watthours)
     selfUsagePowerPv: 3550 (watthours) PV-power, that used for own consumption
@@ -29,6 +30,7 @@ Return object:
     feedInPowerGrid: 3445 (watthours) 
     batteryLoad: 2520 / -2520 (watthours) load/unload battery
     consumptionGrid: 2450 (watthours) 
+    dayTime (optional): to identify this time
 
     missedFeedInPowerGrid, missedInverterPower, missedBatteryPower;
 
@@ -55,7 +57,8 @@ const energyFlow = ( {
         maxPowerGenerationInverter,
         maxPowerGenerationBattery,
         maxPowerLoadBattery,
-        maxPowerFeedIn
+        maxPowerFeedIn,
+        dayTime
     } ) => {
     
     let selfUsagePowerPv, selfUsagePowerBattery, selfUsagePower, 
@@ -184,6 +187,7 @@ const energyFlow = ( {
         missedInverterPower,
         missedBatteryPower,
         missedFeedInPowerGrid,
+        dayTime: dayTime ? dayTime : ''
     }
 
 }
