@@ -329,12 +329,7 @@ export default {
         16000
       ],
       input: {
-        roofs: [{
-            aspect: 90,
-            angle:30,
-            peakpower: 4000
-          }
-        ],
+        roofs: [],
         yearlyConsumption: 5000,
         consumptionProfile: 0,
         consumptionCosts: 0.32,
