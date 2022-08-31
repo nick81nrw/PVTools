@@ -404,14 +404,14 @@ export default {
         const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev,0) / 1000
         const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev,0) / 1000
         const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev,0) / 1000
-        if (size==1) costSavingWithoutBattery = selfUsedPower;
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev,0) / 1000
         const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
         const selfUseRate = selfUsedPower / generationYear * 100 // Eigenverbrauchsquote
-        const costSavings = (this.input.yearlyConsumption * this.input.consumptionCosts) - (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
+        const costSavings = (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
+        if (size==1) costSavingWithoutBattery = costSavings;
         const amortization = (this.input.installationCostsWithoutBattery + this.input.batteryCostsPerKwh * (size/1000)) / costSavings
-        const costSavingsBattery = size == 1 ? 0 : costSavingWithoutBattery - costSavings
-        const batteryAmortization = costSavingsBattery / this.input.batteryCostsPerKwh * (size/1000)
+        const costSavingsBattery = size == 1 ? 0 : costSavings - costSavingWithoutBattery
+        const batteryAmortization = size == 1 ? 0 : this.input.batteryCostsPerKwh * (size/1000) / costSavingsBattery
 
         const monthlyDataObj = energyFlowData.reduce((prev, curr) => {
           const month = parseInt(curr.dayTime.slice(4,6))
