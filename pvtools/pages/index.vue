@@ -223,7 +223,7 @@
               <b-button
                 variant="primary"
                 @click="generateData"
-                :disabled="!adressData.lat && !adressData.lon"
+                :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
               >
                 Berechnen
               </b-button>
@@ -235,6 +235,77 @@
               </b-button>
             </b-button-group>
           </b-form>
+          <b-col>
+              <b-button
+                v-b-toggle.extensionsCollapse
+              >Erweiterte Einstellungen</b-button>
+          </b-col>
+          <b-collapse
+            id="extensionsCollapse"
+            visible>
+            
+          
+
+            <b-form-group
+              label="Speichergrößen:"
+            >
+              <b-input-group
+                append="Wh"
+              >
+                <b-form-tags input-id="tags-basic" :limit="10" :tag-validator="tagValidator" v-model="batterySizes"></b-form-tags>
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Systemverluste PV:"
+            >
+              <b-input-group
+                append="%"
+              >
+                <b-form-input
+                  v-model.number="input.systemloss"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Minimaler Ladezustand Speicher:"
+            >
+              <b-input-group
+                append="%"
+              >
+                <b-form-input
+                  v-model.number="input.batterySocMinPercent"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Ladeeffizenz Speicher (Laden / Entladen):"
+            >
+              <b-input-group
+                append="%"
+              >
+                <b-form-input
+                  v-model.number="input.batteryLoadEfficiency"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+                <b-form-input
+                  v-model.number="input.batteryUnloadEfficiency"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+              </b-input-group>
+            </b-form-group>
+          
+          </b-collapse>
+
         </b-collapse>
       </b-col>
     </b-row>
@@ -315,7 +386,6 @@ export default {
       displayData: [],
       returnedData:{},
       batterySizes: [
-        1,
         500,
         1000,
         1500,
@@ -337,6 +407,9 @@ export default {
         installationCostsWithoutBattery: 10000,
         batteryCostsPerKwh: 500,
         systemloss: 12,
+        batteryLoadEfficiency:99,
+        batteryUnloadEfficiency:99,
+        batterySocMinPercent: 10,
         year: 2020,
       },
       timeNeeded:0,
@@ -356,7 +429,11 @@ export default {
 
     async generateData(){
       let now = performance.now()
+
       this.isCalculating = true
+      
+      this.batterySizes = this.batterySizes.map(e => Number(e)).sort((a,b) => a-b)
+      
       const generationData = await Promise.all(this.input.roofs.map(roof => {
         return this.$axios.post("/relay",{
           url: this.buildQueryString({
@@ -365,7 +442,7 @@ export default {
             lat: this.adressData.lat,
             lon: this.adressData.lon,
             peakpower: roof.peakpower/1000,
-            loss: this.input.systemloss,
+            loss: 12, //this.input.systemloss,
             startyear: this.input.year,
             endyear: this.input.year
 
@@ -385,16 +462,23 @@ export default {
 
       let costSavingWithoutBattery
 
-      let BatterySizeResults = this.batterySizes.map(size => {
+      
+      const batterySizesWithNoBattery = [1,...this.batterySizes]
+
+      let BatterySizeResults = batterySizesWithNoBattery.map(size => {
         let newSoc = 100
   
+        this.returnedData = powerGenAndConsumption
+
         const energyFlowData = powerGenAndConsumption.map(genConsumption => {
           const hourFlow = energyFlow({
             powerGeneration:genConsumption.P,
             powerConsumption:genConsumption.consumption,
             batterySoc: newSoc,
             batterySocMax: size,
-            batterySocMin: 100,
+            batterySocMin: size * this.input.batterySocMinPercent / 100,
+            batteryLoadEfficiency: this.input.batteryLoadEfficiency /100,
+            batteryUnloadEfficiency: this.input.batteryUnloadEfficiency/100,
             dayTime: genConsumption.dayTime
           })
           newSoc = hourFlow.newBatterySoc
@@ -497,6 +581,9 @@ export default {
 
       return string
     }
+  },
+  tagValidator(tag) {
+    return parseInt(tag) == typeof Number
   },
   mounted() {
     this.screenHeight = window.screen.height
