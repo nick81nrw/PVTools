@@ -191,7 +191,7 @@
             <b-button-group>
               <b-button
                 @click="input.roofs.push(roofInput)
-                roofInput = {angle:0,aspect:0,peakPower:0}"
+                roofInput = {angle:0,aspect:0,peakpower:0}"
               >
                 + Dach
               </b-button>
@@ -207,6 +207,23 @@
                   :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower"
                 >
                   Ausrichtung {{roof.aspect}}° - Neigung: {{roof.angle}}° - {{roof.peakpower}} Wp
+                  <b-button-group>
+                    <b-button
+                      variant="primary"
+                      @click="roofInput.aspect = roof.aspect
+                      roofInput.angle = roof.angle
+                      roofInput.peakpower = roof.peakpower
+                      input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower)) "
+                    >
+                      <font-awesome-icon icon="pen"/>
+                    </b-button>
+                    <b-button
+                      variant="danger"
+                      @click="input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower)) "
+                    >
+                      <font-awesome-icon icon="trash"/>
+                    </b-button>
+                  </b-button-group>
                 </b-list-group-item>
                 <!-- <b-collapse
                   :id="'roof' + roof.aspect + roof.angle + roof.peakpower"
@@ -233,18 +250,16 @@
               >
                 Zurücksetzen
               </b-button>
-            </b-button-group>
-          </b-form>
-          <b-col>
               <b-button
                 v-b-toggle.extensionsCollapse
               >Erweiterte Einstellungen</b-button>
-          </b-col>
+            </b-button-group>
+          </b-form>
           <b-collapse
             id="extensionsCollapse"
-            visible>
-            
-          
+          >
+
+
 
             <b-form-group
               label="Speichergrößen:"
@@ -252,7 +267,21 @@
               <b-input-group
                 append="Wh"
               >
-                <b-form-tags input-id="tags-basic" :limit="10" :tag-validator="tagValidator" v-model="batterySizes"></b-form-tags>
+                <b-form-tags
+                  input-id="tags-basic"
+                  :state="state"
+                  v-model="batterySizes"
+                  :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
+                ></b-form-tags>
+
+<!--                <b-form-tags
+                  input-id="tags-validation"
+                  v-model="tags"
+                  :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
+                  :tag-validator="tagValidator"
+                  :state="state"
+                  separator=" "
+                ></b-form-tags>-->
               </b-input-group>
             </b-form-group>
             <b-form-group
@@ -303,7 +332,7 @@
                 />
               </b-input-group>
             </b-form-group>
-          
+
           </b-collapse>
 
         </b-collapse>
@@ -425,15 +454,29 @@ export default {
       screenHeight: 0,
     }
   },
+  computed: {
+    state() {
+      // Overall component validation state
+      return true
+    }
+  },
   methods: {
 
     async generateData(){
+      if (localStorage /* function to detect if localstorage is supported*/) {
+        localStorage.setItem('storedInput', JSON.stringify(this.input))
+        localStorage.setItem('storedSizes', JSON.stringify(this.batterySizes))
+        localStorage.setItem('storedAddress', JSON.stringify(this.adressData))
+        console.log("Test")
+      }
+
+
       let now = performance.now()
 
       this.isCalculating = true
-      
-      this.batterySizes = this.batterySizes.map(e => Number(e)).sort((a,b) => a-b)
-      
+
+      //this.batterySizes = this.batterySizes.map(e => Number(e)).sort((a,b) => a-b)
+
       const generationData = await Promise.all(this.input.roofs.map(roof => {
         return this.$axios.post("/relay",{
           url: this.buildQueryString({
@@ -453,8 +496,8 @@ export default {
         .then(response => response.data)
         .then(data => normalizeHourlyRadiation(data.outputs.hourly))
       }))
-      
-      
+
+
       const mergedPower = mergePowerGeneration(generationData)
 
       const consumption = calculateConsumption({year:this.input.year,consumptionYear:this.input.yearlyConsumption,profile:SLPH0, profileBase:PROFILEBASE, factorFunction})
@@ -462,12 +505,12 @@ export default {
 
       let costSavingWithoutBattery
 
-      
+
       const batterySizesWithNoBattery = [1,...this.batterySizes]
 
       let BatterySizeResults = batterySizesWithNoBattery.map(size => {
         let newSoc = 100
-  
+
         this.returnedData = powerGenAndConsumption
 
         const energyFlowData = powerGenAndConsumption.map(genConsumption => {
@@ -484,7 +527,7 @@ export default {
           newSoc = hourFlow.newBatterySoc
           return hourFlow
         })
-        
+
         const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev,0) / 1000
         const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev,0) / 1000
         const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev,0) / 1000
@@ -526,7 +569,7 @@ export default {
             }
           }
           return prev
-        },{})      
+        },{})
 
 
         const monthlyData = Object.keys(monthlyDataObj).map(key => {
@@ -534,8 +577,8 @@ export default {
           return monthlyDataObj[key]
         }).sort((a,b) => a.month - b.month)
 
-        return {size, 
-                energyFlow: energyFlowData, 
+        return {size,
+                energyFlow: energyFlowData,
                 generationYear,
                 consumptionYear,
                 selfUsedPower,
@@ -550,7 +593,7 @@ export default {
               }
 
       })
-      
+
       this.timeNeeded = performance.now() - now
       this.isCalculating = false
       this.displayData = BatterySizeResults
@@ -567,9 +610,9 @@ export default {
     buildQueryString(params){
       //API BaseURL with Base Params
       // let string = `https://re.jrc.ec.europa.eu/api/v5_2/SHScalc?outputformat=json&raddatabase=PVGIS-SARAH&cutoff=1`
-      
+
       const loss      = params.loss || 12
-      const lat       = params.lat 
+      const lat       = params.lat
       const lon       = params.lon
       const startyear = params.startyear || params.year || 2020
       const endyear   = params.endyear || params.year || 2020
@@ -582,11 +625,28 @@ export default {
       return string
     }
   },
+  watch: {
+    batterySizes(newValue, oldValue) {
+      let temp = []
+      newValue.forEach(value => temp.push(Number(value)))
+
+      this.batterySizes = temp.sort((a,b) => a-b)
+
+    }
+  },
   tagValidator(tag) {
     return parseInt(tag) == typeof Number
   },
   mounted() {
     this.screenHeight = window.screen.height
+
+    if(localStorage.getItem('storedInput') != "null"){
+      this.input = JSON.parse(localStorage.getItem('storedInput'));
+      this.batterySizes = JSON.parse(localStorage.getItem('storedSizes'));
+      this.adressData = JSON.parse(localStorage.getItem('storedAddress'));
+    }
+
+
   }
 }
 </script>
