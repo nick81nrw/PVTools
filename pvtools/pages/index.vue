@@ -246,7 +246,7 @@
               </b-button>
               <b-button
                 variant="danger"
-                disabled
+                @click="resetValues"
               >
                 Zurücksetzen
               </b-button>
@@ -274,14 +274,6 @@
                   :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
                 ></b-form-tags>
 
-<!--                <b-form-tags
-                  input-id="tags-validation"
-                  v-model="tags"
-                  :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
-                  :tag-validator="tagValidator"
-                  :state="state"
-                  separator=" "
-                ></b-form-tags>-->
               </b-input-group>
             </b-form-group>
             <b-form-group
@@ -475,7 +467,6 @@ export default {
 
       this.isCalculating = true
 
-      //this.batterySizes = this.batterySizes.map(e => Number(e)).sort((a,b) => a-b)
 
       const generationData = await Promise.all(this.input.roofs.map(roof => {
         return this.$axios.post("/relay",{
@@ -623,14 +614,15 @@ export default {
       let string = `https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?pvcalculation=1&outputformat=json&loss=${loss}&lat=${lat}&lon=${lon}&startyear=${startyear}&endyear=${endyear}&peakpower=${peakpower}&angle=${angle}&aspect=${aspect}`
 
       return string
+    },
+    resetValues(){
+      localStorage.clear()
+      location.reload()
     }
   },
   watch: {
     batterySizes(newValue, oldValue) {
-      let temp = []
-      newValue.forEach(value => temp.push(Number(value)))
-
-      this.batterySizes = temp.sort((a,b) => a-b)
+      this.batterySizes = newValue.map(val => Number(val)).sort((a,b) => a-b)
 
     }
   },
@@ -640,10 +632,12 @@ export default {
   mounted() {
     this.screenHeight = window.screen.height
 
-    if(localStorage.getItem('storedInput') != "null"){
-      this.input = JSON.parse(localStorage.getItem('storedInput'));
-      this.batterySizes = JSON.parse(localStorage.getItem('storedSizes'));
-      this.adressData = JSON.parse(localStorage.getItem('storedAddress'));
+    if (localStorage != null) {
+
+      if (localStorage.getItem('storedInput')) {this.input = JSON.parse(localStorage.getItem('storedInput'))}
+      if (localStorage.getItem('storedSizes') != null) {this.batterySizes = JSON.parse(localStorage.getItem('storedSizes'))}
+      if (localStorage.getItem('storedAddress') != null) {this.adressData = JSON.parse(localStorage.getItem('storedAddress'))}
+
     }
 
 
