@@ -269,12 +269,19 @@
               >
                 <b-form-tags
                   input-id="tags-basic"
-                  :state="state"
-                  v-model="batterySizes"
+                  v-model="inputBatterySizes"
+                  :tag-validator="tagValidator"
+                  v-b-tooltip.hover title='Zwischen 0,2 und 200 kWh'
                   :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
                 ></b-form-tags>
 
               </b-input-group>
+            </b-form-group>
+            
+            <b-form-group
+              label="Vergleichsjahr:"
+            >
+              <b-form-select v-model="input.year" :options="years"></b-form-select>
             </b-form-group>
             <b-form-group
               label="Systemverluste PV:"
@@ -406,6 +413,7 @@ export default {
     return {
       displayData: [],
       returnedData:{},
+      inputBatterySizes: [],
       batterySizes: [
         500,
         1000,
@@ -444,6 +452,14 @@ export default {
       adressData: {},
       costSavingsWithoutBattery: 0,
       screenHeight: 0,
+      years: [
+          { value: 2020, text: '2020' },
+          { value: 2019, text: '2019' },
+          { value: 2018, text: '2018' },
+          { value: 2017, text: '2017' },
+          { value: 2016, text: '2016' },
+          { value: 2015, text: '2015' },
+        ]
     }
   },
   computed: {
@@ -457,11 +473,12 @@ export default {
     async generateData(){
       if (localStorage /* function to detect if localstorage is supported*/) {
         localStorage.setItem('storedInput', JSON.stringify(this.input))
+        localStorage.setItem('storedInputAddressSearchString', this.inputAddressSearchString)
         localStorage.setItem('storedSizes', JSON.stringify(this.batterySizes))
         localStorage.setItem('storedAddress', JSON.stringify(this.adressData))
-        console.log("Test")
       }
 
+      this.inputBatterySizes = [...this.batterySizes]
 
       let now = performance.now()
 
@@ -618,27 +635,31 @@ export default {
     resetValues(){
       localStorage.clear()
       location.reload()
-    }
+    },
+    tagValidator(tag) {
+    
+      return !isNaN(tag) && tag < 200000 && tag > 200
+    
+    },
   },
   watch: {
-    batterySizes(newValue, oldValue) {
+    inputBatterySizes(newValue, oldValue) {
       this.batterySizes = newValue.map(val => Number(val)).sort((a,b) => a-b)
 
     }
-  },
-  tagValidator(tag) {
-    return parseInt(tag) == typeof Number
   },
   mounted() {
     this.screenHeight = window.screen.height
 
     if (localStorage != null) {
 
-      if (localStorage.getItem('storedInput')) {this.input = JSON.parse(localStorage.getItem('storedInput'))}
+      if (localStorage.getItem('storedInput') != null) {this.input = JSON.parse(localStorage.getItem('storedInput'))}
+      if (localStorage.getItem('storedInputAddressSearchString') != null) {this.inputAddressSearchString = localStorage.getItem('storedInputAddressSearchString')}
       if (localStorage.getItem('storedSizes') != null) {this.batterySizes = JSON.parse(localStorage.getItem('storedSizes'))}
       if (localStorage.getItem('storedAddress') != null) {this.adressData = JSON.parse(localStorage.getItem('storedAddress'))}
 
     }
+    this.inputBatterySizes = [...this.batterySizes]
 
 
   }
