@@ -250,7 +250,7 @@ export default {
       displayData: [],
       returnedData: {},
       inputBatterySizes: [],
-      batterySizes: [
+      batterySizes: JSON.parse(localStorage.getItem('storedSizes')) || [
         500,
         1000,
         2000,
@@ -263,7 +263,7 @@ export default {
         25000,
         30000
       ],
-      input: {
+      input: JSON.parse(localStorage.getItem('storedInput')) || {
         roofs: [],
         yearlyConsumption: 5000,
         consumptionProfile: 0,
@@ -284,8 +284,8 @@ export default {
         angle: 0,
         peakpower: 0
       },
-      inputAddressSearchString: "",
-      adressData: "",
+      inputAddressSearchString: localStorage.getItem('storedInputAddressSearchString') || "",
+      adressData: localStorage.getItem('storedAddress') || {},
       costSavingsWithoutBattery: 0,
       screenHeight: 0,
       years: [
@@ -485,27 +485,18 @@ export default {
       return !isNaN(tag) && tag < 200000 && tag > 200
 
     },
-    watch: {
-      inputBatterySizes(newValue, oldValue) {
-        this.batterySizes = newValue.map(val => Number(val)).sort((a, b) => a - b)
-
-      }
-    },
-    mounted() {
-      this.screenHeight = window.screen.height
-
-      if (localStorage != null) {
-
-        if (localStorage.getItem('storedInput') != null) { this.input = JSON.parse(localStorage.getItem('storedInput')) }
-        if (localStorage.getItem('storedInputAddressSearchString') != null) { this.inputAddressSearchString = localStorage.getItem('storedInputAddressSearchString') }
-        if (localStorage.getItem('storedSizes') != null) { this.batterySizes = JSON.parse(localStorage.getItem('storedSizes')) }
-        if (localStorage.getItem('storedAddress') != null) { this.adressData = JSON.parse(localStorage.getItem('storedAddress')) }
-
-      }
-      this.inputBatterySizes = [...this.batterySizes]
-
+  },
+  watch: {
+    inputBatterySizes(newValue, oldValue) {
+      this.batterySizes = newValue.map(val => Number(val)).sort((a, b) => a - b)
 
     }
+  },
+  mounted() {
+    this.screenHeight = window.screen.height
+
+    this.inputBatterySizes = [...this.batterySizes]
+
   }
 }
 </script>
