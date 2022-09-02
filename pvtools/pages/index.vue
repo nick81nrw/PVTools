@@ -285,7 +285,7 @@ export default {
         peakpower: 0
       },
       inputAddressSearchString: localStorage.getItem('storedInputAddressSearchString') || "",
-      adressData: localStorage.getItem('storedAddress') || {},
+      adressData: JSON.parse(localStorage.getItem('storedAddress')) || {},
       costSavingsWithoutBattery: 0,
       screenHeight: 0,
       years: [
