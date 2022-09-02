@@ -73,50 +73,6 @@
               Die eingegebende Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.
             </b-alert>
             <b-form-group
-              label="Ausrichtung:"
-            >
-              <b-input-group
-                append="° Grad Azimuth"
-              >
-                <b-form-input
-                  v-model.number="input.aspect"
-                  type="number"
-                  min="0"
-                  max="359"
-                  v-b-tooltip.hover title="0 = Süden, 90 = Westen, -90 = Osten"
-                />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group
-              label="Neigung:"
-            >
-              <b-input-group
-                append="° Grad"
-              >
-                <b-form-input
-                  v-model.number="input.angle"
-                  type="number"
-                  min="0"
-                  max="90"
-                  v-b-tooltip.hover title="0 = waargerecht, 90 = senkrecht"
-                />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group
-              label="Installierte Leistung"
-            >
-              <b-input-group
-                append="Wp"
-              >
-                <b-input
-                  v-model.number="input.peakpower"
-                  min="0"
-                  type="number"
-                  v-b-tooltip.hover title='Bei 10kWp muss "10000" eingetragen werden'
-                />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group
               label="Jährlicher Stromverbrauch:"
             >
               <b-input-group
@@ -128,24 +84,6 @@
                   type="number"
                 />
               </b-input-group>
-            </b-form-group>
-          </b-form>
-        </b-collapse>
-      </b-col>
-      <b-col>
-        <b-collapse
-          id="inputCollapse"
-          visible
-        >
-          <b-form>
-            <b-form-group
-              label="Lastprofil:"
-            >
-              <b-form-select
-                v-model="input.consumptionProfile"
-                :options="consumptionProfiles"
-              />
-              <NuxtLink to="/consumptionProfiles">Infos zu den Lastprofilen</NuxtLink>
             </b-form-group>
             <b-form-group
               label="Stromkosten:"
@@ -201,22 +139,208 @@
                 />
               </b-input-group>
             </b-form-group>
+
+
+          </b-form>
+        </b-collapse>
+      </b-col>
+      <b-col>
+        <b-collapse
+          id="inputCollapse"
+          visible
+        >
+          <b-form>
+            <b-form-group
+              label="Ausrichtung:"
+            >
+              <b-input-group
+                append="° Grad Azimuth"
+              >
+                <b-form-input
+                  v-model.number="roofInput.aspect"
+                  type="number"
+                  min="0"
+                  max="359"
+                  v-b-tooltip.hover title="0 = Süden, 90 = Westen, -90 = Osten"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Neigung:"
+            >
+              <b-input-group
+                append="° Grad"
+              >
+                <b-form-input
+                  v-model.number="roofInput.angle"
+                  type="number"
+                  min="0"
+                  max="90"
+                  v-b-tooltip.hover title="0 = waargerecht, 90 = senkrecht"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Installierte Leistung"
+            >
+              <b-input-group
+                append="Wp"
+              >
+                <b-input
+                  v-model.number="roofInput.peakpower"
+                  min="0"
+                  type="number"
+                  v-b-tooltip.hover title='Bei 10kWp muss "10000" eingetragen werden'
+                />
+              </b-input-group>
+            </b-form-group>
+
             <b-button-group>
+              <b-button
+                @click="input.roofs.push(roofInput)
+                roofInput = {angle:0,aspect:0,peakpower:0}"
+              >
+                + Dach
+              </b-button>
+            </b-button-group>
+
+            <b-list-group class="mt-3">
+              <div
+                v-for="roof in input.roofs"
+                :key="roof.aspect + roof.angle + roof.peakpower"
+              >
+                <b-list-group-item
+                  button
+                  :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower"
+                >
+                  Ausrichtung {{roof.aspect}}° - Neigung: {{roof.angle}}° - {{roof.peakpower}} Wp
+                  <b-button-group>
+                    <b-button
+                      variant="primary"
+                      @click="roofInput.aspect = roof.aspect
+                      roofInput.angle = roof.angle
+                      roofInput.peakpower = roof.peakpower
+                      input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower)) "
+                    >
+                      <font-awesome-icon icon="pen"/>
+                    </b-button>
+                    <b-button
+                      variant="danger"
+                      @click="input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower)) "
+                    >
+                      <font-awesome-icon icon="trash"/>
+                    </b-button>
+                  </b-button-group>
+                </b-list-group-item>
+                <!-- <b-collapse
+                  :id="'roof' + roof.aspect + roof.angle + roof.peakpower"
+                  accordion="roofs"
+                  visible
+                >
+                  {{'roof' + roof.aspect + roof.angle + roof.peakpower}}
+                </b-collapse> -->
+              </div>
+            </b-list-group>
+
+
+            <b-button-group class="mt-3">
               <b-button
                 variant="primary"
                 @click="generateData"
-                :disabled="!adressData.lat && !adressData.lon"
+                :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
               >
                 Berechnen
               </b-button>
               <b-button
                 variant="danger"
-                disabled
+                @click="resetValues"
               >
                 Zurücksetzen
               </b-button>
+              <b-button
+                v-b-toggle.extensionsCollapse
+              >Erweiterte Einstellungen</b-button>
             </b-button-group>
           </b-form>
+          <b-collapse
+            id="extensionsCollapse"
+          >
+
+
+
+            <b-form-group
+              label="Speichergrößen:"
+            >
+              <b-input-group
+                append="Wh"
+              >
+                <b-form-tags
+                  input-id="tags-basic"
+                  v-model="inputBatterySizes"
+                  :tag-validator="tagValidator"
+                  v-b-tooltip.hover title='Zwischen 0,2 und 200 kWh'
+                  :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
+                ></b-form-tags>
+
+              </b-input-group>
+            </b-form-group>
+            
+            <b-form-group
+              label="Vergleichsjahr:"
+            >
+              <b-form-select v-model="input.year" :options="years"></b-form-select>
+            </b-form-group>
+            <b-form-group
+              label="Systemverluste PV:"
+            >
+              <b-input-group
+                append="%"
+              >
+                <b-form-input
+                  v-model.number="input.systemloss"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Minimaler Ladezustand Speicher:"
+            >
+              <b-input-group
+                append="%"
+              >
+                <b-form-input
+                  v-model.number="input.batterySocMinPercent"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group
+              label="Ladeeffizenz Speicher (Laden / Entladen):"
+            >
+              <b-input-group
+                append="%"
+              >
+                <b-form-input
+                  v-model.number="input.batteryLoadEfficiency"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+                <b-form-input
+                  v-model.number="input.batteryUnloadEfficiency"
+                  type="number"
+                  min="0"
+                  max="100"
+                />
+              </b-input-group>
+            </b-form-group>
+
+          </b-collapse>
+
         </b-collapse>
       </b-col>
     </b-row>
@@ -229,8 +353,8 @@
           <Chart
             id="chart"
             v-if="displayData.length > 0"
-            :labels="displayData[displayData.length - 1].map(item => item.size)"
-            :datasets="[{ data: displayData[displayData.length - 1].map(item => item.selfUseRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'blue'},{ data: displayData[displayData.length - 1].map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red',}]"
+            :labels="displayData.map(item => item.size)"
+            :datasets="[{ data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'blue'},{ data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red',}]"
 
           />
         </div>
@@ -255,14 +379,14 @@
           <th>Amortisation Anlage</th>
         </tr>
         <tr
-          v-for="item in displayData[displayData.length - 1]"
+          v-for="item in displayData"
           :key="item.size"
         >
           <td>{{(item.size/1000).toFixed(1)}} kWh</td>
           <td>{{item.selfUsedPower.toFixed(2)}} kWh</td>
           <td>{{item.fedInPower.toFixed(2)}} kWh</td>
-          <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
           <td>{{item.selfUseRate.toFixed(2)}} %</td>
+          <td>{{item.selfSufficiencyRate.toFixed(2)}} %</td>
           <td>{{item.costSavingsBattery.toFixed(2)}} €</td>
           <td>{{item.batteryAmortization.toFixed(2)}} Jahre</td>
           <td>{{item.costSavings.toFixed(2)}} €</td>
@@ -277,6 +401,15 @@
 
 <script>
 import Chart from '../components/Chart'
+// import axios from "axios";
+import {
+  calculateConsumption,
+  generateDayTimeValues,
+  mergePowerGeneration,
+  normalizeHourlyRadiation,
+  energyFlow
+} from "@/functions/energyFlow";
+import {factorFunction, PROFILEBASE, SLPH0} from "@/functions/SLP";
 
 export default {
   name: 'IndexPage',
@@ -286,8 +419,9 @@ export default {
   data(){
     return {
       displayData: [],
+      returnedData:{},
+      inputBatterySizes: [],
       batterySizes: [
-        1,
         500,
         1000,
         2000,
@@ -301,207 +435,183 @@ export default {
         30000
       ],
       input: {
-        aspect: 0,
-        angle: 30,
-        peakpower: 8000,
+        roofs: [],
         yearlyConsumption: 5000,
         consumptionProfile: 0,
         consumptionCosts: 0.32,
         feedInCompensation: 0.086,
         installationCostsWithoutBattery: 10000,
-        batteryCostsPerKwh: 500
+        batteryCostsPerKwh: 500,
+        systemloss: 12,
+        batteryLoadEfficiency:99,
+        batteryUnloadEfficiency:99,
+        batterySocMinPercent: 10,
+        year: 2020,
       },
-      consumptionProfiles: [
-        {
-          value: 0, text:"Standardlastprofil H0 SW Hilden - Jahr gemittelt",
-          H_00: 0.029064195,
-          H_01: 0.022303546,
-          H_02: 0.018725847,
-          H_03: 0.019106339,
-          H_04: 0.020091895,
-          H_05: 0.024349181,
-          H_06: 0.033814782,
-          H_07: 0.042806768,
-          H_08: 0.042039649,
-          H_09: 0.041977505,
-          H_10: 0.043133476,
-          H_11: 0.043674032,
-          H_12: 0.046938553,
-          H_13: 0.050398158,
-          H_14: 0.047898286,
-          H_15: 0.043497202,
-          H_16: 0.044159626,
-          H_17: 0.051662384,
-          H_18: 0.059963955,
-          H_19: 0.06418658,
-          H_20: 0.061940291,
-          H_21: 0.057203104,
-          H_22: 0.051313248,
-          H_23: 0.039751399,
-        },
-        {
-          value: 1,
-          text:"SLP H0",
-          H_00: 0.029064195,
-          H_01: 0.022303546,
-          H_02: 0.018725847,
-          H_03: 0.019106339,
-          H_04: 0.020091895,
-          H_05: 0.024349181,
-          H_06: 0.033814782,
-          H_07: 0.042806768,
-          H_08: 0.042039649,
-          H_09: 0.041977505,
-          H_10: 0.043133476,
-          H_11: 0.043674032,
-          H_12: 0.046938553,
-          H_13: 0.050398158,
-          H_14: 0.047898286,
-          H_15: 0.043497202,
-          H_16: 0.044159626,
-          H_17: 0.051662384,
-          H_18: 0.059963955,
-          H_19: 0.06418658,
-          H_20: 0.061940291,
-          H_21: 0.057203104,
-          H_22: 0.051313248,
-          H_23: 0.039751399,
-        },
-        {
-          value: 2,
-
-          text: "SLP H0 +10% Mittags",
-          H_00: 0.029064195,
-          H_01: 0.022303546,
-          H_02: 0.018725847,
-          H_03: 0.019106339,
-          H_04: 0.020091895,
-          H_05: 0.024349181,
-          H_06: 0.033814782,
-          H_07: 0.042806768,
-          H_08: 0.042039649,
-          H_09: 0.041977505,
-          H_10: 0.043133476,
-          H_11: 0.073674032,
-          H_12: 0.086938553,
-          H_13: 0.080398158,
-          H_14: 0.047898286,
-          H_15: 0.043497202,
-          H_16: 0.044159626,
-          H_17: 0.051662384,
-          H_18: 0.059963955,
-          H_19: 0.03418658,
-          H_20: 0.031940291,
-          H_21: 0.037203104,
-          H_22: 0.031313248,
-          H_23: 0.039751399,
-        },
-        {
-          value: 3,
-          text: "SLP H0 +20% Mittags",
-          H_00: 0.019064195,
-          H_01: 0.012303546,
-          H_02: 0.018725847,
-          H_03: 0.019106339,
-          H_04: 0.010091895,
-          H_05: 0.014349181,
-          H_06: 0.013814782,
-          H_07: 0.022806768,
-          H_08: 0.022039649,
-          H_09: 0.041977505,
-          H_10: 0.063133476,
-          H_11: 0.093674032,
-          H_12: 0.106938553,
-          H_13: 0.100398158,
-          H_14: 0.067898286,
-          H_15: 0.063497202,
-          H_16: 0.044159626,
-          H_17: 0.041662384,
-          H_18: 0.049963955,
-          H_19: 0.03418658,
-          H_20: 0.031940291,
-          H_21: 0.037203104,
-          H_22: 0.031313248,
-          H_23: 0.039751399,
-        }
-
-      ],
+      timeNeeded:0,
+      isCalculating: false,
+      roofInput: {
+        aspect: 0,
+        angle:0,
+        peakpower: 0
+      },
       inputAddressSearchString: "",
       adressData: "",
       costSavingsWithoutBattery: 0,
       screenHeight: 0,
+      years: [
+          { value: 2020, text: '2020' },
+          { value: 2019, text: '2019' },
+          { value: 2018, text: '2018' },
+          { value: 2017, text: '2017' },
+          { value: 2016, text: '2016' },
+          { value: 2015, text: '2015' },
+        ]
+    }
+  },
+  computed: {
+    state() {
+      // Overall component validation state
+      return true
     }
   },
   methods: {
 
     async generateData(){
-      let generatedData = []
-      await Promise.all(this.batterySizes.map(size => {
+      if (localStorage /* function to detect if localstorage is supported*/) {
+        localStorage.setItem('storedInput', JSON.stringify(this.input))
+        localStorage.setItem('storedInputAddressSearchString', this.inputAddressSearchString)
+        localStorage.setItem('storedSizes', JSON.stringify(this.batterySizes))
+        localStorage.setItem('storedAddress', JSON.stringify(this.adressData))
+      }
+
+      this.inputBatterySizes = [...this.batterySizes]
+
+      let now = performance.now()
+
+      this.isCalculating = true
+
+
+      const generationData = await Promise.all(this.input.roofs.map(roof => {
         return this.$axios.post("/relay",{
           url: this.buildQueryString({
-            aspect: this.input.aspect ,
-            angle: this.input.angle,
+            aspect: roof.aspect ,
+            angle: roof.angle,
             lat: this.adressData.lat,
             lon: this.adressData.lon,
-            peakpower: this.input.peakpower,
-            batterysize: size,
-            consumptionday: this.input.yearlyConsumption / 365 * 1000,
-            hourconsumption: this.convertPowerProfile(this.input.consumptionProfile)//"0.028,0.022,0.019,0.018,0.018,0.021,0.03,0.039,0.042,0.045,0.047,0.049,0.052,0.051,0.049,0.047,0.048,0.051,0.058,0.063,0.061,0.053,0.049,0.04"
+            peakpower: roof.peakpower/1000,
+            loss: 12, //this.input.systemloss,
+            startyear: this.input.year,
+            endyear: this.input.year
+
           }),
           method: "GET",
           body: {}
         })
         .then(response => response.data)
+        .then(data => normalizeHourlyRadiation(data.outputs.hourly))
       }))
-        .then(data => {
-          //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
-          let selfUsedPower = data[0].outputs.monthly.reduce((p,c) => p + c.E_d,0) * 30.4 / 1000
-          //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
-          let fedInPower = data[0].outputs.monthly.reduce((p,c) => p + c.E_lost_d,0) * 30.4 / 1000
 
-          let costSavings = fedInPower * this.input.feedInCompensation + selfUsedPower * this.input.consumptionCosts
 
-          this.costSavingsWithoutBattery = costSavings
+      const mergedPower = mergePowerGeneration(generationData)
 
-          return data
+      const consumption = calculateConsumption({year:this.input.year,consumptionYear:this.input.yearlyConsumption,profile:SLPH0, profileBase:PROFILEBASE, factorFunction})
+      const powerGenAndConsumption = generateDayTimeValues({consumption,powerGeneration:mergedPower, year: this.input.year})
 
+      let costSavingWithoutBattery
+
+
+      const batterySizesWithNoBattery = [1,...this.batterySizes]
+
+      let BatterySizeResults = batterySizesWithNoBattery.map(size => {
+        let newSoc = 100
+
+        this.returnedData = powerGenAndConsumption
+
+        const energyFlowData = powerGenAndConsumption.map(genConsumption => {
+          const hourFlow = energyFlow({
+            powerGeneration:genConsumption.P,
+            powerConsumption:genConsumption.consumption,
+            batterySoc: newSoc,
+            batterySocMax: size,
+            batterySocMin: size * this.input.batterySocMinPercent / 100,
+            batteryLoadEfficiency: this.input.batteryLoadEfficiency /100,
+            batteryUnloadEfficiency: this.input.batteryUnloadEfficiency/100,
+            dayTime: genConsumption.dayTime
+          })
+          newSoc = hourFlow.newBatterySoc
+          return hourFlow
         })
-          .then(data => {
-            data.forEach(rawSize => {
-              //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
-              let selfUsedPower = rawSize.outputs.monthly.reduce((p,c) => p + c.E_d,0) * 30.4 / 1000
-              //Sum all Values, Multiply with 30.4 to get Monthly from Daily, divide with 1000 to get kWh from Wh
-              let fedInPower = rawSize.outputs.monthly.reduce((p,c) => p + c.E_lost_d,0) * 30.4 / 1000
 
-              let costSavings = fedInPower * this.input.feedInCompensation + selfUsedPower * this.input.consumptionCosts
-              let batterySize = rawSize.inputs.battery.capacity
+        const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev,0) / 1000
+        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev,0) / 1000
+        const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev,0) / 1000
+        const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev,0) / 1000
+        const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
+        const selfUseRate = selfUsedPower / generationYear * 100 // Eigenverbrauchsquote
+        const costSavings = (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
+        if (size==1) costSavingWithoutBattery = costSavings;
+        const amortization = (this.input.installationCostsWithoutBattery + this.input.batteryCostsPerKwh * (size/1000)) / costSavings
+        const costSavingsBattery = size == 1 ? 0 : costSavings - costSavingWithoutBattery
+        const batteryAmortization = size == 1 ? 0 : this.input.batteryCostsPerKwh * (size/1000) / costSavingsBattery
 
-              let amortization = (batterySize/1000 * this.input.batteryCostsPerKwh + this.input.installationCostsWithoutBattery) / costSavings
-              let batteryAmortization = costSavings - this.costSavingsWithoutBattery === 0 ? 0 : (batterySize * this.input.batteryCostsPerKwh/1000)/(costSavings - this.costSavingsWithoutBattery)
-              // this.gereratedData.splice(0)
-              generatedData.push({
-                size: batterySize,
+        const monthlyDataObj = energyFlowData.reduce((prev, curr) => {
+          const month = parseInt(curr.dayTime.slice(4,6))
+          if (prev[month]) {
+
+            prev[month] = {
+              batteryLoad: curr.batteryLoad <= 0 ? (curr.batteryLoad *-1) + prev[month].batteryLoad : curr.batteryLoad + prev[month].batteryLoad,
+              consumptionGrid: curr.consumptionGrid  + prev[month].consumptionGrid,
+              feedInPowerGrid: curr.feedInPowerGrid  + prev[month].feedInPowerGrid,
+              missedBatteryPower: curr.missedBatteryPower + prev[month].missedBatteryPower,
+              missedFeedInPowerGrid: curr.missedFeedInPowerGrid + prev[month].missedFeedInPowerGrid,
+              missedInverterPower: curr.missedInverterPower + prev[month].missedInverterPower,
+              selfUsagePower: curr.selfUsagePower + prev[month].selfUsagePower,
+              selfUsagePowerBattery: curr.selfUsagePowerBattery + prev[month].selfUsagePowerBattery,
+              selfUsagePowerPv: curr.selfUsagePowerPv + prev[month].selfUsagePowerPv
+            }
+          } else {
+            prev[month] = {
+              batteryLoad: curr.batteryLoad <= 0 ? curr.batteryLoad * -1 : curr.batteryLoad,
+              consumptionGrid: curr.consumptionGrid,
+              feedInPowerGrid:curr.feedInPowerGrid,
+              missedBatteryPower:curr.missedBatteryPower,
+              missedFeedInPowerGrid:curr.missedFeedInPowerGrid,
+              missedInverterPower:curr.missedInverterPower,
+              selfUsagePower:curr.selfUsagePower,
+              selfUsagePowerBattery:curr.selfUsagePowerBattery,
+              selfUsagePowerPv:curr.selfUsagePowerPv
+            }
+          }
+          return prev
+        },{})
+
+
+        const monthlyData = Object.keys(monthlyDataObj).map(key => {
+          monthlyDataObj[key].month = parseInt(key)
+          return monthlyDataObj[key]
+        }).sort((a,b) => a.month - b.month)
+
+        return {size,
+                energyFlow: energyFlowData,
+                generationYear,
+                consumptionYear,
                 selfUsedPower,
                 fedInPower,
+                selfSufficiencyRate,
+                selfUseRate,
                 costSavings,
                 amortization,
+                costSavingsBattery,
                 batteryAmortization,
-                costSavingsBattery: costSavings - this.costSavingsWithoutBattery,
-                // selfUseRate: selfUsedPower / (selfUsedPower + fedInPower) * 100,
-                // selfSufficiencyRate: selfUsedPower / this.input.yearlyConsumption * 100
-                selfUseRate: selfUsedPower / this.input.yearlyConsumption * 100,
-                selfSufficiencyRate: selfUsedPower / (selfUsedPower + fedInPower) * 100
-              })
+                monthlyData
+              }
 
-              //generatedData = generatedData.sort((a,b) => a.size - b.size)
-            })
+      })
 
-          })
-
-      this.displayData.push(generatedData)
-
-      this.$root.$emit('bv::toggle::collapse', 'inputCollapse')
-
+      this.timeNeeded = performance.now() - now
+      this.isCalculating = false
+      this.displayData = BatterySizeResults
     },
     async getCoordinatesByAddress() {
       let osmReturn = (await this.$axios.post("/relay", {
@@ -518,48 +628,54 @@ export default {
       } else if(osmReturn[0]) {
         this.adressData = osmReturn[0]
         this.inputAddressSearchString = this.adressData.display_name
-      }
-    },
-    convertPowerProfile(profileId){
-      let profile = this.consumptionProfiles.find(item =>  item.value === profileId)
-
-      let keys = Object.keys(profile)
-      let returnValue = ""
-      keys.forEach(key => {
-        if(key.includes("H_")){
-          returnValue == "" ? returnValue += profile[key] : returnValue += "," + profile[key]
-        }
-      })
-      return returnValue
-
     },
     buildQueryString(params){
       //API BaseURL with Base Params
-      let string = `https://re.jrc.ec.europa.eu/api/v5_2/SHScalc?outputformat=json&raddatabase=PVGIS-SARAH&cutoff=1`
+      // let string = `https://re.jrc.ec.europa.eu/api/v5_2/SHScalc?outputformat=json&raddatabase=PVGIS-SARAH&cutoff=1`
 
-      /*
-      * {
-      * aspect: 0.00
-      * angle: 45.00,
-      * lat: 45.000,
-      * lon: 45.000,
-      * peakpower: 10000,
-      * batterysize: 5000,
-      * consumptionday: 15000,
-      * hourconsumption: 0.01,0.09,0.9 24* und zusammen 1
-      * }
-      *
-      * */
-      let keys = Object.keys(params)
-      keys.forEach(key => {
-        string += `&${key}=${params[key]}`
-      })
-      //console.log(string)
+      const loss      = params.loss || 12
+      const lat       = params.lat
+      const lon       = params.lon
+      const startyear = params.startyear || params.year || 2020
+      const endyear   = params.endyear || params.year || 2020
+      const peakpower = params.peakpower
+      const angle     = params.angle
+      const aspect    = params.aspect
+
+      let string = `https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?pvcalculation=1&outputformat=json&loss=${loss}&lat=${lat}&lon=${lon}&startyear=${startyear}&endyear=${endyear}&peakpower=${peakpower}&angle=${angle}&aspect=${aspect}`
+
       return string
+    },
+    resetValues(){
+      localStorage.clear()
+      location.reload()
+    },
+    tagValidator(tag) {
+    
+      return !isNaN(tag) && tag < 200000 && tag > 200
+    
+    },
+  },
+  watch: {
+    inputBatterySizes(newValue, oldValue) {
+      this.batterySizes = newValue.map(val => Number(val)).sort((a,b) => a-b)
+
     }
   },
   mounted() {
     this.screenHeight = window.screen.height
+
+    if (localStorage != null) {
+
+      if (localStorage.getItem('storedInput') != null) {this.input = JSON.parse(localStorage.getItem('storedInput'))}
+      if (localStorage.getItem('storedInputAddressSearchString') != null) {this.inputAddressSearchString = localStorage.getItem('storedInputAddressSearchString')}
+      if (localStorage.getItem('storedSizes') != null) {this.batterySizes = JSON.parse(localStorage.getItem('storedSizes'))}
+      if (localStorage.getItem('storedAddress') != null) {this.adressData = JSON.parse(localStorage.getItem('storedAddress'))}
+
+    }
+    this.inputBatterySizes = [...this.batterySizes]
+
+
   }
 }
 </script>
