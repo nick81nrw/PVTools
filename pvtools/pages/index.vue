@@ -137,7 +137,8 @@
 
             <b-button-group class="mt-3">
               <b-button variant="primary" @click="generateData"
-                :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0">
+                :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
+                v-b-toggle.inputCollapse>
                 Berechnen
               </b-button>
               <b-button variant="danger" @click="resetValues">
