@@ -107,7 +107,7 @@
                 </b-button>
               </b-button-group>
             </b-card>
-            
+
             <b-list-group class="mt-3">
               <div v-for="roof in input.roofs" :key="roof.aspect + roof.angle + roof.peakpower">
                 <b-list-group-item button :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower">
@@ -181,7 +181,27 @@
                 <b-form-input v-model.number="input.batteryUnloadEfficiency" type="number" min="0" max="100" />
               </b-input-group>
             </b-form-group>
-
+            <b-form-group label="Maximalleistung Wechelrichter (0 = keine Prüfung):">
+              <b-input-group append="W">
+                <b-form-input v-model.number="input.maxPowerGenerationInverter" type="number" min="0" max="100000" />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
+              <b-input-group append="W">
+                <b-form-input v-model.number="input.maxPowerLoadBattery" type="number" min="0" max="100000" />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group label="Maximale Entladeleistung Speicher (0 = keine Prüfung):">
+              <b-input-group append="W">
+                <b-form-input v-model.number="input.maxPowerGenerationBattery" type="number" min="0" max="100000" />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung):">
+              <b-input-group append="W">
+                <b-form-input v-model.number="input.maxPowerFeedIn" type="number" min="0" max="100000" />
+              </b-input-group>
+            </b-form-group>
+            
           </b-collapse>
 
         </b-collapse>
@@ -299,6 +319,10 @@ export default {
         batteryUnloadEfficiency: 99,
         batterySocMinPercent: 10,
         year: 2020,
+        maxPowerGenerationInverter: 0,
+        maxPowerGenerationBattery: 0,
+        maxPowerLoadBattery: 0,
+        maxPowerFeedIn: 0,
       },
       timeNeeded: 0,
       isCalculating: false,
@@ -352,7 +376,7 @@ export default {
             lat: this.adressData.lat,
             lon: this.adressData.lon,
             peakpower: roof.peakpower / 1000,
-            loss: 12, //this.input.systemloss,
+            loss: this.input.systemloss,
             startyear: this.input.year,
             endyear: this.input.year
 
@@ -381,7 +405,7 @@ export default {
         this.returnedData = powerGenAndConsumption
 
         const energyFlowData = powerGenAndConsumption.map(genConsumption => {
-          const hourFlow = energyFlow({
+          const energyFlowObj = {
             powerGeneration: genConsumption.P,
             powerConsumption: genConsumption.consumption,
             batterySoc: newSoc,
@@ -390,7 +414,13 @@ export default {
             batteryLoadEfficiency: this.input.batteryLoadEfficiency / 100,
             batteryUnloadEfficiency: this.input.batteryUnloadEfficiency / 100,
             dayTime: genConsumption.dayTime
-          })
+          }
+          if (this.input.maxPowerGenerationInverter && this.input.maxPowerGenerationInverter > 0) energyFlowObj.maxPowerGenerationInverter = this.input.maxPowerGenerationInverter
+          if (this.input.maxPowerGenerationBattery && this.input.maxPowerGenerationBattery > 0) energyFlowObj.maxPowerGenerationBattery = this.input.maxPowerGenerationBattery
+          if (this.input.maxPowerLoadBattery && this.input.maxPowerLoadBattery > 0) energyFlowObj.maxPowerLoadBattery = this.input.maxPowerLoadBattery
+          if (this.input.maxPowerFeedIn && this.input.maxPowerFeedIn > 0) energyFlowObj.maxPowerFeedIn = this.input.maxPowerFeedIn
+
+          const hourFlow = energyFlow(energyFlowObj)
           newSoc = hourFlow.newBatterySoc
           return hourFlow
         })
