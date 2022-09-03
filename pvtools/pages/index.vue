@@ -190,7 +190,7 @@
       <b-col>
         <div id="chartContainer">
           <Chart id="chart" v-if="displayData.length > 0" :labels="displayData.map(item => item.size)"
-            :datasets="[{ data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauch', borderColor: 'blue' },{ data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkie', borderColor: 'green' }, { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }]" />
+            :datasets="[{ data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' }, { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' }, { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }]" />
         </div>
 
 
