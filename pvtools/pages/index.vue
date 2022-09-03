@@ -197,7 +197,7 @@
       </b-col>
     </b-row>
     <!--    {{generatedData}}-->
-    <div id="tableContainer">
+    <!-- <div id="tableContainer">
       <table v-if="displayData.length > 0" class="mt-3">
         <tr>
           <th>Speichergröße</th>
@@ -222,7 +222,17 @@
           <td>{{ item.amortization.toFixed(2) }} Jahre</td>
         </tr>
       </table>
-    </div>
+    </div> -->
+        
+    <b-table 
+      v-if="displayData.length > 0" 
+      striped hover 
+      :items="displayData"
+      :fields="tableFields"
+      small
+      responsive="sm"
+    />
+    
 
     <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
   </b-container>
@@ -249,6 +259,17 @@ export default {
     return {
       displayData: [],
       returnedData: {},
+      tableFields:[
+        { key: 'size', label: 'Speichergröße', formatter: (val) => (val/1000).toFixed(1) + " kWh" },
+        { key: 'selfUsedPower', label: 'Selbstgenutzer Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
+        { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
+        { key: 'selfUseRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + " %" },
+        { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + " %" },
+        { key: 'costSavingsBattery', label: 'Ersparnis / Jahr durch Akku', formatter: (val) => val.toFixed(2) + " €"  },
+        { key: 'batteryAmortization', label: 'Amortisation nur Speicher', formatter: (val) => val.toFixed(2) + " Jahre" },
+        { key: 'costSavings', label: 'Ersparnis / Jahr Anlage', formatter: (val) => val.toFixed(2) + " €" },
+        { key: 'amortization', label: 'Amortisation Anlage', formatter: (val) => val.toFixed(2) + " Jahre"  },
+      ],
       inputBatterySizes: [],
       batterySizes: JSON.parse(localStorage.getItem('storedSizes')) || [
         500,
