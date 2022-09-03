@@ -80,32 +80,34 @@
       <b-col>
         <b-collapse id="inputCollapse" visible>
           <b-form>
-            <b-form-group label="Ausrichtung:">
-              <b-input-group append="° Grad Azimuth">
-                <b-form-input v-model.number="roofInput.aspect" type="number" min="0" max="359" v-b-tooltip.hover
-                  title="0 = Süden, 90 = Westen, -90 = Osten" />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group label="Neigung:">
-              <b-input-group append="° Grad">
-                <b-form-input v-model.number="roofInput.angle" type="number" min="0" max="90" v-b-tooltip.hover
-                  title="0 = waargerecht, 90 = senkrecht" />
-              </b-input-group>
-            </b-form-group>
-            <b-form-group label="Installierte Leistung">
-              <b-input-group append="Wp">
-                <b-input v-model.number="roofInput.peakpower" min="0" type="number" v-b-tooltip.hover
-                  title='Bei 10kWp muss "10000" eingetragen werden' />
-              </b-input-group>
-            </b-form-group>
+            <b-card bg-variant="light">
+              <b-form-group label="Ausrichtung:">
+                <b-input-group append="° Grad Azimuth">
+                  <b-form-input v-model.number="roofInput.aspect" type="number" min="0" max="359" v-b-tooltip.hover
+                    title="0 = Süden, 90 = Westen, -90 = Osten" />
+                </b-input-group>
+              </b-form-group>
+              <b-form-group label="Neigung:">
+                <b-input-group append="° Grad">
+                  <b-form-input v-model.number="roofInput.angle" type="number" min="0" max="90" v-b-tooltip.hover
+                    title="0 = waargerecht, 90 = senkrecht" />
+                </b-input-group>
+              </b-form-group>
+              <b-form-group label="Installierte Leistung">
+                <b-input-group append="Wp">
+                  <b-input v-model.number="roofInput.peakpower" min="0" type="number" v-b-tooltip.hover
+                    title='Bei 10kWp muss "10000" eingetragen werden' />
+                </b-input-group>
+              </b-form-group>
 
-            <b-button-group>
-              <b-button @click="input.roofs.push(roofInput)
-              roofInput = { angle: 0, aspect: 0, peakpower: 0 }">
-                + Dach
-              </b-button>
-            </b-button-group>
-
+              <b-button-group>
+                <b-button @click="input.roofs.push(roofInput)
+                roofInput = { angle: 0, aspect: 0, peakpower: 0 }">
+                  Ausrichtung zur Berechnung hinzufügen
+                </b-button>
+              </b-button-group>
+            </b-card>
+            
             <b-list-group class="mt-3">
               <div v-for="roof in input.roofs" :key="roof.aspect + roof.angle + roof.peakpower">
                 <b-list-group-item button :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower">
