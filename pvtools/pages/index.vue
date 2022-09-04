@@ -201,6 +201,21 @@
                 <b-form-input v-model.number="input.maxPowerFeedIn" type="number" min="0" max="100000" />
               </b-input-group>
             </b-form-group>
+            <b-form-group label="Lineare Degradation der PV-Module pro Jahr:">
+              <b-input-group append="%">
+                <b-form-input v-model.number="input.linearDegrationModules" type="number" min="0" max="10" />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group label="Lineare Veränderung des Strombedarfs pro Jahr (auch negativ erlaubt z.B. -1%):">
+              <b-input-group append="%">
+                <b-form-input v-model.number="input.linearConsumptionChange" type="number" min="-20" max="20" />
+              </b-input-group>
+            </b-form-group>
+            <b-form-group label="Lineare Veränderung der Eigenverbrauchsrate pro Jahr:">
+              <b-input-group append="%">
+                <b-form-input v-model.number="input.linearSelfUseRateChange" type="number" min="0" max="10" />
+              </b-input-group>
+            </b-form-group>
             
           </b-collapse>
 
@@ -253,7 +268,22 @@
       :fields="tableFields"
       small
       responsive="sm"
-    />
+    >
+      <template #cell(show_details)="row">
+        <b-button size="sm" @click="row.toggleDetails" class="mr-2">
+          {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
+        </b-button>
+
+      </template>
+
+      <template #row-details="row">
+        <b-card>
+          
+          <!-- TODO: Hier soll das Bar Chart hin -->
+
+        </b-card>
+      </template>
+    </b-table>
     
 
     <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
@@ -291,6 +321,7 @@ export default {
         { key: 'batteryAmortization', label: 'Amortisation nur Speicher', formatter: (val) => val.toFixed(2) + " Jahre" },
         { key: 'costSavings', label: 'Ersparnis / Jahr Anlage', formatter: (val) => val.toFixed(2) + " €" },
         { key: 'amortization', label: 'Amortisation Anlage', formatter: (val) => val.toFixed(2) + " Jahre"  },
+        'show_details'
       ],
       inputBatterySizes: [],
       batterySizes: JSON.parse(localStorage.getItem('storedSizes')) || [
@@ -323,6 +354,10 @@ export default {
         maxPowerGenerationBattery: 0,
         maxPowerLoadBattery: 0,
         maxPowerFeedIn: 0,
+        amortizationYears: 20,
+        linearDegrationModules:0.5,
+        linearConsumptionChange:0.5, // negative = less need
+        linearSelfUseRateChange:0, 
       },
       timeNeeded: 0,
       isCalculating: false,
@@ -468,6 +503,24 @@ export default {
           return prev
         }, {})
 
+        const yearlyData = new Array(this.input.amortizationYears).fill(undefined).map((val,i)=>i).map((val) => {
+            const conYear = consumptionYear * (100- (this.input.linearConsumptionChange * val)) /100
+            const suRate = selfUseRate + (this.input.linearSelfUseRateChange/selfUseRate*100)
+            const suPower = generationYear*suRate/100
+
+            return {
+              year: val,
+              generationYear: generationYear * (100 - (this.input.linearDegrationModules * val)) /100,
+              consumptionYear: conYear,
+              selfUsedPower: suPower,
+              fedInPower: generationYear - suPower,
+              selfSufficiencyRate: suPower/conYear*100,
+              selfUsedRate: suRate,
+            }
+
+        })
+
+
 
         const monthlyData = Object.keys(monthlyDataObj).map(key => {
           monthlyDataObj[key].month = parseInt(key)
@@ -487,7 +540,8 @@ export default {
           amortization,
           costSavingsBattery,
           batteryAmortization,
-          monthlyData
+          monthlyData,
+          yearlyData
         }
 
       })
