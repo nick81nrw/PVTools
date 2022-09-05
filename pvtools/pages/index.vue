@@ -262,7 +262,7 @@
             <BarChart :datasets="[
                                   {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'}, 
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'}, 
-                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Seicher', backgroundColor: 'blue', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
                                   {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 1'},
                                   {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
                                 ]" 
