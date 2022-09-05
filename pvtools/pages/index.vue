@@ -222,69 +222,51 @@
         </b-collapse>
       </b-col>
     </b-row>
+    <b-overlay :show="isCalculating" rounded="sm">
+      <b-row>
+        <b-col>
+          <div id="chartContainer">
+            <Chart id="chart" v-if="displayData.length > 0" :labels="displayData.map(item => item.size)"
+              :datasets="[{ data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' }, { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' }, { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }]" />
+          </div>
 
-    <b-row>
-      <b-col>
-        <div id="chartContainer">
-          <Chart id="chart" v-if="displayData.length > 0" :labels="displayData.map(item => item.size)"
-            :datasets="[{ data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' }, { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' }, { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }]" />
-        </div>
 
+        </b-col>
+      </b-row>
+         
+      <b-table 
+        v-if="displayData.length > 0" 
+        striped hover 
+        :items="displayData"
+        :fields="tableFields"
+        small
+        responsive="sm"
+      >
+        <template #cell(show_details)="row">
+          <b-button size="sm" @click="row.toggleDetails" class="mr-2">
+            {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
+          </b-button>
 
-      </b-col>
-    </b-row>
-    <!--    {{generatedData}}-->
-    <!-- <div id="tableContainer">
-      <table v-if="displayData.length > 0" class="mt-3">
-        <tr>
-          <th>Speichergröße</th>
-          <th>Selbstgenutzer Strom / Jahr</th>
-          <th>Eingespeister Strom / Jahr</th>
-          <th>Eigenverbrauchsquote</th>
-          <th>Autarkie</th>
-          <th>Ersparnis / Jahr durch Akku</th>
-          <th>Amortisation nur Speicher</th>
-          <th>Ersparnis / Jahr Anlage</th>
-          <th>Amortisation Anlage</th>
-        </tr>
-        <tr v-for="item in displayData" :key="item.size">
-          <td>{{ (item.size / 1000).toFixed(1) }} kWh</td>
-          <td>{{ item.selfUsedPower.toFixed(2) }} kWh</td>
-          <td>{{ item.fedInPower.toFixed(2) }} kWh</td>
-          <td>{{ item.selfUseRate.toFixed(2) }} %</td>
-          <td>{{ item.selfSufficiencyRate.toFixed(2) }} %</td>
-          <td>{{ item.costSavingsBattery.toFixed(2) }} €</td>
-          <td>{{ item.batteryAmortization.toFixed(2) }} Jahre</td>
-          <td>{{ item.costSavings.toFixed(2) }} €</td>
-          <td>{{ item.amortization.toFixed(2) }} Jahre</td>
-        </tr>
-      </table>
-    </div> -->
-        
-    <b-table 
-      v-if="displayData.length > 0" 
-      striped hover 
-      :items="displayData"
-      :fields="tableFields"
-      small
-      responsive="sm"
-    >
-      <template #cell(show_details)="row">
-        <b-button size="sm" @click="row.toggleDetails" class="mr-2">
-          {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
-        </b-button>
+        </template>
 
-      </template>
-
-      <template #row-details="row">
-        <b-card>
-          
-          <!-- TODO: Hier soll das Bar Chart hin -->
-
-        </b-card>
-      </template>
-    </b-table>
-    
+        <template #row-details="row">
+          <b-card>
+            <!-- <b-col>asdsad {{ row.item.fedInPower }} asdasd</b-col> -->
+            <!-- TODO: Hier soll das Bar Chart hin -->
+            <BarChart :datasets="[
+                                  {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'}, 
+                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'}, 
+                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Seicher', backgroundColor: 'blue', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 1'},
+                                  {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
+                                ]" 
+                      :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
+                      
+                      />
+          </b-card>
+        </template>
+      </b-table>
+    </b-overlay>
 
     <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
   </b-container>
@@ -292,6 +274,7 @@
 
 <script>
 import Chart from '../components/Chart'
+import BarChart from '../components/BarChart'
 // import axios from "axios";
 import {
   calculateConsumption,
@@ -305,7 +288,8 @@ import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
 export default {
   name: 'IndexPage',
   components: {
-    Chart
+    Chart,
+    BarChart
   },
   data() {
     return {
@@ -641,5 +625,9 @@ td {
 
 .paypal {
   margin-top: 10px;
+}
+.b-table-details canvas {
+  max-width: 100%;
+  max-height: 40vh;
 }
 </style>
