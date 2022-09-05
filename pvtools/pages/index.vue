@@ -201,7 +201,7 @@
                 <b-form-input v-model.number="input.maxPowerFeedIn" type="number" min="0" max="100000" />
               </b-input-group>
             </b-form-group>
-            <b-form-group label="Lineare Degradation der PV-Module pro Jahr:">
+            <!-- <b-form-group label="Lineare Degradation der PV-Module pro Jahr:">
               <b-input-group append="%">
                 <b-form-input v-model.number="input.linearDegrationModules" type="number" min="0" max="10" />
               </b-input-group>
@@ -211,11 +211,16 @@
                 <b-form-input v-model.number="input.linearConsumptionChange" type="number" min="-20" max="20" />
               </b-input-group>
             </b-form-group>
-            <b-form-group label="Lineare Veränderung der Eigenverbrauchsrate pro Jahr:">
+            <b-form-group label="Lineare Veränderung des Strompreises pro Jahr (auch negativ erlaubt z.B. -1%):">
               <b-input-group append="%">
-                <b-form-input v-model.number="input.linearSelfUseRateChange" type="number" min="0" max="10" />
+                <b-form-input v-model.number="input.linearConsumptionCostsChange" type="number" min="-20" max="20" />
               </b-input-group>
             </b-form-group>
+            <b-form-group label="Lineare Veränderung der Eigenverbrauchsrate pro Jahr (auch negativ erlaubt z.B. -1%):">
+              <b-input-group append="%">
+                <b-form-input v-model.number="input.linearSelfUseRateChange" type="number" min="-10" max="10" />
+              </b-input-group>
+            </b-form-group> -->
             
           </b-collapse>
 
@@ -243,16 +248,17 @@
         responsive="sm"
       >
         <template #cell(show_details)="row">
-          <b-button size="sm" @click="row.toggleDetails" class="mr-2">
-            {{ row.detailsShowing ? 'Hide' : 'Show'}} Details
+          <b-button size="sm" @click="row.toggleDetails" >
+            Details
+            <font-awesome-icon v-if="row.detailsShowing" icon="fa-square-caret-up" />
+            <font-awesome-icon v-if="!row.detailsShowing" icon="fa-square-caret-down" />
+            <!-- {{ row.detailsShowing ? 'Hide' : 'Show'}} Details -->
           </b-button>
 
         </template>
 
         <template #row-details="row">
           <b-card>
-            <!-- <b-col>asdsad {{ row.item.fedInPower }} asdasd</b-col> -->
-            <!-- TODO: Hier soll das Bar Chart hin -->
             <BarChart :datasets="[
                                   {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'}, 
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'}, 
@@ -261,8 +267,26 @@
                                   {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
                                 ]" 
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
-                      
                       />
+            <!-- <b-table 
+              v-if="displayData.length > 0" 
+              striped hover 
+              :items="row.item.yearlyData"
+              :fields="[
+                { key: 'year', label: 'Jahr' },
+                { key: 'consumptionYear', label: 'Verbrauch Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
+                { key: 'generationYear', label: 'Erzeugung Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
+                { key: 'selfUsedPower', label: 'Selbstgenutzer Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
+                { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
+                { key: 'selfUsedRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + ' %' },
+                { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + ' %' },
+                { key: 'consumptionCosts', label: 'Kosten', formatter: (val) => val.toFixed(2) + '€' },
+                { key: 'costSavings', label: 'Ersparnis', formatter: (val) => val.toFixed(2) + '€' },
+              ]"
+              small
+              responsive="sm"
+            /> -->
+            
           </b-card>
         </template>
       </b-table>
@@ -305,7 +329,7 @@ export default {
         { key: 'batteryAmortization', label: 'Amortisation nur Speicher', formatter: (val) => val.toFixed(2) + " Jahre" },
         { key: 'costSavings', label: 'Ersparnis / Jahr Anlage', formatter: (val) => val.toFixed(2) + " €" },
         { key: 'amortization', label: 'Amortisation Anlage', formatter: (val) => val.toFixed(2) + " Jahre"  },
-        'show_details'
+        { key: 'show_details', label: 'Weitere Details'  },
       ],
       inputBatterySizes: [],
       batterySizes: JSON.parse(localStorage.getItem('storedSizes')) || [
@@ -341,6 +365,7 @@ export default {
         amortizationYears: 20,
         linearDegrationModules:0.5,
         linearConsumptionChange:0.5, // negative = less need
+        linearConsumptionCostsChange:0, 
         linearSelfUseRateChange:0, 
       },
       timeNeeded: 0,
@@ -488,18 +513,24 @@ export default {
         }, {})
 
         const yearlyData = new Array(this.input.amortizationYears).fill(undefined).map((val,i)=>i).map((val) => {
-            const conYear = consumptionYear * (100- (this.input.linearConsumptionChange * val)) /100
-            const suRate = selfUseRate + (this.input.linearSelfUseRateChange/selfUseRate*100)
+            
+            const conYear = consumptionYear * (100+ (this.input.linearConsumptionChange * val)) /100
+            // var suRate = selfUseRate * (100 + this.input.linearSelfUseRateChange * val)/100
+            var suRate = selfUseRate * ((this.input.linearSelfUseRateChange / 100+1)**val)
             const suPower = generationYear*suRate/100
+            const conCosts = this.input.consumptionCosts * ((100 + this.input.linearConsumptionCostsChange*val)/100)
+            const fedIn = generationYear - suPower
 
             return {
               year: val,
               generationYear: generationYear * (100 - (this.input.linearDegrationModules * val)) /100,
               consumptionYear: conYear,
               selfUsedPower: suPower,
-              fedInPower: generationYear - suPower,
+              fedInPower: fedIn,
               selfSufficiencyRate: suPower/conYear*100,
-              selfUsedRate: suRate,
+              selfUsedRate: selfUseRate,
+              consumptionCosts: conCosts,
+              costSavings: (suPower * conCosts + fedIn * this.input.feedInCompensation),
             }
 
         })
