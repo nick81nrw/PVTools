@@ -232,7 +232,11 @@
         <b-col>
           <div id="chartContainer">
             <Chart id="chart" v-if="displayData.length > 0" :labels="displayData.map(item => item.size)"
-              :datasets="[{ data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' }, { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' }, { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }]" />
+              :datasets="[
+                { data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' }, 
+                { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' }, 
+                { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }
+                ]" />
           </div>
 
 
@@ -256,15 +260,30 @@
           </b-button>
 
         </template>
-
         <template #row-details="row">
+          <b-card>
+              <b-table 
+                striped hover 
+                :items="[row.item]"
+                :fields="[
+                  { key: 'generationYear', label: 'PV Erzeugung', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'consumptionYear', label: 'Stromverbrauch', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'consumptionGrid', label: 'Netzbezug', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedFeedInPowerGrid', label: 'Fehlende Netzeinspeisung', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedInverterPower', label: 'Fehlende Erzeugung Wechelrichter', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedBatteryPower', label: 'Fehlende Erzeugung Speicher', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                ]"
+                small
+                responsive="sm"
+              />
+          </b-card>
           <b-card>
             <BarChart :datasets="[
                                   {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'}, 
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'}, 
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 1'},
-                                  {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
+                                  {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
+                                  // {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
                                 ]" 
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
                       />
@@ -471,6 +490,10 @@ export default {
 
         const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
         const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev, 0) / 1000
+        const consumptionGrid = energyFlowData.reduce((prev, curr) => curr.consumptionGrid + prev, 0) / 1000
+        const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.missedBatteryPower + prev, 0) / 1000
+        const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
+        const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.missedInverterPower + prev, 0) / 1000
         const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev, 0) / 1000
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev, 0) / 1000
         const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
@@ -549,6 +572,10 @@ export default {
           consumptionYear,
           selfUsedPower,
           fedInPower,
+          missedBatteryPower,
+          missedFeedInPowerGrid,
+          missedInverterPower,
+          consumptionGrid,
           selfSufficiencyRate,
           selfUseRate,
           costSavings,
