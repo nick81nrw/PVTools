@@ -33,6 +33,7 @@ export default {
 
   // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
   buildModules: [
+    '@nuxtjs/google-analytics'
   ],
 
   // Modules: https://go.nuxtjs.dev/config-modules
@@ -49,7 +50,9 @@ export default {
      baseURL: process.env.NODE_ENV == 'production' ? 'https://pvtools.sektorsonne.de' : 'http://localhost:8082',
     //  baseURL: 'http://localhost:8082',
   },
-
+  googleAnalytics: {
+    id: process.env.GOOGLE_ANALYTICS_ID
+  },
   // Build Configuration: https://go.nuxtjs.dev/config-build
 
   build: {
