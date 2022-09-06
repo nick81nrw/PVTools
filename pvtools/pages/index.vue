@@ -276,8 +276,22 @@
                 small
                 responsive="sm"
               />
+              <h4>Einzelne Erträge der Ausrichtungen</h4>
+              <b-table 
+                striped hover 
+                :items="roofsData"
+                :fields="[
+                  { key: 'aspect', label: 'Ausrichtung', formatter: (val) => (val).toFixed(1) + '°' },
+                  { key: 'angle', label: 'Neigung', formatter: (val) => (val).toFixed(1) + '°' },
+                  { key: 'peakpower', label: 'Leistung', formatter: (val) => (val).toFixed(1) + ' kWp' },
+                  { key: 'generationYear', label: 'PV-Ertrag', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                ]"
+                small
+                responsive="sm"
+              />
           </b-card>
           <b-card>
+            <h4>Monatsverlauf</h4>
             <BarChart :datasets="[
                                   {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'}, 
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'}, 
@@ -287,25 +301,7 @@
                                 ]" 
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
                       />
-            <!-- <b-table 
-              v-if="displayData.length > 0" 
-              striped hover 
-              :items="row.item.yearlyData"
-              :fields="[
-                { key: 'year', label: 'Jahr' },
-                { key: 'consumptionYear', label: 'Verbrauch Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
-                { key: 'generationYear', label: 'Erzeugung Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
-                { key: 'selfUsedPower', label: 'Selbstgenutzer Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
-                { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + ' kWh' },
-                { key: 'selfUsedRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + ' %' },
-                { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + ' %' },
-                { key: 'consumptionCosts', label: 'Kosten', formatter: (val) => val.toFixed(2) + '€' },
-                { key: 'costSavings', label: 'Ersparnis', formatter: (val) => val.toFixed(2) + '€' },
-              ]"
-              small
-              responsive="sm"
-            /> -->
-            
+           
           </b-card>
         </template>
       </b-table>
@@ -396,6 +392,7 @@ export default {
         angle: 0,
         peakpower: 0
       },
+      roofsData: [],
       inputAddressSearchString: localStorage.getItem('storedInputAddressSearchString') || "",
       adressData: JSON.parse(localStorage.getItem('storedAddress')) || {},
       costSavingsWithoutBattery: 0,
@@ -431,7 +428,7 @@ export default {
       let now = performance.now()
 
       this.isCalculating = true
-
+      this.roofsData = []
 
       const generationData = await Promise.all(this.input.roofs.map(roof => {
         return this.$axios.post("/relay", {
@@ -450,7 +447,12 @@ export default {
           body: {}
         })
           .then(response => response.data)
-          .then(data => normalizeHourlyRadiation(data.outputs.hourly))
+          .then(data => {
+            const normData = normalizeHourlyRadiation(data.outputs.hourly)
+            const generationYear = Object.values(normData).reduce((prev, curr) => prev + curr.P,0) / 1000
+            this.roofsData.push({...roof, generationYear })
+            return normData
+          })
       }))
 
 
@@ -467,7 +469,7 @@ export default {
       let BatterySizeResults = batterySizesWithNoBattery.map(size => {
         let newSoc = 100
 
-        this.returnedData = powerGenAndConsumption
+        
 
         const energyFlowData = powerGenAndConsumption.map(genConsumption => {
           const energyFlowObj = {
