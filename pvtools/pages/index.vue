@@ -310,7 +310,7 @@
         </template>
       </b-table>
     </b-overlay>
-
+    <FAQ />
     <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
   </b-container>
 </template>
@@ -318,6 +318,7 @@
 <script>
 import Chart from '../components/Chart'
 import BarChart from '../components/BarChart'
+import FAQ from '../components/FAQ'
 // import axios from "axios";
 import {
   calculateConsumption,
@@ -332,7 +333,8 @@ export default {
   name: 'IndexPage',
   components: {
     Chart,
-    BarChart
+    BarChart,
+    FAQ
   },
   data() {
     return {
