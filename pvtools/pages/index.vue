@@ -86,7 +86,7 @@
             <b-card bg-variant="light">
               <b-form-group label="Ausrichtung:">
                 <b-input-group append="° Grad Azimuth">
-                  <b-form-input v-model.number="roofInput.aspect" type="number" min="0" max="359" v-b-tooltip.hover
+                  <b-form-input v-model.number="roofInput.aspect" type="number" min="-180" max="180" v-b-tooltip.hover
                     title="0 = Süden, 90 = Westen, -90 = Osten" />
                 </b-input-group>
               </b-form-group>
