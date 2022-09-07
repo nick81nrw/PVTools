@@ -31,10 +31,13 @@
           <b-form>
             <b-form-group label="Adresse:">
               <b-input-group append="Straße, PLZ Stadt">
-                <b-form-input v-model="inputAddressSearchString" @focusout="getCoordinatesByAddress"
+                <b-form-input v-model="inputAddressSearchString"
                   placeholder="z.B. 50667 Köln" v-b-tooltip.hover
                   title='Beim verlassen des Feldes wird der Standort gesucht' />
-              </b-input-group>
+                </b-input-group>
+                <b-input-group-append>
+                  <b-button variant="info" @click="getCoordinatesByAddress">Suche nach Adresse</b-button>
+                </b-input-group-append>
             </b-form-group>
 
             <b-form-group label="Koordinaten:" v-if="adressData.lon && adressData.lat">
@@ -79,7 +82,7 @@
       </b-col>
       <b-col>
         <b-collapse id="inputCollapse" visible>
-          <b-form>
+          <b-form @submit="addRoof" @submit.stop.prevent >
             <b-card bg-variant="light">
               <b-form-group label="Ausrichtung:">
                 <b-input-group append="° Grad Azimuth">
@@ -95,46 +98,45 @@
               </b-form-group>
               <b-form-group label="Installierte Leistung">
                 <b-input-group append="Wp">
-                  <b-input v-model.number="roofInput.peakpower" min="0" type="number" v-b-tooltip.hover
+                  <b-input v-model.number="roofInput.peakpower" min="1" type="number" v-b-tooltip.hover
                     title='Bei 10kWp muss "10000" eingetragen werden' />
                 </b-input-group>
               </b-form-group>
 
               <b-button-group>
-                <b-button @click="input.roofs.push(roofInput)
-                roofInput = { angle: 0, aspect: 0, peakpower: 0 }">
+                <b-button type="submit">
                   Ausrichtung zur Berechnung hinzufügen
                 </b-button>
               </b-button-group>
             </b-card>
-
-            <b-list-group class="mt-3">
-              <div v-for="roof in input.roofs" :key="roof.aspect + roof.angle + roof.peakpower">
-                <b-list-group-item button :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower">
-                  Ausrichtung {{ roof.aspect }}° - Neigung: {{ roof.angle }}° - {{ roof.peakpower }} Wp
-                  <b-button-group>
-                    <b-button variant="primary"
-                      @click="roofInput.aspect = roof.aspect
-                                            roofInput.angle = roof.angle
-                      roofInput.peakpower = roof.peakpower
-                      input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower)) ">
-                      <font-awesome-icon icon="pen" />
-                    </b-button>
-                    <b-button variant="danger"
-                      @click="input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower))">
-                      <font-awesome-icon icon="trash" />
-                    </b-button>
-                  </b-button-group>
-                </b-list-group-item>
-                <!-- <b-collapse
-                  :id="'roof' + roof.aspect + roof.angle + roof.peakpower"
-                  accordion="roofs"
-                  visible
-                >
-                  {{'roof' + roof.aspect + roof.angle + roof.peakpower}}
-                </b-collapse> -->
-              </div>
-            </b-list-group>
+          </b-form>
+          <b-list-group class="mt-3">
+            <div v-for="roof in input.roofs" :key="roof.aspect + roof.angle + roof.peakpower">
+              <b-list-group-item button :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower">
+                Ausrichtung {{ roof.aspect }}° - Neigung: {{ roof.angle }}° - {{ roof.peakpower }} Wp
+                <b-button-group>
+                  <b-button variant="primary"
+                    @click="roofInput.aspect = roof.aspect
+                                          roofInput.angle = roof.angle
+                    roofInput.peakpower = roof.peakpower
+                    input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower)) ">
+                    <font-awesome-icon icon="pen" />
+                  </b-button>
+                  <b-button variant="danger"
+                    @click="input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower))">
+                    <font-awesome-icon icon="trash" />
+                  </b-button>
+                </b-button-group>
+              </b-list-group-item>
+              <!-- <b-collapse
+                :id="'roof' + roof.aspect + roof.angle + roof.peakpower"
+                accordion="roofs"
+                visible
+              >
+                {{'roof' + roof.aspect + roof.angle + roof.peakpower}}
+              </b-collapse> -->
+            </div>
+          </b-list-group>
 
 
             <b-button-group class="mt-3">
@@ -148,7 +150,7 @@
               </b-button>
               <b-button v-b-toggle.extensionsCollapse>Erweiterte Einstellungen</b-button>
             </b-button-group>
-          </b-form>
+        
           <b-collapse id="extensionsCollapse">
 
 
@@ -638,6 +640,14 @@ export default {
       return !isNaN(tag) && tag < 200000 && tag > 200
 
     },
+    addRoof(e) {
+      this.input.roofs.push(this.roofInput)
+      this.roofInput= {
+        aspect: 0,
+        angle: 0,
+        peakpower: 0
+      }
+    }
   },
   watch: {
     inputBatterySizes(newValue, oldValue) {
