@@ -15,7 +15,7 @@ const ENV = process.env.NODE_ENV || 'development'
 
 if (ENV === 'production') {
   app.use(cors({
-    origin: 'https://pvtools.sektorsonne.de'
+    origin: `https://${process.env.APP_URL}`
   }))
 
 } else {
