@@ -28,7 +28,7 @@ const calcHeatingTempMap = ({maxHeatTemp = null, minHeatTemp = -25, tempMap}) =>
         (nextTargetTemp - currTargetTemp) / (nextTemp - currTemp) :
         (currTargetTemp - prevTargetTemp) / (currTemp - prevTemp)
         
-        console.log({currTemp,nextTemp,prevTemp,currTargetTemp,nextTargetTemp, prevTargetTemp, factor})
+        // console.log({currTemp,nextTemp,prevTemp,currTargetTemp,nextTargetTemp, prevTargetTemp, factor})
 
         if (i == 0){
             for (let i = minHeatTemp; i <= currTemp; i++) {
@@ -51,7 +51,65 @@ const calcHeatingTempMap = ({maxHeatTemp = null, minHeatTemp = -25, tempMap}) =>
 
 
 
+const calcHeatEfficiencyMap = ({maxHeatTemp,minHeatTemp,maxTargetTemp,minTargetTemp,efficiencyMap }) => {
 
+    if (!maxHeatTemp) throw new Error('maxHeatTemp not given')
+    if (!minHeatTemp) throw new Error('minHeatTemp not given')
+    if (!maxTargetTemp) throw new Error('maxTargetTemp not given')
+    if (!minTargetTemp) throw new Error('minTargetTemp not given')
+    if (!efficiencyMap  ) throw new Error('efficiencyMap is not given')
+    if (!Array.isArray(efficiencyMap) ) throw new Error('efficiencyMap is not an array')
+    
+    const sameTemp = efficiencyMap.filter((val,i,arr) => arr.filter(v => v[0] == val[0]).length > 1 ).sort((a,b) => a[1] - b[1])
+    const sameHeatTemp = efficiencyMap.filter((val,i,arr) => arr.filter(v => v[1] == val[1]).length > 1 ).sort((a,b) => a[0] - b[0])
+    
+    if (sameTemp.length < 2) throw new Error('efficiencyMap need two efficiency values with same temprature')
+    if (sameHeatTemp.length < 2) throw new Error('efficiencyMap need two efficiency values with same heat temprature')
+
+    const tempBase = sameTemp[0][0]
+    const tempBaseEfficiency = sameTemp[0][2]
+    const tempBaseEfficiencyHigh = sameTemp[1][2]
+    const tempTargetBase = sameTemp[0][1]
+    const tempTargetBaseHigh = sameTemp[1][1]
+    const efficiencyPerTemp = (sameHeatTemp[sameTemp.length - 1][2] - sameHeatTemp[0][2])/(sameHeatTemp[sameTemp.length - 1][0] - sameHeatTemp[0][0])
+    const efficiencyPerTargetTemp = (sameTemp[0][2] - sameTemp[sameTemp.length - 1][2])/(sameTemp[sameTemp.length - 1][1] - sameTemp[0][1])
+
+    console.log({
+        tempBase,
+        tempBaseEfficiency,
+        tempTargetBase,
+        tempTargetBaseHigh,
+        tempBaseEfficiencyHigh,
+        efficiencyPerTemp,
+        efficiencyPerTargetTemp,
+        sameTemp,
+        sameHeatTemp
+    })
+
+    let tempTargetBaseMap = {}
+    for (let i = minHeatTemp; i <= maxHeatTemp; i++) {
+        tempTargetBaseMap[i] =  (i - tempBase) * efficiencyPerTemp + tempBaseEfficiency
+    }
+    
+    let newEfficiencyMap = Object.keys(tempTargetBaseMap).reduce((prev,curr) => {
+        for (let temp = minTargetTemp; temp <= maxTargetTemp; temp++){
+            let efficiencyLow = tempBaseEfficiency + (curr - tempBase) * efficiencyPerTemp
+            let efficiencyHigh = tempBaseEfficiencyHigh + (curr - tempBase) * efficiencyPerTargetTemp
+            let efficiencyDelta = (efficiencyLow-efficiencyHigh) / (tempTargetBaseHigh-tempTargetBase)
+
+            prev[temp] = {...prev[temp],[curr]: efficiencyLow - (temp - tempTargetBase) * efficiencyDelta }
+
+            // console.log(curr, obj, efficiencyLow, efficiencyHigh, efficiencyDelta)
+            // console.log(tempBaseEfficiency, temp, tempBase, efficiencyPerTemp)
+        }
+        // console.log(prev, curr)
+        return prev
+    }, {})
+
+
+    return newEfficiencyMap
+
+}
 
 
 
@@ -59,5 +117,6 @@ const calcHeatingTempMap = ({maxHeatTemp = null, minHeatTemp = -25, tempMap}) =>
 
 
 module.exports = {
-    calcHeatingTempMap
+    calcHeatingTempMap,
+    calcHeatEfficiencyMap
 }
