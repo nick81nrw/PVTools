@@ -285,7 +285,7 @@
                 :fields="[
                   { key: 'aspect', label: 'Ausrichtung', formatter: (val) => (val).toFixed(1) + '°' },
                   { key: 'angle', label: 'Neigung', formatter: (val) => (val).toFixed(1) + '°' },
-                  { key: 'peakpower', label: 'Leistung', formatter: (val) => (val).toFixed(1) + ' kWp' },
+                  { key: 'peakpower', label: 'Leistung', formatter: (val) => (val/1000).toFixed(1) + ' kWp' },
                   { key: 'generationYear', label: 'PV-Ertrag', formatter: (val) => (val).toFixed(1) + ' kWh' },
                 ]"
                 small
