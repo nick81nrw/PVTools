@@ -36,3 +36,10 @@ describe('calculate efficiency Map',() => {
         expect(calc['39']['-2']).toBe(3.6418333333333335)
     })
 })
+
+describe('calculate needed heat per day', () => {
+    test('', () => {
+
+        
+    })
+})

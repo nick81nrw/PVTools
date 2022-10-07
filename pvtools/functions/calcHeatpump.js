@@ -74,17 +74,17 @@ const calcHeatEfficiencyMap = ({maxHeatTemp,minHeatTemp,maxTargetTemp,minTargetT
     const efficiencyPerTemp = (sameHeatTemp[sameTemp.length - 1][2] - sameHeatTemp[0][2])/(sameHeatTemp[sameTemp.length - 1][0] - sameHeatTemp[0][0])
     const efficiencyPerTargetTemp = (sameTemp[0][2] - sameTemp[sameTemp.length - 1][2])/(sameTemp[sameTemp.length - 1][1] - sameTemp[0][1])
 
-    console.log({
-        tempBase,
-        tempBaseEfficiency,
-        tempTargetBase,
-        tempTargetBaseHigh,
-        tempBaseEfficiencyHigh,
-        efficiencyPerTemp,
-        efficiencyPerTargetTemp,
-        sameTemp,
-        sameHeatTemp
-    })
+    // console.log({
+    //     tempBase,
+    //     tempBaseEfficiency,
+    //     tempTargetBase,
+    //     tempTargetBaseHigh,
+    //     tempBaseEfficiencyHigh,
+    //     efficiencyPerTemp,
+    //     efficiencyPerTargetTemp,
+    //     sameTemp,
+    //     sameHeatTemp
+    // })
 
     let tempTargetBaseMap = {}
     for (let i = minHeatTemp; i <= maxHeatTemp; i++) {
@@ -111,12 +111,18 @@ const calcHeatEfficiencyMap = ({maxHeatTemp,minHeatTemp,maxTargetTemp,minTargetT
 
 }
 
+const calcDayHeat = ({tempArr, yearlyHeatConsumption}) => {
 
+    
+
+
+}
 
 
 
 
 module.exports = {
     calcHeatingTempMap,
-    calcHeatEfficiencyMap
+    calcHeatEfficiencyMap,
+    calcDayHeat
 }

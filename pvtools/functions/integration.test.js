@@ -68,7 +68,8 @@ describe('intertation', () => {
         expect(powerGenAndConsumption.find(v => v.dayTime == '20200405:14')).toEqual({
             dayTime: '20200405:14',
             P: 6308.4 + 558.8,
-            consumption: 885.0214310934527
+            consumption: 885.0214310934527,
+            temperature: 17.55
         })
     })
     test('energyFlow with real data on one day', () => {
