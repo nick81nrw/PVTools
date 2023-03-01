@@ -340,7 +340,7 @@ export default {
       returnedData: {},
       tableFields:[
         { key: 'size', label: 'Speichergröße', formatter: (val) => (val/1000).toFixed(1) + " kWh" },
-        { key: 'selfUsedPower', label: 'Selbstgenutzer Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
+        { key: 'selfUsedPower', label: 'Selbstgenutzter Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'selfUseRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + " %" },
         { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + " %" },
