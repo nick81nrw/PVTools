@@ -34,7 +34,7 @@
             text:"Anhand des eingetragenen Standortes werden bei PVGis die PV-Erzeugungsdaten je Stunde für ein Jahr abgeholt (Standard 2020) und mit den Verbrauchsdaten aus dem Lastprofil und verschiedene Batteriegrößen verrechnet."},
             {realm:"Allgemeines",
             title:"Mir fehlt eine Funktion",
-            text:"Wenn dir eine Funktion fehlt, dann melde dich über das Forum von Andreas Schmitz (forum.drbacke.de). Gerne nehmen wir dafür auch eine Untersützung entgegen ;-)"},
+            text:"Wenn dir eine Funktion fehlt, dann melde dich über das <a href="https://forum.drbacke.de">Forum von Andreas Schmitz</a> oder direkt auf der <a href="https://github.com/nick81nrw/PVTools/issues">Quellcode Website</a>. Gerne nehmen wir dafür auch eine Untersützung entgegen ;-)"},
             {realm:"Eingabefelder",
             title:"Adresse",
             text:"(Pflichtfeld) Hier kannst du eine Stadt, einer Postleitzahl oder eine Komplette Adresse eingeben. Der erste Treffer laut openstreetmap wird dann verwendet. Falls die Adresse nicht stimmen sollte, einfach mehr Informationen eingeben. Daraus wird der Breiten- und Längengrad ermittelt welche für die Berechnung benötigt wird."},
