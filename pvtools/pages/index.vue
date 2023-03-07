@@ -75,11 +75,10 @@
                 <b-input v-model.number="input.batteryCostsPerKwh" min="0" type="number" />
               </b-input-group>
             </b-form-group>
-
-
           </b-form>
         </b-collapse>
       </b-col>
+
       <b-col>
         <b-collapse id="inputCollapse" visible>
           <b-form @submit="addRoof" @submit.stop.prevent >
@@ -138,10 +137,10 @@
             </div>
           </b-list-group>
 
-
             <b-button-group class="mt-3">
               <b-button variant="primary" @click="generateData"
                 :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
+                v-if="disabled" v-tooltip="Füge eine addresse und mindestens eine PV Ausrichtung hinzu"
                 v-b-toggle.inputCollapse>
                 Berechnen
               </b-button>
