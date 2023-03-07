@@ -140,7 +140,7 @@
             <b-button-group class="mt-3">
               <b-button variant="primary" @click="generateData"
                 :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
-                v-if="disabled" v-tooltip="Füge eine addresse und mindestens eine PV Ausrichtung hinzu"
+                :title="isDisabled ? 'Füge eine addresse und mindestens eine PV Ausrichtung hinzu' : ''"
                 v-b-toggle.inputCollapse>
                 Berechnen
               </b-button>
