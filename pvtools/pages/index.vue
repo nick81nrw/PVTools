@@ -140,7 +140,7 @@
             <b-button-group class="mt-3">
               <b-button variant="primary" @click="generateData"
                 :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
-                :title="(!adressData.lat && !adressData.lon) || input.roofs.length == 0 ? 'Füge eine addresse und mindestens eine PV Ausrichtung hinzu' : ''"
+                :title="(!adressData.lat && !adressData.lon) || input.roofs.length == 0 ? 'Füge eine Adresse und mindestens eine PV Ausrichtung hinzu' : ''"
                 v-b-toggle.inputCollapse>
                 Berechnen
               </b-button>
@@ -151,18 +151,13 @@
             </b-button-group>
         
           <b-collapse id="extensionsCollapse">
-
-
-
             <b-form-group label="Speichergrößen:">
               <b-input-group append="Wh">
                 <b-form-tags input-id="tags-basic" v-model="inputBatterySizes" :tag-validator="tagValidator"
                   v-b-tooltip.hover title='Zwischen 0,2 und 200 kWh'
                   :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"></b-form-tags>
-
               </b-input-group>
             </b-form-group>
-
             <b-form-group label="Vergleichsjahr:">
               <b-form-select v-model="input.year" :options="years"></b-form-select>
             </b-form-group>
@@ -222,9 +217,7 @@
                 <b-form-input v-model.number="input.linearSelfUseRateChange" type="number" min="-10" max="10" />
               </b-input-group>
             </b-form-group> -->
-            
           </b-collapse>
-
         </b-collapse>
       </b-col>
     </b-row>
