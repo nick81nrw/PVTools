@@ -1,4 +1,4 @@
-![Website](https://img.shields.io/website?up_message=online&url=https%3A%2F%2Fpvtools.sektorsonne.de%2F)
+[![Website](https://img.shields.io/website?up_message=online&url=https%3A%2F%2Fpvtools.sektorsonne.de%2F)](https://pvtools.sektorsonne.de)
 
 # PVTools
 PV Auslegungsrechner für mit Support für
