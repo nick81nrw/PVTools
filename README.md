@@ -1,5 +1,9 @@
+![Website](https://img.shields.io/website?up_message=online&url=https%3A%2F%2Fpvtools.sektorsonne.de%2F)
+
 # PVTools
-PV Tools
+PV Auslegungsrechner für mit Support für
+- Batteriespeicher
+- Mehrere Dachflächen
 
 ## API-Foundation:
 https://re.jrc.ec.europa.eu/api/v5_2/
