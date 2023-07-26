@@ -122,7 +122,7 @@
                     <font-awesome-icon icon="pen" />
                   </b-button>
                   <b-button variant="danger"
-                    @click="input.roofs = input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower))">
+                    @click="removeRoof(roof)">
                     <font-awesome-icon icon="trash" />
                   </b-button>
                 </b-button-group>
@@ -319,6 +319,7 @@ import {
   energyFlow
 } from "@/functions/energyFlow";
 import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
+import { convertConsumptionCSV, createTemplateCsv } from "@/functions/convertConsumpionUploads";
 
 export default {
   name: 'IndexPage',
@@ -382,6 +383,8 @@ export default {
       },
       timeNeeded: 0,
       isCalculating: false,
+      needFetch: true,
+      mergedPower:[],
       roofInput: {
         aspect: 0,
         angle: 0,
@@ -423,38 +426,42 @@ export default {
       let now = performance.now()
 
       this.isCalculating = true
-      this.roofsData = []
+      
+      if (this.needFetch) {
+      
+        this.roofsData = []
 
-      const generationData = await Promise.all(this.input.roofs.map(roof => {
-        return this.$axios.post("/relay", {
-          url: this.buildQueryString({
-            aspect: roof.aspect,
-            angle: roof.angle,
-            lat: this.adressData.lat,
-            lon: this.adressData.lon,
-            peakpower: roof.peakpower / 1000,
-            loss: this.input.systemloss,
-            startyear: this.input.year,
-            endyear: this.input.year
+        const generationData = await Promise.all(this.input.roofs.map(roof => {
+          return this.$axios.post("/relay", {
+            url: this.buildQueryString({
+              aspect: roof.aspect,
+              angle: roof.angle,
+              lat: this.adressData.lat,
+              lon: this.adressData.lon,
+              peakpower: roof.peakpower / 1000,
+              loss: this.input.systemloss,
+              startyear: this.input.year,
+              endyear: this.input.year
 
-          }),
-          method: "GET",
-          body: {}
-        })
-          .then(response => response.data)
-          .then(data => {
-            const normData = normalizeHourlyRadiation(data.outputs.hourly)
-            const generationYear = Object.values(normData).reduce((prev, curr) => prev + curr.P,0) / 1000
-            this.roofsData.push({...roof, generationYear })
-            return normData
+            }),
+            method: "GET",
+            body: {}
           })
-      }))
+            .then(response => response.data)
+            .then(data => {
+              const normData = normalizeHourlyRadiation(data.outputs.hourly)
+              const generationYear = Object.values(normData).reduce((prev, curr) => prev + curr.P,0) / 1000
+              this.roofsData.push({...roof, generationYear })
+              return normData
+            })
+        }))
 
 
-      const mergedPower = mergePowerGeneration(generationData)
-
+        this.mergedPower = mergePowerGeneration(generationData)
+        this.needFetch = false
+      }
       const consumption = calculateConsumption({ year: this.input.year, consumptionYear: this.input.yearlyConsumption, profile: SLPH0, profileBase: PROFILEBASE, factorFunction })
-      const powerGenAndConsumption = generateDayTimeValues({ consumption, powerGeneration: mergedPower, year: this.input.year })
+      const powerGenAndConsumption = generateDayTimeValues({ consumption, powerGeneration: this.mergedPower, year: this.input.year })
 
       let costSavingWithoutBattery
 
@@ -633,6 +640,10 @@ export default {
       return !isNaN(tag) && tag < 200000 && tag > 200
 
     },
+    removeRoof(roof){
+      this.input.roofs = this.input.roofs.filter(roofEntry => !(roof.aspect == roofEntry.aspect && roof.angle == roofEntry.angle && roof.peakpower == roofEntry.peakpower))
+      // this.needFetch = true
+    },
     addRoof(e) {
       this.input.roofs.push(this.roofInput)
       this.roofInput= {
@@ -640,13 +651,27 @@ export default {
         angle: 0,
         peakpower: 0
       }
+      // this.needFetch = true
     }
   },
   watch: {
-    inputBatterySizes(newValue, oldValue) {
+    inputBatterySizes(newValue) {
       this.batterySizes = newValue.map(val => Number(val)).sort((a, b) => a - b)
 
-    }
+    },
+    'input.systemloss'() {
+      this.needFetch = true
+    }, 
+    'input.year'() {
+      this.needFetch = true
+    }, 
+    'input.roofs'() {
+      this.needFetch = true
+    }, 
+    inputAddressSearchString(){
+      this.needFetch = true
+    },
+    deep: true
   },
   mounted() {
     this.screenHeight = window.screen.height

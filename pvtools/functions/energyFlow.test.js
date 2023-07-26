@@ -6,6 +6,17 @@ const seriescalc2 = require('./seriescalc2.json')
 const normalizedHR = normalizeHourlyRadiation(seriescalc.outputs.hourly)
 const normalizedHR2 = normalizeHourlyRadiation(seriescalc2.outputs.hourly)
 
+
+describe('testNormalize function',()=>{
+    test('check P and temperature values', () => {
+
+        expect(Object.keys(normalizedHR).length).toBe(8784)
+        expect(normalizedHR['20200505:15']).toEqual({"P": 3443.82, "temperature": 22.81})
+
+    })
+
+})
+
 describe('PV > Consumption',() => {
     test('pv generation is more than consumption, battery is loading', () => {
         const data = energyFlow({   
@@ -27,6 +38,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime: "",
         })
     })
     
@@ -51,6 +63,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -75,6 +88,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -99,6 +113,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 500,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -123,6 +138,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -146,6 +162,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     test('pv generation is more than consumption, battery is full, power is feed in, max feedin power less then generation', () => {
@@ -169,6 +186,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 1000,
+            dayTime:""
         })
     })
     
@@ -192,6 +210,7 @@ describe('PV > Consumption',() => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -218,6 +237,7 @@ describe('PV < Consumption', () => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
 
@@ -242,6 +262,7 @@ describe('PV < Consumption', () => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
    
@@ -266,6 +287,7 @@ describe('PV < Consumption', () => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -290,6 +312,7 @@ describe('PV < Consumption', () => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -313,6 +336,7 @@ describe('PV < Consumption', () => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
     
@@ -336,6 +360,7 @@ describe('PV < Consumption', () => {
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
+            dayTime:""
         })
     })
 })
@@ -388,7 +413,8 @@ describe('merge powergeneration arrays', () => {
         expect(typeof oneResult).toBe('object')
     })
     test('merge only one power generation object, find one key', () => {
-        expect(oneResult['20200308:13']).toEqual({"P": 3065.16})
+        expect(oneResult['20200308:13']).toEqual({"P": 3065.16,"temperature": 12.84})
+        expect(result['20200308:13']).toEqual({"P": 5861.82,"temperature": 12.84})
     })
     test('result is an object', () => {
         expect(typeof result).toBe('object')

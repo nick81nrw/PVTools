@@ -270,7 +270,7 @@ const normalizeHourlyRadiation = hourlyRadiationArray => {
             if (prev[dateHour]) {
                 prev[dateHour].P += curr.P
             } else {
-                prev[dateHour] = {P: curr.P}
+                prev[dateHour] = {P: curr.P, temperature: curr.T2m}
             }
 
             return prev
@@ -296,7 +296,7 @@ const mergePowerGeneration = powerGenerationArray => {
             if (prev[key]) {
                 prev[key].P += value.P
             } else {
-                prev[key] = {P: value.P}
+                prev[key] = {P: value.P, temperature: value.temperature}
             }
         }
 
@@ -339,9 +339,9 @@ const generateDayTimeOrder = year => {
 }
 
 /**
- * generate array with merged power generation + calculated power conszmption within day time aray
+ * generate array with merged power generation + calculated power consumption within day time aray
  * @param  {Int} year A year: 2020
- * @return {Array} Array with Objects  [{dayTime: "20200101:00", P: 220, consumption: 350},{dayTime: "20200101:01", P: 20, consumption: 450}, ... ]
+ * @return {Array} Array with Objects  [{dayTime: "20200101:00", P: 220, consumption: 350, temperature:10.3},{dayTime: "20200101:01", P: 20, consumption: 450}, ... ]
 */
 
 const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
@@ -351,6 +351,7 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
                 {
                     dayTime: curr,
                     P: powerGeneration[curr].P,
+                    temperature: powerGeneration[curr].temperature,
                     consumption: consumption[curr].P
                 }
             ]
@@ -367,5 +368,6 @@ module.exports = {
     calculateConsumption,
     normalizeHourlyRadiation,
     mergePowerGeneration,
-    generateDayTimeValues
+    generateDayTimeValues,
+    generateDayTimeOrder
 }

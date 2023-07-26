@@ -3,7 +3,7 @@ const {SLPH0, PROFILEBASE, factorFunction} = require('./SLP')
 const calcProfile = require('./calcProfile')
 
 
-describe.only('test SPL functions', () => {
+describe('test SPL functions', () => {
     const results = calcProfile({year: 2021, consumptionYear: 5000, profile: SLPH0, profileBase:PROFILEBASE})
     test('results length are as long then the year', () => {
         expect(Object.keys(results).length).toBe(365 * 24)
