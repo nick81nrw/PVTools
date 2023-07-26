@@ -326,6 +326,7 @@ import {
   energyFlow
 } from "@/functions/energyFlow";
 import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
+import { convertConsumptionCSV, createTemplateCsv } from "@/functions/convertConsumpionUploads";
 
 export default {
   name: 'IndexPage',

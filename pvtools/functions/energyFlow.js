@@ -339,7 +339,7 @@ const generateDayTimeOrder = year => {
 }
 
 /**
- * generate array with merged power generation + calculated power conszmption within day time aray
+ * generate array with merged power generation + calculated power consumption within day time aray
  * @param  {Int} year A year: 2020
  * @return {Array} Array with Objects  [{dayTime: "20200101:00", P: 220, consumption: 350, temperature:10.3},{dayTime: "20200101:01", P: 20, consumption: 450}, ... ]
 */
@@ -368,5 +368,6 @@ module.exports = {
     calculateConsumption,
     normalizeHourlyRadiation,
     mergePowerGeneration,
-    generateDayTimeValues
+    generateDayTimeValues,
+    generateDayTimeOrder
 }
