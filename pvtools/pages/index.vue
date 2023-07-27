@@ -52,7 +52,7 @@
             </b-alert>
             <b-form-group :disabled="this.useImportData" label="Jährlicher Stromverbrauch:">
               <b-input-group append="kWh">
-                <b-input v-model.number="input.yearlyConsumption" min="0" type="number" />
+                <b-input v-model.number="input.yearlyConsumption" min="0" type="number" step="100"/>
                 <b-alert variant="danger" :show="this.useImportData">Es wird ein individueller Verbrauch genutzt</b-alert>
               </b-input-group>
             </b-form-group>
@@ -63,24 +63,23 @@
             </b-form-group>
             <b-form-group label="Einspeisevergütung:">
               <b-input-group append="€ / kWh">
-                <b-input v-model.number="input.feedInCompensation" min="0" type="number" step="0.0001" />
+                <b-input v-model.number="input.feedInCompensation" min="0" type="number" step="0.001" />
               </b-input-group>
             </b-form-group>
             <b-form-group label="Installationskosten ohne Akku:">
               <b-input-group append="€">
-                <b-input v-model.number="input.installationCostsWithoutBattery" min="0" type="number" />
+                <b-input v-model.number="input.installationCostsWithoutBattery" min="0" type="number" step="100" />
               </b-input-group>
             </b-form-group>
             <b-form-group label="Speicherkosten pro kWh:">
               <b-input-group append="€">
-                <b-input v-model.number="input.batteryCostsPerKwh" min="0" type="number" />
+                <b-input v-model.number="input.batteryCostsPerKwh" min="0" type="number" step="100" />
               </b-input-group>
             </b-form-group>
-
-
           </b-form>
         </b-collapse>
       </b-col>
+
       <b-col>
         <b-collapse id="inputCollapse" visible>
           <b-form @submit="addRoof" @submit.stop.prevent >
@@ -99,7 +98,7 @@
               </b-form-group>
               <b-form-group label="Installierte Leistung">
                 <b-input-group append="Wp">
-                  <b-input v-model.number="roofInput.peakpower" min="1" type="number" required v-b-tooltip.hover
+                  <b-input v-model.number="roofInput.peakpower" min="1" type="number" step="100" required v-b-tooltip.hover
                     title='Bei 10kWp muss "10000" eingetragen werden' />
                 </b-input-group>
               </b-form-group>
@@ -139,10 +138,10 @@
             </div>
           </b-list-group>
 
-
             <b-button-group class="mt-3">
               <b-button variant="primary" @click="generateData"
                 :disabled="(!adressData.lat && !adressData.lon) || input.roofs.length == 0"
+                :title="(!adressData.lat && !adressData.lon) || input.roofs.length == 0 ? 'Füge eine Adresse und mindestens eine PV Ausrichtung hinzu' : ''"
                 v-b-toggle.inputCollapse>
                 Berechnen
               </b-button>
@@ -151,20 +150,15 @@
               </b-button>
               <b-button v-b-toggle.extensionsCollapse>Erweiterte Einstellungen</b-button>
             </b-button-group>
-        
+
           <b-collapse id="extensionsCollapse">
-
-
-
             <b-form-group label="Speichergrößen:">
               <b-input-group append="Wh">
                 <b-form-tags input-id="tags-basic" v-model="inputBatterySizes" :tag-validator="tagValidator"
                   v-b-tooltip.hover title='Zwischen 0,2 und 200 kWh'
                   :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"></b-form-tags>
-
               </b-input-group>
             </b-form-group>
-
             <b-form-group label="Vergleichsjahr:">
               <b-form-select v-model="input.year" :options="years"></b-form-select>
             </b-form-group>
@@ -238,9 +232,8 @@
                 <b-form-input v-model.number="input.linearSelfUseRateChange" type="number" min="-10" max="10" />
               </b-input-group>
             </b-form-group> -->
-            
-          </b-collapse>
 
+          </b-collapse>
         </b-collapse>
       </b-col>
     </b-row>
@@ -250,8 +243,8 @@
           <div id="chartContainer">
             <Chart id="chart" v-if="displayData.length > 0" :labels="displayData.map(item => item.size)"
               :datasets="[
-                { data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' }, 
-                { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' }, 
+                { data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' },
+                { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' },
                 { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }
                 ]" />
           </div>
@@ -259,10 +252,10 @@
 
         </b-col>
       </b-row>
-         
-      <b-table 
-        v-if="displayData.length > 0" 
-        striped hover 
+
+      <b-table
+        v-if="displayData.length > 0"
+        striped hover
         :items="displayData"
         :fields="tableFields"
         small
@@ -279,8 +272,8 @@
         </template>
         <template #row-details="row">
           <b-card>
-              <b-table 
-                striped hover 
+              <b-table
+                striped hover
                 :items="[row.item]"
                 :fields="[
                   { key: 'generationYear', label: 'PV Erzeugung', formatter: (val) => (val).toFixed(1) + ' kWh' },
@@ -294,13 +287,13 @@
                 responsive="sm"
               />
               <h4>Einzelne Erträge der Ausrichtungen</h4>
-              <b-table 
-                striped hover 
+              <b-table
+                striped hover
                 :items="roofsData"
                 :fields="[
                   { key: 'aspect', label: 'Ausrichtung', formatter: (val) => (val).toFixed(1) + '°' },
                   { key: 'angle', label: 'Neigung', formatter: (val) => (val).toFixed(1) + '°' },
-                  { key: 'peakpower', label: 'Leistung', formatter: (val) => (val).toFixed(1) + ' kWp' },
+                  { key: 'peakpower', label: 'Leistung', formatter: (val) => (val/1000).toFixed(1) + ' kWp' },
                   { key: 'generationYear', label: 'PV-Ertrag', formatter: (val) => (val).toFixed(1) + ' kWh' },
                 ]"
                 small
@@ -310,15 +303,15 @@
           <b-card>
             <h4>Monatsverlauf</h4>
             <BarChart :datasets="[
-                                  {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'}, 
-                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'}, 
+                                  {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'},
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
                                   {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
                                   // {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
-                                ]" 
+                                ]"
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
                       />
-           
+
           </b-card>
         </template>
       </b-table>
@@ -356,7 +349,7 @@ export default {
       returnedData: {},
       tableFields:[
         { key: 'size', label: 'Speichergröße', formatter: (val) => (val/1000).toFixed(1) + " kWh" },
-        { key: 'selfUsedPower', label: 'Selbstgenutzer Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
+        { key: 'selfUsedPower', label: 'Selbstgenutzter Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'selfUseRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + " %" },
         { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + " %" },
@@ -400,8 +393,8 @@ export default {
         amortizationYears: 20,
         linearDegrationModules:0.5,
         linearConsumptionChange:0.5, // negative = less need
-        linearConsumptionCostsChange:0, 
-        linearSelfUseRateChange:0, 
+        linearConsumptionCostsChange:0,
+        linearSelfUseRateChange:0,
       },
       timeNeeded: 0,
       isCalculating: false,
@@ -497,7 +490,7 @@ export default {
       let BatterySizeResults = batterySizesWithNoBattery.map(size => {
         let newSoc = 100
 
-        
+
 
         const energyFlowData = powerGenAndConsumption.map(genConsumption => {
           const energyFlowObj = {
@@ -568,7 +561,7 @@ export default {
         }, {})
 
         const yearlyData = new Array(this.input.amortizationYears).fill(undefined).map((val,i)=>i).map((val) => {
-            
+
             const conYear = consumptionYear * (100+ (this.input.linearConsumptionChange * val)) /100
             // var suRate = selfUseRate * (100 + this.input.linearSelfUseRateChange * val)/100
             var suRate = selfUseRate * ((this.input.linearSelfUseRateChange / 100+1)**val)
