@@ -50,9 +50,10 @@
             <b-alert v-else-if="adressData == 'no_address'" variant="danger" show>
               Die eingegebende Adresse konnte nicht gefunden werden. Bitte versuchen Sie es erneut.
             </b-alert>
-            <b-form-group label="Jährlicher Stromverbrauch:">
+            <b-form-group :disabled="this.useImportData" label="Jährlicher Stromverbrauch:">
               <b-input-group append="kWh">
                 <b-input v-model.number="input.yearlyConsumption" min="0" type="number" step="100"/>
+                <b-alert variant="danger" :show="this.useImportData">Es wird ein individueller Verbrauch genutzt</b-alert>
               </b-input-group>
             </b-form-group>
             <b-form-group label="Stromkosten:">
@@ -160,6 +161,20 @@
             </b-form-group>
             <b-form-group label="Vergleichsjahr:">
               <b-form-select v-model="input.year" :options="years"></b-form-select>
+            </b-form-group>
+            <b-form-group label="Import individueller stündlicher Verbauch:">
+              <b-button size="sm" @click="downloadCsvTemplate">{{"Vorlage herunterladen für das o.g. Vergleichsjahr " + this.input.year}}</b-button>
+              <b-form-file
+              v-model="csvFile"
+              :state="Boolean(csvFile)"
+              placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
+              drop-placeholder="Drop file here..."
+              accept=".csv"
+              plain
+              ></b-form-file>
+              <b-alert show :show="!!this.importCsvErrorMessage" dismissible variant="danger">{{this.importCsvErrorMessage}}</b-alert>
+              <b-button size="sm" :disabled="this.useImportData" @click="uploadCsvData">Aktiviere CSV Datei</b-button>
+              <b-button size="sm" :disabled="!this.useImportData" @click="deleteCsvFile">Deaktiviere Datei</b-button>
             </b-form-group>
             <b-form-group label="Systemverluste PV:">
               <b-input-group append="%">
@@ -390,6 +405,10 @@ export default {
         angle: 0,
         peakpower: 0
       },
+      // CSV Import
+      useImportData: false,
+      importConsumptionData: {},
+      importCsvErrorMessage: null,
       roofsData: [],
       inputAddressSearchString: localStorage.getItem('storedInputAddressSearchString') || "",
       adressData: JSON.parse(localStorage.getItem('storedAddress')) || {},
@@ -460,7 +479,7 @@ export default {
         this.mergedPower = mergePowerGeneration(generationData)
         this.needFetch = false
       }
-      const consumption = calculateConsumption({ year: this.input.year, consumptionYear: this.input.yearlyConsumption, profile: SLPH0, profileBase: PROFILEBASE, factorFunction })
+      const consumption = this.useImportData ? this.importConsumptionData : calculateConsumption({ year: this.input.year, consumptionYear: this.input.yearlyConsumption, profile: SLPH0, profileBase: PROFILEBASE, factorFunction })
       const powerGenAndConsumption = generateDayTimeValues({ consumption, powerGeneration: this.mergedPower, year: this.input.year })
 
       let costSavingWithoutBattery
@@ -652,6 +671,49 @@ export default {
         peakpower: 0
       }
       // this.needFetch = true
+    },
+    downloadCsvTemplate() {
+      const filename = "verbrauch_"+this.input.year+".csv"
+      const csvFile = new File([createTemplateCsv(this.input.year)],filename,{type: 'text/plan'})
+      const blobUrl = URL.createObjectURL(csvFile)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      document.body.appendChild(link)
+
+      link.dispatchEvent(
+        new MouseEvent('click',{
+          bubbles:true,
+          cancelable:true,
+          view:window
+        })
+      )
+
+      document.body.removeChild(link)
+      
+    },
+    uploadCsvData() {
+      const fr = new FileReader()
+      fr.readAsText(this.csvFile)
+      fr.onload = () => {
+        try {
+          this.importConsumptionData = convertConsumptionCSV(fr.result, this.input.year)
+          this.useImportData = true
+        }catch(e) {
+          console.log(e.message)
+          this.importCsvErrorMessage = e.message
+          console.log(this.importCsvErrorMessage)
+          setTimeout(()=>{
+            this.importCsvErrorMessage = null
+            this.importConsumptionData = null
+            this.useImportData = false
+          },3000)
+        }
+      }
+    },
+    deleteCsvFile() {
+      this.useImportData = false
+      this.importConsumptionData = null
     }
   },
   watch: {
