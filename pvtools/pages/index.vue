@@ -52,7 +52,7 @@
             </b-alert>
             <b-form-group :disabled="this.useImportData" label="Jährlicher Stromverbrauch:">
               <b-input-group append="kWh">
-                <b-input v-model.number="input.yearlyConsumption" min="0" type="number" step="100"/>
+                <b-input v-model.number="input.yearlyConsumption" min="0" type="number" step="1"/>
                 <b-alert variant="danger" :show="this.useImportData">Es wird ein individueller Verbrauch genutzt</b-alert>
               </b-input-group>
             </b-form-group>
@@ -68,12 +68,12 @@
             </b-form-group>
             <b-form-group label="Installationskosten ohne Akku:">
               <b-input-group append="€">
-                <b-input v-model.number="input.installationCostsWithoutBattery" min="0" type="number" step="100" />
+                <b-input v-model.number="input.installationCostsWithoutBattery" min="0" type="number" step="1" />
               </b-input-group>
             </b-form-group>
             <b-form-group label="Speicherkosten pro kWh:">
               <b-input-group append="€">
-                <b-input v-model.number="input.batteryCostsPerKwh" min="0" type="number" step="100" />
+                <b-input v-model.number="input.batteryCostsPerKwh" min="0" type="number" step="1" />
               </b-input-group>
             </b-form-group>
           </b-form>
@@ -98,7 +98,7 @@
               </b-form-group>
               <b-form-group label="Installierte Leistung">
                 <b-input-group append="Wp">
-                  <b-input v-model.number="roofInput.peakpower" min="1" type="number" step="100" required v-b-tooltip.hover
+                  <b-input v-model.number="roofInput.peakpower" min="1" type="number" step="1" required v-b-tooltip.hover
                     title='Bei 10kWp muss "10000" eingetragen werden' />
                 </b-input-group>
               </b-form-group>
