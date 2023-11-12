@@ -28,6 +28,7 @@
     "webpack": "^4.46.0"
   },
   "devDependencies": {
+    "csv-parse": "^5.5.2",
     "jest": "^28.1.3"
   }
 }
