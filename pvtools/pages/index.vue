@@ -610,22 +610,22 @@ export default {
         }).sort((a, b) => a.month - b.month)
         
         // Debug !!!!
-        const filename = size+".json"
-        const jsonFile = new File([JSON.stringify(energyFlowData,null,2)], filename, {type: 'application/json'})
-        const blobUrl = URL.createObjectURL(jsonFile)
-        const link = document.createElement('a')
-        link.href = blobUrl
-        link.download = filename
-        document.body.appendChild(link)
+        // const filename = size+".json"
+        // const jsonFile = new File([JSON.stringify(energyFlowData,null,2)], filename, {type: 'application/json'})
+        // const blobUrl = URL.createObjectURL(jsonFile)
+        // const link = document.createElement('a')
+        // link.href = blobUrl
+        // link.download = filename
+        // document.body.appendChild(link)
 
-        link.dispatchEvent(
-          new MouseEvent('click',{
-            bubbles:true,
-            cancelable:true,
-            view:window
-          })
-        )
-        document.body.removeChild(link)
+        // link.dispatchEvent(
+        //   new MouseEvent('click',{
+        //     bubbles:true,
+        //     cancelable:true,
+        //     view:window
+        //   })
+        // )
+        // document.body.removeChild(link)
         
         return {
           size,
