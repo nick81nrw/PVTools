@@ -494,7 +494,7 @@ export default {
 
 
 
-        const energyFlowData = powerGenAndConsumption.map(genConsumption => {
+        let energyFlowData = powerGenAndConsumption.map(genConsumption => {
           const energyFlowObj = {
             powerGeneration: genConsumption.P,
             powerConsumption: genConsumption.consumption,
@@ -516,25 +516,31 @@ export default {
           return hourFlow
         })
         // regression
-        const regressionEnergyFlow = energyFlowData.map(e => {
-          const powerConsumption = e.selfUsagePower > 0 ? e.selfUsagePower : 0
-          e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption})
-          if (powerConsumption > e.selfUsedRegression) {
-            e.consumptionGrid = e.consumptionGrid + (powerConsumption - e.selfUsagePower)
+        energyFlowData = energyFlowData.map(e => {
+          e.originalSelfUsedPower = e.selfUsagePower
+          e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption: e.powerConsumption})
+          if (e.consumptionGrid > 0) {
+            e.originalConsumptionGrid = e.consumptionGrid
+            e.consumptionGrid = e.consumptionGrid + (e.originalSelfUsedPower - e.selfUsagePower)
+            e.originalFeedInPowerGrid = e.feedInPowerGrid
+            e.feedInPowerGrid = e.powerGeneration - e.selfUsagePower <= 0 ? 0 :e.powerGeneration - e.selfUsagePower
           }
           return e
         })
 
-        const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
-        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev, 0) / 1000
+        const generationYear = energyFlowData.reduce((prev, curr) => curr.powerGeneration + prev, 0) / 1000
+        // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
+        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.powerConsumption  + prev, 0) / 1000
+        // const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev, 0) / 1000
         const consumptionGrid = energyFlowData.reduce((prev, curr) => curr.consumptionGrid + prev, 0) / 1000
         const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.missedBatteryPower + prev, 0) / 1000
         const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
         const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.missedInverterPower + prev, 0) / 1000
         const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev, 0) / 1000
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev, 0) / 1000
-        const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
-        const selfUseRate = selfUsedPower / generationYear * 100 // Eigenverbrauchsquote
+        const selfSufficiencyRate = selfUsedPower / consumptionYear * 100 // Autarkiegrad
+        // const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
+        const selfUseRate =  generationYear / selfUsedPower * 100 // Eigenverbrauchsquote
         const costSavings = (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
         if (size == 1) costSavingWithoutBattery = costSavings;
         const amortization = (this.input.installationCostsWithoutBattery + this.input.batteryCostsPerKwh * (size / 1000)) / costSavings
@@ -604,7 +610,7 @@ export default {
         
         // Debug !!!!
         // const filename = size+".json"
-        // const jsonFile = new File([JSON.stringify(regressionEnergyFlow,null,2)], filename, {type: 'application/json'})
+        // const jsonFile = new File([JSON.stringify(energyFlowData,null,2)], filename, {type: 'application/json'})
         // const blobUrl = URL.createObjectURL(jsonFile)
         // const link = document.createElement('a')
         // link.href = blobUrl
@@ -639,7 +645,7 @@ export default {
           batteryAmortization,
           monthlyData,
           yearlyData,
-          regressionEnergyFlow
+          // regressionEnergyFlow
         }
 
       })
