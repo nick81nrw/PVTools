@@ -58,17 +58,17 @@ const energyFlow = ( {
         maxPowerGenerationBattery,
         maxPowerLoadBattery,
         maxPowerFeedIn,
-        dayTime,
-        regressionDb
+        dayTime
     } ) => {
     
     let selfUsagePowerPv, selfUsagePowerBattery, selfUsagePower, 
         newBatterySoc, feedInPowerGrid, consumptionGrid, batteryLoad,
-        missedFeedInPowerGrid, missedInverterPower, missedBatteryPower, powerProduction;
+        missedFeedInPowerGrid, missedInverterPower, missedBatteryPower;
     
     missedFeedInPowerGrid = 0
     missedInverterPower = 0
     missedBatteryPower = 0
+    const powerProduction = powerGeneration
 
     batteryLoadEfficiency = batteryLoadEfficiency || batteryEfficiency || 1
     batteryUnloadEfficiency = batteryUnloadEfficiency || batteryEfficiency || 1
@@ -181,6 +181,7 @@ const energyFlow = ( {
         newBatterySoc,
         powerGeneration,
         powerConsumption,
+        powerProduction,
         selfUsagePower,
         selfUsagePowerPv,
         selfUsagePowerBattery,

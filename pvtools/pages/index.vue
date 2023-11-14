@@ -518,17 +518,18 @@ export default {
         // regression
         energyFlowData = energyFlowData.map(e => {
           e.originalSelfUsedPower = e.selfUsagePower
-          e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption: e.powerConsumption})
+          e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption: e.selfUsagePower})
           if (e.consumptionGrid > 0) {
             e.originalConsumptionGrid = e.consumptionGrid
             e.consumptionGrid = e.consumptionGrid + (e.originalSelfUsedPower - e.selfUsagePower)
             e.originalFeedInPowerGrid = e.feedInPowerGrid
             e.feedInPowerGrid = e.powerGeneration - e.selfUsagePower <= 0 ? 0 :e.powerGeneration - e.selfUsagePower
+
           }
           return e
         })
 
-        const generationYear = energyFlowData.reduce((prev, curr) => curr.powerGeneration + prev, 0) / 1000
+        const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
         // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
         const consumptionYear = energyFlowData.reduce((prev, curr) => curr.powerConsumption  + prev, 0) / 1000
         // const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev, 0) / 1000
@@ -540,7 +541,7 @@ export default {
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev, 0) / 1000
         const selfSufficiencyRate = selfUsedPower / consumptionYear * 100 // Autarkiegrad
         // const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
-        const selfUseRate =  generationYear / selfUsedPower * 100 // Eigenverbrauchsquote
+        const selfUseRate =  selfUsedPower / generationYear  * 100 // Eigenverbrauchsquote
         const costSavings = (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
         if (size == 1) costSavingWithoutBattery = costSavings;
         const amortization = (this.input.installationCostsWithoutBattery + this.input.batteryCostsPerKwh * (size / 1000)) / costSavings
@@ -609,22 +610,22 @@ export default {
         }).sort((a, b) => a.month - b.month)
         
         // Debug !!!!
-        // const filename = size+".json"
-        // const jsonFile = new File([JSON.stringify(energyFlowData,null,2)], filename, {type: 'application/json'})
-        // const blobUrl = URL.createObjectURL(jsonFile)
-        // const link = document.createElement('a')
-        // link.href = blobUrl
-        // link.download = filename
-        // document.body.appendChild(link)
+        const filename = size+".json"
+        const jsonFile = new File([JSON.stringify(energyFlowData,null,2)], filename, {type: 'application/json'})
+        const blobUrl = URL.createObjectURL(jsonFile)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
 
-        // link.dispatchEvent(
-        //   new MouseEvent('click',{
-        //     bubbles:true,
-        //     cancelable:true,
-        //     view:window
-        //   })
-        // )
-        // document.body.removeChild(link)
+        link.dispatchEvent(
+          new MouseEvent('click',{
+            bubbles:true,
+            cancelable:true,
+            view:window
+          })
+        )
+        document.body.removeChild(link)
         
         return {
           size,
