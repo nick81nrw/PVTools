@@ -58,12 +58,13 @@ const energyFlow = ( {
         maxPowerGenerationBattery,
         maxPowerLoadBattery,
         maxPowerFeedIn,
-        dayTime
+        dayTime,
+        regressionDb
     } ) => {
     
     let selfUsagePowerPv, selfUsagePowerBattery, selfUsagePower, 
         newBatterySoc, feedInPowerGrid, consumptionGrid, batteryLoad,
-        missedFeedInPowerGrid, missedInverterPower, missedBatteryPower;
+        missedFeedInPowerGrid, missedInverterPower, missedBatteryPower, powerProduction;
     
     missedFeedInPowerGrid = 0
     missedInverterPower = 0
@@ -72,7 +73,7 @@ const energyFlow = ( {
     batteryLoadEfficiency = batteryLoadEfficiency || batteryEfficiency || 1
     batteryUnloadEfficiency = batteryUnloadEfficiency || batteryEfficiency || 1
 
-
+    //TODO: das muss weg
     if (maxPowerGenerationInverter && maxPowerGenerationInverter < powerGeneration) {
         
         missedInverterPower = powerGeneration - maxPowerGenerationInverter
@@ -363,11 +364,34 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
     
 }
 
+
+
+
+const regressionCalc = ({regressionDb,maxPowerGenerationInverter, powerConsumption }) => {
+
+    const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
+    const regression = regressionDb[Math.floor(powerConsumption / 100)*100] ? regressionDb[Math.floor(powerConsumption / 100)*100] : lastRegression 
+    // powerConsumption = 584Wh
+    // maxPowerGenerationInverter = 600
+
+    const powerProduction = Object.keys(regression)
+            .reduce((acc, key) => {
+                if (maxPowerGenerationInverter > 0 && maxPowerGenerationInverter <= parseInt(key)){
+                    return acc + powerConsumption*(maxPowerGenerationInverter/parseInt(key)*regression[key]) // keys > 600 | 584*(600/700*0.035) | 584*(600/800*0.0325*) | ....
+                }
+                return acc + regression[key]*powerConsumption // keys <= 600 | 0.00035*584 ... 0.0050*584 ....
+            },0)
+        
+    // console.log({powerProduction,powerConsumption, percent: Math.round(powerProduction/powerConsumption*100) })
+    return powerProduction
+}
+
 module.exports = {
     energyFlow,
     calculateConsumption,
     normalizeHourlyRadiation,
     mergePowerGeneration,
     generateDayTimeValues,
-    generateDayTimeOrder
+    generateDayTimeOrder,
+    regressionCalc
 }

@@ -331,10 +331,12 @@ import {
   generateDayTimeValues,
   mergePowerGeneration,
   normalizeHourlyRadiation,
-  energyFlow
+  energyFlow,
+  regressionCalc
 } from "@/functions/energyFlow";
 import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
 import { convertConsumptionCSV, createTemplateCsv } from "@/functions/convertConsumpionUploads";
+import regressionDb from '@/functions/regression.json'
 
 export default {
   name: 'IndexPage',
@@ -501,7 +503,8 @@ export default {
             batterySocMin: size * this.input.batterySocMinPercent / 100,
             batteryLoadEfficiency: this.input.batteryLoadEfficiency / 100,
             batteryUnloadEfficiency: this.input.batteryUnloadEfficiency / 100,
-            dayTime: genConsumption.dayTime
+            dayTime: genConsumption.dayTime,
+            regressionDb
           }
           if (this.input.maxPowerGenerationInverter && this.input.maxPowerGenerationInverter > 0) energyFlowObj.maxPowerGenerationInverter = this.input.maxPowerGenerationInverter
           if (this.input.maxPowerGenerationBattery && this.input.maxPowerGenerationBattery > 0) energyFlowObj.maxPowerGenerationBattery = this.input.maxPowerGenerationBattery
@@ -511,6 +514,15 @@ export default {
           const hourFlow = energyFlow(energyFlowObj)
           newSoc = hourFlow.newBatterySoc
           return hourFlow
+        })
+        // regression
+        const regressionEnergyFlow = energyFlowData.map(e => {
+          const powerConsumption = e.selfUsagePower > 0 ? e.selfUsagePower : 0
+          e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption})
+          if (powerConsumption > e.selfUsedRegression) {
+            e.consumptionGrid = e.consumptionGrid + (powerConsumption - e.selfUsagePower)
+          }
+          return e
         })
 
         const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
@@ -589,7 +601,25 @@ export default {
           monthlyDataObj[key].month = parseInt(key)
           return monthlyDataObj[key]
         }).sort((a, b) => a.month - b.month)
+        
+        // Debug !!!!
+        // const filename = size+".json"
+        // const jsonFile = new File([JSON.stringify(regressionEnergyFlow,null,2)], filename, {type: 'application/json'})
+        // const blobUrl = URL.createObjectURL(jsonFile)
+        // const link = document.createElement('a')
+        // link.href = blobUrl
+        // link.download = filename
+        // document.body.appendChild(link)
 
+        // link.dispatchEvent(
+        //   new MouseEvent('click',{
+        //     bubbles:true,
+        //     cancelable:true,
+        //     view:window
+        //   })
+        // )
+        // document.body.removeChild(link)
+        
         return {
           size,
           energyFlow: energyFlowData,
@@ -608,7 +638,8 @@ export default {
           costSavingsBattery,
           batteryAmortization,
           monthlyData,
-          yearlyData
+          yearlyData,
+          regressionEnergyFlow
         }
 
       })
@@ -616,6 +647,9 @@ export default {
       this.timeNeeded = performance.now() - now
       this.isCalculating = false
       this.displayData = BatterySizeResults
+      
+
+      
     },
     async getCoordinatesByAddress() {
       let osmReturn = (await this.$axios.post("/relay", {
