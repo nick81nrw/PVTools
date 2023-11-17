@@ -465,32 +465,59 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
 
 
 
-
-const regressionCalc = ({regressionDb,maxPowerGenerationInverter = 999999999 , energyConsumption, multiplicator }) => {
+const regressionCalc = ({regressionDb,maxPowerGenerationInverter, energyConsumption, multiplicator }) => {
 
 	if (multiplicator == 0 ) return 0
+	if (maxPowerGenerationInverter == 0 || !maxPowerGenerationInverter) return multiplicator
     const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
-    const regression = regressionDb[Math.floor(energyConsumption / 100)*100] ? regressionDb[Math.floor(energyConsumption / 100)*100] : lastRegression 
+    const regression = regressionDb[Math.floor(energyConsumption / 50)*50] ? regressionDb[Math.floor(energyConsumption / 100)*100] : lastRegression 
 
-	const minPower = maxPowerGenerationInverter > multiplicator ? multiplicator : maxPowerGenerationInverter
-	const minPowerFloor = Math.floor(minPower / 100)*100
     // energyConsumption = 407Wh
     // maxPowerGenerationInverter = 600
+
     const powerProduction = Object.keys(regression)
-	.reduce((acc, curr) => {
-		const key = parseInt(curr)
-		const value = regression[key]
-		if (minPower >= key){
-			if (minPowerFloor == key) return acc + minPower * value
-			return acc + ((key + 50) * value) // keys > 600 | 617*(600/700*0.035) | 617*(600/800*0.0325*) | ....
-		}
-		return acc + (minPower * value)  // keys <= 600 | 617*0.00035 ... 617*0.0050 ....
-	},0)
+            .reduce((acc, curr) => {
+				const key = parseInt(curr)
+				const value = regression[key]
+                if (maxPowerGenerationInverter > 0 && maxPowerGenerationInverter <= key){ 
+                    return acc + (multiplicator*(maxPowerGenerationInverter/key)*value) // keys > 600 | 617*(600/700*0.035) | 617*(600/800*0.0325*) | ....
+                }
+                return acc + multiplicator*value // keys <= 600 | 617*0.00035 ... 617*0.0050 ....
+            },0)
     // powerProduction = 350
-	console.log({energyConsumption, multiplicator, minPower, powerProduction})
         
     return powerProduction
 }
+
+
+// const regressionCalc = ({regressionDb,maxPowerGenerationInverter = 999999999 , energyConsumption, multiplicator }) => {
+
+//     // energyConsumption = 470Wh
+//     // maxPowerGenerationInverter = 999999
+// 	// multiplicator = 106,96 
+// 	if (multiplicator == 0 ) return 0
+//     const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
+//     // finde in Matrix die 100
+// 	const regression = regressionDb[Math.floor(energyConsumption / 50)*50] ? regressionDb[Math.floor(energyConsumption / 100)*100] : lastRegression 
+	
+// 	// nutze Min(WRLeistung, multiplicator) = 106,96
+// 	const minPower = maxPowerGenerationInverter > multiplicator ? multiplicator : maxPowerGenerationInverter
+// 	const minPowerFloor = Math.floor(minPower / 100)*100
+//     const powerProduction = Object.keys(regression)
+// 		.reduce((acc, curr) => {
+// 			const key = parseInt(curr)
+// 			const value = regression[key]
+// 			if (minPower >= key){ // 106,96 > 0, 106,96 > 100 
+// 				if (minPowerFloor == key) return acc + minPower * value // floor(106,96) 100 == key --- 106,96*0.0028530
+// 				return acc + ((key + 25) * value) // 106,96 > 0 --- (0+50)*0.0000850
+// 			}
+// 			return acc + (minPower * value)  // 106,96*0.0471 ... 106,96*0.14986 ....
+// 		},0)
+//     // powerProduction = 350
+// 	console.log({energyConsumption, multiplicator, minPower, powerProduction})
+        
+//     return powerProduction
+// }
 
 module.exports = {
     energyFlow,
