@@ -103,7 +103,7 @@ const energyFlow = ( {
 	
 	
 	gridUsedEnergy = energyConsumption - selfUsedEnergy
-	
+
 	if(energyGeneration >= selfUsedEnergy) {
 		const freeBatteryCapacity = batterySocMax - newBatterySoc
 		selfUsedEnergyPV = selfUsedEnergy
@@ -476,17 +476,18 @@ const regressionCalc = ({regressionDb,maxPowerGenerationInverter = 999999999 , e
 	const minPowerFloor = Math.floor(minPower / 100)*100
     // energyConsumption = 407Wh
     // maxPowerGenerationInverter = 600
-
     const powerProduction = Object.keys(regression)
-            .reduce((acc, curr) => {
-				const key = parseInt(curr)
-                if (minPower >= key){
-					if (minPowerFloor == key) return minPower * regression[key]
-                    return acc + ((key + 50) * regression[key]) // keys > 600 | 617*(600/700*0.035) | 617*(600/800*0.0325*) | ....
-                }
-                return acc + (minPower * regression[key])  // keys <= 600 | 617*0.00035 ... 617*0.0050 ....
-            },0)
+	.reduce((acc, curr) => {
+		const key = parseInt(curr)
+		const value = regression[key]
+		if (minPower >= key){
+			if (minPowerFloor == key) return acc + minPower * value
+			return acc + ((key + 50) * value) // keys > 600 | 617*(600/700*0.035) | 617*(600/800*0.0325*) | ....
+		}
+		return acc + (minPower * value)  // keys <= 600 | 617*0.00035 ... 617*0.0050 ....
+	},0)
     // powerProduction = 350
+	console.log({energyConsumption, multiplicator, minPower, powerProduction})
         
     return powerProduction
 }
