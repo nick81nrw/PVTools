@@ -459,22 +459,25 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
 
 
 
-const regressionCalc = ({regressionDb,maxPowerGenerationInverter, energyConsumption, multiplicator }) => {
+const regressionCalc = ({regressionDb,maxPowerGenerationInverter = 999999999 , energyConsumption, multiplicator }) => {
 
 	if (multiplicator == 0 ) return 0
-	if (maxPowerGenerationInverter == 0 || !maxPowerGenerationInverter) return multiplicator
     const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
     const regression = regressionDb[Math.floor(energyConsumption / 100)*100] ? regressionDb[Math.floor(energyConsumption / 100)*100] : lastRegression 
 
+	const minPower = maxPowerGenerationInverter > multiplicator ? multiplicator : maxPowerGenerationInverter
+	const minPowerFloor = Math.floor(minPower / 100)*100
     // energyConsumption = 407Wh
     // maxPowerGenerationInverter = 600
 
     const powerProduction = Object.keys(regression)
-            .reduce((acc, key) => {
-                if (maxPowerGenerationInverter > 0 && maxPowerGenerationInverter <= parseInt(key)){ 
-                    return acc + (multiplicator*(maxPowerGenerationInverter/parseInt(key)*regression[key])) // keys > 600 | 617*(600/700*0.035) | 617*(600/800*0.0325*) | ....
+            .reduce((acc, curr) => {
+				const key = parseInt(curr)
+                if (minPower >= key){
+					if (minPowerFloor == key) return minPower * regression[key]
+                    return acc + ((key + 50) * regression[key]) // keys > 600 | 617*(600/700*0.035) | 617*(600/800*0.0325*) | ....
                 }
-                return acc + multiplicator*regression[key] // keys <= 600 | 617*0.00035 ... 617*0.0050 ....
+                return acc + (minPower * regression[key])  // keys <= 600 | 617*0.00035 ... 617*0.0050 ....
             },0)
     // powerProduction = 350
         
