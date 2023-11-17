@@ -278,7 +278,7 @@
                 :fields="[
                   { key: 'generationYear', label: 'PV Erzeugung', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'consumptionYear', label: 'Stromverbrauch', formatter: (val) => (val).toFixed(1) + ' kWh' },
-                  { key: 'consumptionGrid', label: 'Netzbezug', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'gridUsedEnergy', label: 'Netzbezug', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'missedFeedInPowerGrid', label: 'Fehlende Netzeinspeisung', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'missedInverterPower', label: 'Fehlende Erzeugung Wechelrichter', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'missedBatteryPower', label: 'Fehlende Erzeugung Speicher', formatter: (val) => (val).toFixed(1) + ' kWh' },
@@ -306,8 +306,8 @@
                                   {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'},
                                   {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
-                                  // {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
+                                  {data: row.item.monthlyData.map(i=>i.gridUsedEnergy/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
+                                  // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
                                 ]"
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
                       />
@@ -351,7 +351,7 @@ export default {
       returnedData: {},
       tableFields:[
         { key: 'size', label: 'Speichergröße', formatter: (val) => (val/1000).toFixed(1) + " kWh" },
-        { key: 'selfUsedPower', label: 'Selbstgenutzter Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
+        { key: 'selfUsedEnergy', label: 'Selbstgenutzter Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'selfUseRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + " %" },
         { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + " %" },
@@ -483,7 +483,18 @@ export default {
       }
       const consumption = this.useImportData ? this.importConsumptionData : calculateConsumption({ year: this.input.year, consumptionYear: this.input.yearlyConsumption, profile: SLPH0, profileBase: PROFILEBASE, factorFunction })
       const powerGenAndConsumption = generateDayTimeValues({ consumption, powerGeneration: this.mergedPower, year: this.input.year })
-
+      
+      // const monGeneration = Object.keys(consumption).reduce((acc,key) => {
+      //   const mon = key.slice(-7).slice(0,2)
+      //   if (acc[mon]){
+      //     acc[mon].P = acc[mon].P + consumption[key].P
+      //   } else {
+      //     acc[mon] = {P:consumption[key].P}
+      //   }
+      //   return acc
+      // },{})
+      // console.log(monGeneration)
+      
       let costSavingWithoutBattery
 
 
@@ -496,10 +507,10 @@ export default {
 
         let energyFlowData = powerGenAndConsumption.map(genConsumption => {
           const energyFlowObj = {
-            powerGeneration: genConsumption.P,
-            powerConsumption: genConsumption.consumption,
+            energyGeneration: genConsumption.P,
+            energyConsumption: genConsumption.consumption,
             batterySoc: newSoc,
-            batterySocMax: size,
+            batterySocMax: size, // * this.input.batterySocMaxPercent / 100,
             batterySocMin: size * this.input.batterySocMinPercent / 100,
             batteryLoadEfficiency: this.input.batteryLoadEfficiency / 100,
             batteryUnloadEfficiency: this.input.batteryUnloadEfficiency / 100,
@@ -516,33 +527,33 @@ export default {
           return hourFlow
         })
         // regression
-        energyFlowData = energyFlowData.map(e => {
-          e.originalSelfUsedPower = e.selfUsagePower
-          e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption: e.selfUsagePower})
-          if (e.consumptionGrid > 0) {
-            e.originalConsumptionGrid = e.consumptionGrid
-            e.consumptionGrid = e.consumptionGrid + (e.originalSelfUsedPower - e.selfUsagePower)
-            e.originalFeedInPowerGrid = e.feedInPowerGrid
-            e.feedInPowerGrid = e.powerGeneration - e.selfUsagePower <= 0 ? 0 :e.powerGeneration - e.selfUsagePower
+        // energyFlowData = energyFlowData.map(e => {
+        //   e.originalselfUsedEnergy = e.selfUsagePower
+        //   e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption: e.selfUsagePower})
+        //   if (e.gridUsedEnergy > 0) {
+        //     e.originalgridUsedEnergy = e.gridUsedEnergy
+        //     e.gridUsedEnergy = e.gridUsedEnergy + (e.originalselfUsedEnergy - e.selfUsagePower)
+        //     e.originalFeedInPowerGrid = e.feedInPowerGrid
+        //     e.feedInPowerGrid = e.powerGeneration - e.selfUsagePower <= 0 ? 0 :e.powerGeneration - e.selfUsagePower
 
-          }
-          return e
-        })
+        //   }
+        //   return e
+        // })
 
-        const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
-        // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
+        const generationYear = energyFlowData.reduce((prev, curr) => curr.powerProduction + prev, 0) / 1000
+        // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.feedInPowerGrid + prev, 0) / 1000
         const consumptionYear = energyFlowData.reduce((prev, curr) => curr.powerConsumption  + prev, 0) / 1000
-        // const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev, 0) / 1000
-        const consumptionGrid = energyFlowData.reduce((prev, curr) => curr.consumptionGrid + prev, 0) / 1000
+        // const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.gridUsedEnergy + prev, 0) / 1000
+        const gridUsedEnergy = energyFlowData.reduce((prev, curr) => curr.gridUsedEnergy + prev, 0) / 1000
         const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.missedBatteryPower + prev, 0) / 1000
         const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
         const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.missedInverterPower + prev, 0) / 1000
-        const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev, 0) / 1000
+        const selfUsedEnergy = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + prev, 0) / 1000
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev, 0) / 1000
-        const selfSufficiencyRate = selfUsedPower / consumptionYear * 100 // Autarkiegrad
-        // const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
-        const selfUseRate =  selfUsedPower / generationYear  * 100 // Eigenverbrauchsquote
-        const costSavings = (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
+        const selfSufficiencyRate = selfUsedEnergy / consumptionYear * 100 // Autarkiegrad
+        // const selfSufficiencyRate = selfUsedEnergy / this.input.yearlyConsumption * 100 // Autarkiegrad
+        const selfUseRate =  selfUsedEnergy / generationYear  * 100 // Eigenverbrauchsquote
+        const costSavings = (selfUsedEnergy * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
         if (size == 1) costSavingWithoutBattery = costSavings;
         const amortization = (this.input.installationCostsWithoutBattery + this.input.batteryCostsPerKwh * (size / 1000)) / costSavings
         const costSavingsBattery = size == 1 ? 0 : costSavings - costSavingWithoutBattery
@@ -554,24 +565,24 @@ export default {
 
             prev[month] = {
               batteryLoad: curr.batteryLoad <= 0 ? (curr.batteryLoad * -1) + prev[month].batteryLoad : curr.batteryLoad + prev[month].batteryLoad,
-              consumptionGrid: curr.consumptionGrid + prev[month].consumptionGrid,
+              gridUsedEnergy: curr.gridUsedEnergy + prev[month].gridUsedEnergy,
               feedInPowerGrid: curr.feedInPowerGrid + prev[month].feedInPowerGrid,
               missedBatteryPower: curr.missedBatteryPower + prev[month].missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid + prev[month].missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower + prev[month].missedInverterPower,
-              selfUsagePower: curr.selfUsagePower + prev[month].selfUsagePower,
+              selfUsedEnergy: curr.selfUsedEnergy + prev[month].selfUsedEnergy,
               selfUsagePowerBattery: curr.selfUsagePowerBattery + prev[month].selfUsagePowerBattery,
               selfUsagePowerPv: curr.selfUsagePowerPv + prev[month].selfUsagePowerPv
             }
           } else {
             prev[month] = {
               batteryLoad: curr.batteryLoad <= 0 ? curr.batteryLoad * -1 : curr.batteryLoad,
-              consumptionGrid: curr.consumptionGrid,
+              gridUsedEnergy: curr.gridUsedEnergy,
               feedInPowerGrid: curr.feedInPowerGrid,
               missedBatteryPower: curr.missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower,
-              selfUsagePower: curr.selfUsagePower,
+              selfUsedEnergy: curr.selfUsedEnergy,
               selfUsagePowerBattery: curr.selfUsagePowerBattery,
               selfUsagePowerPv: curr.selfUsagePowerPv
             }
@@ -579,6 +590,7 @@ export default {
           return prev
         }, {})
 
+        
         const yearlyData = new Array(this.input.amortizationYears).fill(undefined).map((val,i)=>i).map((val) => {
 
             const conYear = consumptionYear * (100+ (this.input.linearConsumptionChange * val)) /100
@@ -587,12 +599,11 @@ export default {
             const suPower = generationYear*suRate/100
             const conCosts = this.input.consumptionCosts * ((100 + this.input.linearConsumptionCostsChange*val)/100)
             const fedIn = generationYear - suPower
-
             return {
               year: val,
               generationYear: generationYear * (100 - (this.input.linearDegrationModules * val)) /100,
               consumptionYear: conYear,
-              selfUsedPower: suPower,
+              selfUsedEnergy: suPower,
               fedInPower: fedIn,
               selfSufficiencyRate: suPower/conYear*100,
               selfUsedRate: selfUseRate,
@@ -632,12 +643,12 @@ export default {
           energyFlow: energyFlowData,
           generationYear,
           consumptionYear,
-          selfUsedPower,
+          selfUsedEnergy,
           fedInPower,
           missedBatteryPower,
           missedFeedInPowerGrid,
           missedInverterPower,
-          consumptionGrid,
+          gridUsedEnergy,
           selfSufficiencyRate,
           selfUseRate,
           costSavings,
@@ -650,6 +661,8 @@ export default {
         }
 
       })
+
+      console.log(BatterySizeResults.slice(3))
 
       this.timeNeeded = performance.now() - now
       this.isCalculating = false
