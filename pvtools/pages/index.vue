@@ -506,12 +506,13 @@ export default {
 
 
         let energyFlowData = powerGenAndConsumption.map(genConsumption => {
+          const minSocWithoutBattery = 1
           const energyFlowObj = {
             energyGeneration: genConsumption.P,
             energyConsumption: genConsumption.consumption,
             batterySoc: newSoc,
             batterySocMax: size, // * this.input.batterySocMaxPercent / 100,
-            batterySocMin: size * this.input.batterySocMinPercent / 100,
+            batterySocMin: size == 1 ? minSocWithoutBattery : size * this.input.batterySocMinPercent / 100,
             batteryLoadEfficiency: this.input.batteryLoadEfficiency / 100,
             batteryUnloadEfficiency: this.input.batteryUnloadEfficiency / 100,
             dayTime: genConsumption.dayTime,

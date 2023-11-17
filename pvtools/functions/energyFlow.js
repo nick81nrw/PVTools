@@ -69,7 +69,7 @@ const energyFlow = ( {
 		missedFeedInPowerGrid = 0, 
 		missedInverterPower = 0, 
 		missedBatteryPower = 0, 
-		newBatterySoc = 0,
+		newBatterySoc = batterySoc,
 		gridUsedEnergy = 0;
     
     const powerProduction = energyGeneration
@@ -83,39 +83,45 @@ const energyFlow = ( {
 	    energyGeneration = maxPowerGenerationInverter
 	}
 
-	const MIN_ENERGY_OFFER = 100
+	const MIN_ENERGY_OFFER = 0
 
-    const maxEnergyOffer = (batterySoc-batterySocMin)*batteryUnloadEfficiency + energyGeneration < MIN_ENERGY_OFFER ? 0 : (batterySoc-batterySocMin)*batteryUnloadEfficiency + energyGeneration
-	newBatterySoc = maxEnergyOffer == 0 && batterySoc + energyGeneration <= batterySocMax ? batterySoc + energyGeneration : batterySoc
+    const maxEnergyOffer = (newBatterySoc-batterySocMin)*batteryUnloadEfficiency + energyGeneration < MIN_ENERGY_OFFER ? 0 : (newBatterySoc-batterySocMin)*batteryUnloadEfficiency + energyGeneration
+	if(maxEnergyOffer == 0) {
+		if (batterySoc >= batterySocMax ) {
+			gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration
+		} else if (batterySocMax - batterySoc > energyGeneration) {
+			newBatterySoc = newBatterySoc + energyGeneration
+		} else {
+			const freeBatteryCapacity = batterySocMax - batterySoc
+			newBatterySoc = batterySocMax 
+			gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration - freeBatteryCapacity
+		}
+	}
 
 	const multiplicator = energyConsumption > maxEnergyOffer ? maxEnergyOffer : energyConsumption
 	const selfUsedEnergy = regressionCalc({regressionDb, maxPowerGenerationInverter, energyConsumption, multiplicator})
 	
 	
 	gridUsedEnergy = energyConsumption - selfUsedEnergy
-	if (selfUsedEnergy == 0) {
-		gridUsedEnergy = energyConsumption
-
-	}else if(energyGeneration >= selfUsedEnergy) {
+	
+	if(energyGeneration >= selfUsedEnergy) {
 		const freeBatteryCapacity = batterySocMax - newBatterySoc
 		selfUsedEnergyPV = selfUsedEnergy
 		if (freeBatteryCapacity <= 0) {
 			selfUsedEnergyBattery = 0
 			newBatterySoc = batterySocMax
-			gridEnergyFeedIn = energyGeneration - selfUsedEnergyPV
+			gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration - selfUsedEnergyPV
 		} else if(freeBatteryCapacity >= energyGeneration - selfUsedEnergyPV) {
 			newBatterySoc = newBatterySoc + energyGeneration - selfUsedEnergyPV
 		} else if (freeBatteryCapacity < energyGeneration - selfUsedEnergyPV) {
 			newBatterySoc = batterySocMax
-			gridEnergyFeedIn = energyGeneration - selfUsedEnergyPV - selfUsedEnergyBattery
+			gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration - selfUsedEnergyPV - selfUsedEnergyBattery
 		}
 	} else if (energyGeneration < selfUsedEnergy ) {
 		selfUsedEnergyPV = energyGeneration
 		const batteryCapacity = newBatterySoc - batterySocMin 
 		const neededEnergy = selfUsedEnergy - selfUsedEnergyPV
-		console.log({batteryCapacity, neededEnergy}) 
 		if(batteryCapacity == 0) {
-			gridUsedEnergy = neededEnergy
 		} else if(batteryCapacity >= neededEnergy) {
 			selfUsedEnergyBattery = neededEnergy
 			newBatterySoc = newBatterySoc - neededEnergy
@@ -146,7 +152,8 @@ const energyFlow = ( {
 		maxEnergyOffer,
 		batterySoc,
 		newBatterySoc,
-		batterySocMin
+		batterySocMin,
+		batterySocMax
 	})
 
 	
