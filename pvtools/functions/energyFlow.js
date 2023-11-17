@@ -92,6 +92,7 @@ const energyFlow = ( {
 	const selfUsedEnergy = regressionCalc({regressionDb, maxPowerGenerationInverter, energyConsumption, multiplicator})
 	
 	
+	gridUsedEnergy = energyConsumption - selfUsedEnergy
 	if (selfUsedEnergy == 0) {
 		gridUsedEnergy = energyConsumption
 
@@ -103,10 +104,8 @@ const energyFlow = ( {
 			newBatterySoc = batterySocMax
 			gridEnergyFeedIn = energyGeneration - selfUsedEnergyPV
 		} else if(freeBatteryCapacity >= energyGeneration - selfUsedEnergyPV) {
-			selfUsedEnergyBattery = energyGeneration - selfUsedEnergyPV
 			newBatterySoc = newBatterySoc + energyGeneration - selfUsedEnergyPV
 		} else if (freeBatteryCapacity < energyGeneration - selfUsedEnergyPV) {
-			selfUsedEnergyBattery = freeBatteryCapacity
 			newBatterySoc = batterySocMax
 			gridEnergyFeedIn = energyGeneration - selfUsedEnergyPV - selfUsedEnergyBattery
 		}
