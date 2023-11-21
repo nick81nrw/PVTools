@@ -97,7 +97,7 @@ const energyFlow = ( {
 		}
 	}
 
-	const {selfUsedEnergy, gridUsedEnergy} = regressionCalc({regressionDb, energyConsumption, energyOffer})
+	let {selfUsedEnergy, gridUsedEnergy} = regressionCalc({regressionDb, energyConsumption, energyOffer})
 	
 
 	if(energyGeneration >= selfUsedEnergy) {
@@ -132,6 +132,27 @@ const energyFlow = ( {
 
 	const batteryLoadEnergy = batterySoc - newBatterySoc
 			
+	// console.log({
+	// 	dayTime,
+	// 	// freeBatteryCapacity,
+	// 	energyGeneration,
+	// 	energyConsumption,
+	// 	energyOffer,
+	// 	powerProduction,
+	// 	selfUsedEnergy,
+	// 	selfUsedEnergyBattery,
+	// 	selfUsedEnergyPV,
+	// 	gridUsedEnergy,
+	// 	gridEnergyFeedIn,
+	// 	maxPowerGenerationInverter, 
+	// 	// multiplicator,
+	// 	// maxEnergyOffer,
+	// 	batterySoc,
+	// 	newBatterySoc,
+	// 	batterySocMin,
+	// 	batterySocMax
+	// })
+
 	
 
 	return {
@@ -456,7 +477,7 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
             .reduce((acc, curr) => {
 				const power = parseInt(curr) + 25
 				const value = regression[curr]
-				return acc + Math.min(energyOffer/power,1) * value * multiplicator
+				return acc + Math.min(power/energyOffer,1) * value * multiplicator
 
             },0)
 	
