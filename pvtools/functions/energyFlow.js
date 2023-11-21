@@ -477,11 +477,11 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
             .reduce((acc, curr) => {
 				const power = parseInt(curr) + 25
 				const value = regression[curr]
-				return acc + Math.min(power/energyOffer,1) * value * multiplicator
+				return acc + Math.min(energyOffer/power,1) * value * energyConsumption
 
             },0)
 	
-	const gridUsedEnergy = energyConsumption - selfUsedEnergy
+	const gridUsedEnergy = energyConsumption - Math.min(selfUsedEnergy,energyOffer)
         
     return {
 		selfUsedEnergy,
