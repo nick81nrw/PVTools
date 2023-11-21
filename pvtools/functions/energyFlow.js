@@ -473,15 +473,15 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
 	const regressionKey = Math.floor(energyConsumption / 50)*50
     const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : lastRegression 
 
-    const selfUsedEnergy = Object.keys(regression)
+    const selfUsedEnergy = Math.min(Object.keys(regression)
             .reduce((acc, curr) => {
 				const power = parseInt(curr) + 25
 				const value = regression[curr]
 				return acc + Math.min(energyOffer/power,1) * value * energyConsumption
 
-            },0)
+            },0), energyOffer)
 	
-	const gridUsedEnergy = energyConsumption - Math.min(selfUsedEnergy,energyOffer)
+	const gridUsedEnergy = energyConsumption -selfUsedEnergy
         
     return {
 		selfUsedEnergy,
