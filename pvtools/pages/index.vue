@@ -299,8 +299,10 @@
                 small
                 responsive="sm"
               />
-          </b-card>
-          <b-card>
+              
+            </b-card>
+            <b-button @click="downloadDataCsv({array: row.item.energyFlow, filename: 'daten_'+ row.item.size+'.csv'})">Daten herunterladen</b-button>
+            <b-card>
             <h4>Monatsverlauf</h4>
             <BarChart :datasets="[
                                   {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
@@ -335,7 +337,7 @@ import {
   regressionCalc
 } from "@/functions/energyFlow";
 import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
-import { convertConsumptionCSV, createTemplateCsv } from "@/functions/convertConsumpionUploads";
+import { convertConsumptionCSV, createTemplateCsv, createDataCsv} from "@/functions/convertConsumpionUploads";
 import regressionDb from '@/functions/regression.json'
 
 export default {
@@ -527,19 +529,6 @@ export default {
           newSoc = hourFlow.newBatterySoc
           return hourFlow
         })
-        // regression
-        // energyFlowData = energyFlowData.map(e => {
-        //   e.originalselfUsedEnergy = e.selfUsagePower
-        //   e.selfUsagePower = regressionCalc({regressionDb, maxPowerGenerationInverter: this.input.maxPowerGenerationInverter, powerConsumption: e.selfUsagePower})
-        //   if (e.gridUsedEnergy > 0) {
-        //     e.originalgridUsedEnergy = e.gridUsedEnergy
-        //     e.gridUsedEnergy = e.gridUsedEnergy + (e.originalselfUsedEnergy - e.selfUsagePower)
-        //     e.originalFeedInPowerGrid = e.feedInPowerGrid
-        //     e.feedInPowerGrid = e.powerGeneration - e.selfUsagePower <= 0 ? 0 :e.powerGeneration - e.selfUsagePower
-
-        //   }
-        //   return e
-        // })
 
         const generationYear = energyFlowData.reduce((prev, curr) => curr.powerProduction + prev, 0) / 1000
         // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.feedInPowerGrid + prev, 0) / 1000
@@ -621,24 +610,7 @@ export default {
           return monthlyDataObj[key]
         }).sort((a, b) => a.month - b.month)
         
-        // Debug !!!!
-        // const filename = size+".json"
-        // const jsonFile = new File([JSON.stringify(energyFlowData,null,2)], filename, {type: 'application/json'})
-        // const blobUrl = URL.createObjectURL(jsonFile)
-        // const link = document.createElement('a')
-        // link.href = blobUrl
-        // link.download = filename
-        // document.body.appendChild(link)
-
-        // link.dispatchEvent(
-        //   new MouseEvent('click',{
-        //     bubbles:true,
-        //     cancelable:true,
-        //     view:window
-        //   })
-        // )
-        // document.body.removeChild(link)
-        
+        console.log(energyFlowData)
         return {
           size,
           energyFlow: energyFlowData,
@@ -663,7 +635,6 @@ export default {
 
       })
 
-      console.log(BatterySizeResults.slice(3))
 
       this.timeNeeded = performance.now() - now
       this.isCalculating = false
@@ -727,10 +698,19 @@ export default {
       }
       // this.needFetch = true
     },
+    downloadDataCsv({array, filename}) {
+      const data = createDataCsv(array)
+      this.downloadCsv({data, filename})
+    },
     downloadCsvTemplate() {
       const filename = "verbrauch_"+this.input.year+".csv"
-      const csvFile = new File([createTemplateCsv(this.input.year)],filename,{type: 'text/plan'})
-      const blobUrl = URL.createObjectURL(csvFile)
+      const data = createTemplateCsv(this.input.year)
+      this.downloadCsv({data, filename})
+      
+    },    
+    downloadCsv({data, filename, type = 'text/plan'}) {
+      const file = new File([data],filename,{type})
+      const blobUrl = URL.createObjectURL(file)
       const link = document.createElement('a')
       link.href = blobUrl
       link.download = filename
@@ -745,7 +725,6 @@ export default {
       )
 
       document.body.removeChild(link)
-      
     },
     uploadCsvData() {
       const fr = new FileReader()
