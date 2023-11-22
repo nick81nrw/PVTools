@@ -512,10 +512,10 @@ const calcInverterEfficiency = ({maxPowerGenerationInverter, power}) => {
 	// }
 	
 	if (!maxPowerGenerationInverter  || maxPowerGenerationInverter == 0) {
-		return inverterEfficiency[100]
+		return inverterEfficiency[101]
 	}
 	const usedPower = Math.min(power / maxPowerGenerationInverter,1) * 100
-	const getCorrectEfficiencyKey = Object.keys(inverterEfficiency).find(val => val >= usedPower)  || 5
+	const getCorrectEfficiencyKey = Object.keys(inverterEfficiency).find(val => val >= usedPower)  || 0
 
 	// if (Math.random() < 0.05) {
 	// 	console.log({maxPowerGenerationInverter,power,usedPower,getCorrectEfficiencyKey, inverterEfficiency: inverterEfficiency[getCorrectEfficiencyKey]})
