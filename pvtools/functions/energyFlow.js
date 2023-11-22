@@ -475,13 +475,13 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
 
     const selfUsedEnergy = Math.min(Object.keys(regression)
             .reduce((acc, curr) => {
-				const power = parseInt(curr) + 25
+				const power = parseInt(curr)
 				const value = regression[curr]
-				return acc + Math.min(energyOffer/power,1) * value * energyConsumption
+				return acc + Math.min(power/multiplicator,1) * value * multiplicator
 
             },0), energyOffer)
 	
-	const gridUsedEnergy = energyConsumption -selfUsedEnergy
+	const gridUsedEnergy = energyConsumption - selfUsedEnergy
         
     return {
 		selfUsedEnergy,
@@ -489,34 +489,6 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
 	}
 }
 
-// const regressionCalc = ({regressionDb,maxPowerGenerationInverter = 999999999 , energyConsumption, multiplicator }) => {
-
-//     // energyConsumption = 470Wh
-//     // maxPowerGenerationInverter = 999999
-// 	// multiplicator = 106,96 
-// 	if (multiplicator == 0 ) return 0
-//     const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
-//     // finde in Matrix die 100
-// 	const regression = regressionDb[Math.floor(energyConsumption / 50)*50] ? regressionDb[Math.floor(energyConsumption / 100)*100] : lastRegression 
-	
-// 	// nutze Min(WRLeistung, multiplicator) = 106,96
-// 	const minPower = maxPowerGenerationInverter > multiplicator ? multiplicator : maxPowerGenerationInverter
-// 	const minPowerFloor = Math.floor(minPower / 100)*100
-//     const powerProduction = Object.keys(regression)
-// 		.reduce((acc, curr) => {
-// 			const key = parseInt(curr)
-// 			const value = regression[key]
-// 			if (minPower >= key){ // 106,96 > 0, 106,96 > 100 
-// 				if (minPowerFloor == key) return acc + minPower * value // floor(106,96) 100 == key --- 106,96*0.0028530
-// 				return acc + ((key + 25) * value) // 106,96 > 0 --- (0+50)*0.0000850
-// 			}
-// 			return acc + (minPower * value)  // 106,96*0.0471 ... 106,96*0.14986 ....
-// 		},0)
-//     // powerProduction = 350
-// 	console.log({energyConsumption, multiplicator, minPower, powerProduction})
-        
-//     return powerProduction
-// }
 
 module.exports = {
     energyFlow,
