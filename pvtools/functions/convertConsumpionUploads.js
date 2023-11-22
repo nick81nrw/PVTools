@@ -61,7 +61,7 @@ const createTemplateCsv = year => {
 }
 
 const createDataCsv = (array) => {
-    const csv = Papa.unparse(array)
+    const csv = Papa.unparse(array,{delimiter:';',quotes:true})
     return csv
 }
 
