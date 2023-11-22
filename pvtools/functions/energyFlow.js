@@ -97,7 +97,7 @@ const energyFlow = ( {
 		}
 	}
 
-	let {selfUsedEnergy, gridUsedEnergy} = regressionCalc({regressionDb, energyConsumption, energyOffer})
+	let {selfUsedEnergy, gridUsedEnergy} = regressionCalc({regressionDb, energyConsumption, energyOffer, maxPowerGenerationInverter})
 	
 
 	if(energyGeneration >= selfUsedEnergy) {
@@ -462,8 +462,9 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
 
 
 
-const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
+const regressionCalc = ({regressionDb, energyConsumption, energyOffer, maxPowerGenerationInverter }) => {
 
+	
 	const multiplicator = Math.min(energyConsumption, energyOffer)
 	if (multiplicator == 0 ) return {
 		selfUsedEnergy: 0,
@@ -477,7 +478,8 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
             .reduce((acc, curr) => {
 				const power = parseInt(curr)
 				const value = regression[curr]
-				return acc + Math.min(power/multiplicator,1) * value * multiplicator
+				const inverterEfficiency = calcInverterEfficiency({maxPowerGenerationInverter, power: multiplicator})
+				return acc + Math.min(power/multiplicator,1) * value * multiplicator * inverterEfficiency
 
             },0), energyOffer)
 	
@@ -487,6 +489,39 @@ const regressionCalc = ({regressionDb, energyConsumption, energyOffer }) => {
 		selfUsedEnergy,
 		gridUsedEnergy
 	}
+}
+
+const calcInverterEfficiency = ({maxPowerGenerationInverter, power}) => {
+	const inverterEfficiency = {
+		0: 0.8667,
+		10: 0.8667,
+		20: 0.9103,
+		30: 0.9207,
+		50: 0.9295,
+		75: 0.9291,
+		101: 0.9304,
+	}
+	// const inverterEfficiency = {
+	// 	5: 0.8667,
+	// 	10: 0.9103,
+	// 	20: 0.9207,
+	// 	30: 0.9295,
+	// 	50: 0.9291,
+	// 	75: 0.9304,
+	// 	100: 0.9304,
+	// }
+	
+	if (!maxPowerGenerationInverter  || maxPowerGenerationInverter == 0) {
+		return inverterEfficiency[100]
+	}
+	const usedPower = Math.min(power / maxPowerGenerationInverter,1) * 100
+	const getCorrectEfficiencyKey = Object.keys(inverterEfficiency).find(val => val >= usedPower)  || 5
+
+	// if (Math.random() < 0.05) {
+	// 	console.log({maxPowerGenerationInverter,power,usedPower,getCorrectEfficiencyKey, inverterEfficiency: inverterEfficiency[getCorrectEfficiencyKey]})
+	// }
+	return inverterEfficiency[getCorrectEfficiencyKey]
+
 }
 
 
