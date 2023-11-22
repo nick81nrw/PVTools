@@ -1,6 +1,6 @@
 <template>
     <div> 
-        <b-button v-b-toggle.collapseFaq>FAQs</b-button>
+        <b-button v-b-toggle.collapseFaq>FAQs und News</b-button>
         <b-collapse id="collapseFaq">
             <b-card v-for="realm in getRealms()" v-bind:key="realm">
                 <h3>{{realm}}</h3>
@@ -26,6 +26,12 @@
     data() {
       return {
         faqs: [
+            {realm:"Neuigkeiten",
+            title:"Bessere Berechnung und Datendownload (11/23)",
+            text:"In die Berechnung haben wir 'Ungenauigkeiten' beim Stromverbrauch eingebaut, damit werden Verbrauchsschwankungen auf Grundlage des aktuellen Verbrauchs simuliert. Zudem haben wir je nach Leistung des Wechselrichters eine Wirkungsgrad-Kennlinie hinterlegt und berechnen diese ein. Beides führt dszu, dass sich der EIgenverbrauch reduziert und damit näher am wirklichen 'ist' herankommt. Zudem können nun die Ergebnisse als csv-Datei heruntergeladen und weiterverarbeitet werden. ACHTUNG: Die Dezimalzahlen haben ein Punkt anstatt eines Kommas, das müsst ihr beim Import in Excel berücksichtigen"},
+            {realm:"Neuigkeiten",
+            title:"Eigenen Verbrauch nutzen (09/23)",
+            text:"Es ist nun möglich seinen eigenen Verbrauch in die Berechnung mit einfließen zu lassen. Wie das geht, könnt ihr unter den Reiter 'Erweiterete Einstellugen' in den FAQs sehen."},
             {realm:"Allgemeines",
             title:"Woher kommen die Daten",
             text:"Die Berechnung basiert auf Daten von PVGis, einem kostenlosen Tool der Europäischen Kommision zur ermittlung von Strahlungsdaten. Dieses Tool stellt auch einige kostenlose Schnittstellen bereit die wir nutzen. Zusätzlich wurde für den Stromverbrauch das Standardlastprofil H0 des BDEW verwendet und auf den eingetragenen Jahresstromverbrauch errechnet"},
@@ -61,10 +67,16 @@
             text:"Bei der Be- und Entladung wird eine nicht 100%ige Effizienz angenommen. Wenn du also 1kWh in den Speicher laden möchstest, benötigst du dafür 1kWh/99% Energie."},
             {realm:"Erweitert",
             title:"Maximalleistung Wechselrichter/Speicher",
-            text:"Wenn du mehr PV Leistung hast als der Wechselrichter nutzen kann, kannst du damit die max. Leistung festlegen. Die Ergebnisse werden in den Details angezeigt. Das gilt bei dem Speicher genau so."},
+            text:"Wenn du mehr PV Leistung hast als der Wechselrichter nutzen kann, kannst du damit die max. Leistung festlegen. Die Ergebnisse werden in den Details angezeigt. Das gilt bei dem Speicher genau so. NEU 11/23: Dieser Wert wird genutzt um einen Wirkungsgrad zu ermitteln, deshalb ist dieser Wert auf Standard 5000W gesetzt. "},
             {realm:"Erweitert",
             title:"Maximale Netzeinspeisung",
             text:"Diese Einstellung kann für die 70%-Regel in Deutschland genutzt werden. Die Ergebnisse werden in den Details angezeigt."},
+            {realm:"Details",
+            title:"Daten herunterladen",
+            text:"Je berechnete Batteriegröße könnt ihr die Berechneten Daten herunterladen. Achtung: Die Dezimalzahlen sind mit einem Punkt anstatt eines Kommas geschrieben. Dies müsst ihr beim Import berücksichtigen (oder mit einem Texteditor alle '.' in ',' ändern)"},
+            {realm:"Erweitert",
+            title:"Eigenen Stromverbrauch nutzen",
+            text:"Ihr könnt euch unter 'Erweiterete Einstellungen' eine csv-Vorlage herunterladen und eure stündlichen Verbräuche in Wattstunden in Spalte B einpflegen. Die Spalte A muss so bleiben. Außerdem könnt ihr auswählen, gegen welches Jahr ihr euren Verbrauch berechnen wollt, Standard ist 2020. Wenn ihr keine Daten von dem Jahr habt, ist das nicht schlimm. Das Jahr betrifft nur die Sonneneinstrahlung. Ihr könnt also auch eure Verbrauchsdaten von z.B. 2022 eingeben und gegen das Jahr 2020 rechnen lassen."},
             {realm:"Fehlerbehebung",
             title:"Irgendwas stimmt nicht",
             text:"Nutze den Zurücksetzen knopf. dann wird alles zurückgesetzt und die meisten Fehler sollten sich erledigen."},

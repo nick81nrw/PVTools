@@ -390,7 +390,7 @@ export default {
         batteryUnloadEfficiency: 99,
         batterySocMinPercent: 10,
         year: 2020,
-        maxPowerGenerationInverter: 0,
+        maxPowerGenerationInverter: 5000,
         maxPowerGenerationBattery: 0,
         maxPowerLoadBattery: 0,
         maxPowerFeedIn: 0,
