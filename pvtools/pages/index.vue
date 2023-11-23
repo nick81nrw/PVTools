@@ -503,12 +503,12 @@ export default {
       const batterySizesWithNoBattery = [1, ...this.batterySizes]
 
       let BatterySizeResults = batterySizesWithNoBattery.map(size => {
-        let newSoc = 100
+        const minSocWithoutBattery = 1
+        let newSoc = size == 1 ? minSocWithoutBattery : size * this.input.batterySocMinPercent / 100
 
 
 
         let energyFlowData = powerGenAndConsumption.map(genConsumption => {
-          const minSocWithoutBattery = 1
           const energyFlowObj = {
             energyGeneration: genConsumption.P,
             energyConsumption: genConsumption.consumption,
