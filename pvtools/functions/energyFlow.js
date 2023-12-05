@@ -64,12 +64,12 @@ const energyFlow = ( {
     
     let 
 		gridEnergyFeedIn = 0, 
-		selfUsedEnergyPV = 0,
-		selfUsedEnergyBattery = 0,
+		// selfUsedEnergyPV = 0,
+		// selfUsedEnergyBattery = 0,
 		missedFeedInPowerGrid = 0, 
 		missedInverterPower = 0, 
-		missedBatteryPower = 0, 
-		newBatterySoc = batterySoc;
+		missedBatteryPower = 0
+		// newBatterySoc = batterySoc;
     
     const powerProduction = energyGeneration
 
@@ -82,55 +82,94 @@ const energyFlow = ( {
 	    energyGeneration = maxPowerGenerationInverter
 	}
 
-	const MIN_ENERGY_OFFER = 1
+	// const MIN_ENERGY_OFFER = 1
 
-    const energyOffer = (newBatterySoc-batterySocMin)*batteryUnloadEfficiency + energyGeneration < MIN_ENERGY_OFFER ? 0 : (newBatterySoc-batterySocMin)*batteryUnloadEfficiency + energyGeneration
-	// if(energyOffer == 0) {
-	// 	const freeBatteryCapacity = batterySocMax - batterySoc
-	// 	if (batterySoc >= batterySocMax ) {
-	// 		gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration
-	// 	} else if (freeBatteryCapacity > energyGeneration) {
-	// 		newBatterySoc = newBatterySoc + (energyGeneration / batteryLoadEfficiency)
-	// 	} else {
-	// 		newBatterySoc = batterySocMax 
-	// 		gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration - freeBatteryCapacity
+    // const dynamicEnergyOffer = (newBatterySoc-batterySocMin)*batteryUnloadEfficiency < MIN_ENERGY_OFFER ? 0 : (newBatterySoc-batterySocMin)*batteryUnloadEfficiency 
+
+	let {		
+        selfUsedEnergy,
+        selfUsedEnergyPV,
+		gridUsedEnergy,
+        selfUsedEnergyBattery,
+        feedInEnergyGrid,
+        lossesUnloadBattery,
+        lossesLoadBattery,
+        lossesPvGeneration,
+        losses,
+        newBatterySoc,
+        usedEnergyPvBase,
+        staticInverterEfficiency,
+        usedPv,
+        usedEnergyBatteryBase
+                } = regressionCalc({
+                        regressionDb, 
+                        energyConsumption, 
+                        staticPowerGeneration: energyGeneration, 
+                        maxPowerStaticInverter: maxPowerGenerationInverter,
+                        maxPowerDynamicInverter: maxPowerGenerationBattery,
+                        batterySoc,
+                        batterySocMin,
+                        batterySocMax,
+                        batteryLoadEfficiency,
+                        batteryUnloadEfficiency,
+                    })
+                    // regressionDb, energyConsumption, staticPowerGeneration = 0, dynamicEnergyOffer = 0, 
+                    //maxPowerStaticInverter, maxPowerDynamicInverter = 0, 
+                    //batterySoc = 0, batteryUnloadEfficiency = 1, batteryLoadEfficiency = 1, batterySocMin, batterySocMax
+    
+    console.log({
+        dayTime,
+        energyConsumption,
+        energyGeneration,
+        selfUsedEnergy,
+        selfUsedEnergyPV,
+        usedEnergyPvBase,
+		gridUsedEnergy,
+        selfUsedEnergyBattery,
+        feedInEnergyGrid,
+        lossesUnloadBattery,
+        lossesLoadBattery,
+        lossesPvGeneration,
+        losses,
+        batterySoc,
+        newBatterySoc,
+        staticInverterEfficiency,
+        maxPowerGenerationInverter,
+        usedPv,
+        usedEnergyBatteryBase
+    })
+
+	// if(energyGeneration >= selfUsedEnergy) {
+	// 	const freeBatteryCapacity = batterySocMax - newBatterySoc
+	// 	selfUsedEnergyPV = selfUsedEnergy
+	// 	if (freeBatteryCapacity <= 0) {
+	// 		selfUsedEnergyBattery = 0
+	// 		newBatterySoc = batterySocMax
+	// 		gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration - selfUsedEnergyPV
+	// 	} else if(freeBatteryCapacity >= (energyGeneration - selfUsedEnergyPV)/batteryLoadEfficiency) {
+	// 		newBatterySoc = newBatterySoc + (energyGeneration - selfUsedEnergyPV)*batteryLoadEfficiency
+	// 	} else if (freeBatteryCapacity < (energyGeneration - selfUsedEnergyPV)/batteryLoadEfficiency) {
+	// 		newBatterySoc = batterySocMax
+	// 		gridEnergyFeedIn = gridEnergyFeedIn + (energyGeneration - selfUsedEnergyPV)*batteryLoadEfficiency
+	// 	}
+	// } else if (energyGeneration < selfUsedEnergy ) {
+	// 	selfUsedEnergyPV = energyGeneration
+	// 	const batteryCapacity = newBatterySoc - batterySocMin
+	// 	const neededEnergy = selfUsedEnergy - selfUsedEnergyPV
+	// 	if(batteryCapacity <= 0) {
+	// 		gridUsedEnergy = neededEnergy - selfUsedEnergyBattery
+	// 	} else if(batteryCapacity >= neededEnergy/batteryUnloadEfficiency) {
+	// 		selfUsedEnergyBattery = neededEnergy
+	// 		newBatterySoc = newBatterySoc - neededEnergy/batteryUnloadEfficiency
+	// 	} else if (batteryCapacity < neededEnergy/batteryUnloadEfficiency) {
+	// 		selfUsedEnergyBattery = neededEnergy
+	// 		newBatterySoc = batterySocMin
+	// 		gridUsedEnergy = neededEnergy - selfUsedEnergyBattery/batteryUnloadEfficiency
 	// 	}
 	// }
 
-	let {selfUsedEnergy, gridUsedEnergy} = regressionCalc({regressionDb, energyConsumption, energyOffer, maxPowerGenerationInverter})
-	
 
-	if(energyGeneration >= selfUsedEnergy) {
-		const freeBatteryCapacity = batterySocMax - newBatterySoc
-		selfUsedEnergyPV = selfUsedEnergy
-		if (freeBatteryCapacity <= 0) {
-			selfUsedEnergyBattery = 0
-			newBatterySoc = batterySocMax
-			gridEnergyFeedIn = gridEnergyFeedIn + energyGeneration - selfUsedEnergyPV
-		} else if(freeBatteryCapacity >= (energyGeneration - selfUsedEnergyPV)/batteryLoadEfficiency) {
-			newBatterySoc = newBatterySoc + (energyGeneration - selfUsedEnergyPV)*batteryLoadEfficiency
-		} else if (freeBatteryCapacity < (energyGeneration - selfUsedEnergyPV)/batteryLoadEfficiency) {
-			newBatterySoc = batterySocMax
-			gridEnergyFeedIn = gridEnergyFeedIn + (energyGeneration - selfUsedEnergyPV)*batteryLoadEfficiency
-		}
-	} else if (energyGeneration < selfUsedEnergy ) {
-		selfUsedEnergyPV = energyGeneration
-		const batteryCapacity = newBatterySoc - batterySocMin
-		const neededEnergy = selfUsedEnergy - selfUsedEnergyPV
-		if(batteryCapacity <= 0) {
-			gridUsedEnergy = neededEnergy - selfUsedEnergyBattery
-		} else if(batteryCapacity >= neededEnergy/batteryUnloadEfficiency) {
-			selfUsedEnergyBattery = neededEnergy
-			newBatterySoc = newBatterySoc - neededEnergy/batteryUnloadEfficiency
-		} else if (batteryCapacity < neededEnergy/batteryUnloadEfficiency) {
-			selfUsedEnergyBattery = neededEnergy
-			newBatterySoc = batterySocMin
-			gridUsedEnergy = neededEnergy - selfUsedEnergyBattery/batteryUnloadEfficiency
-		}
-	}
-
-
-	const batteryLoadEnergy = newBatterySoc - batterySoc
+	// const batteryLoadEnergy = newBatterySoc - batterySoc
 			
 	// console.log({
 	// 	dayTime,
@@ -164,13 +203,13 @@ const energyFlow = ( {
 		batteryUnloadEfficiency,
         powerGeneration: energyGeneration,
         powerConsumption: energyConsumption,
-		energyOffer,
+		// energyOffer,
         powerProduction,
         selfUsedEnergy,
         selfUsagePowerPv: selfUsedEnergyPV,
         selfUsagePowerBattery: selfUsedEnergyBattery,
         feedInPowerGrid: gridEnergyFeedIn,
-        batteryLoad: batteryLoadEnergy,
+        // batteryLoad: batteryLoadEnergy,
         gridUsedEnergy,
         missedInverterPower,
         missedBatteryPower,
@@ -468,34 +507,122 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
 
 
 
-const regressionCalc = ({regressionDb, energyConsumption, energyOffer, maxPowerGenerationInverter }) => {
+const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration = 0, dynamicEnergyOffer = 0, 
+                            maxPowerStaticInverter, maxPowerDynamicInverter = 0, 
+                            batterySoc = 0, batteryUnloadEfficiency = 1, batteryLoadEfficiency = 1, batterySocMin, batterySocMax }) => {
 
-	
-	const multiplicator = Math.min(energyConsumption, energyOffer)
+    const freePowerDynamicGeneration = maxPowerDynamicInverter || maxPowerStaticInverter - staticPowerGeneration
+    
+    if (staticPowerGeneration == 0) staticPowerGeneration = 1
+
+	const multiplicator = Math.min(energyConsumption, staticPowerGeneration)
 	if (multiplicator == 0 ) return {
 		selfUsedEnergy: 0,
 		gridUsedEnergy: energyConsumption,
 	}
+    
+    const staticInverterEfficiency = calcInverterEfficiency({maxPowerGenerationInverter: maxPowerStaticInverter, power: staticPowerGeneration}) 
     const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
 	const regressionKey = Math.floor(energyConsumption / 50)*50
     const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : lastRegression 
 
-    const selfUsedEnergy = Math.min(Object.keys(regression)
+    const powerDelta = 25 // use the mid of two regressen keys. e.g. 50,100,150 > use 75,125,175
+
+    const {usedEnergyPv, usedEnergyPvBase, usedEnergyBattery, usedEnergyBatteryBase, usedPv} = Object.keys(regression)
             .reduce((acc, curr) => {
 				const power = parseInt(curr)
 				const value = regression[curr]
-				const inverterEfficiency = calcInverterEfficiency({maxPowerGenerationInverter, power: multiplicator})
-				return acc + Math.min(power/multiplicator,1) * value * multiplicator * inverterEfficiency
+                const usedPv = Math.min((power+powerDelta)/multiplicator, 1)
+                const usedEnergyPvBase = usedPv * value * multiplicator
+                const usedEnergyPv = usedPv * value * staticInverterEfficiency * multiplicator
 
-            },0), energyOffer)
+                
+                const splitConsumption = value * energyConsumption
+                const energyForBattery = splitConsumption - usedEnergyPv
+                const usedBattery = Math.min(freePowerDynamicGeneration / (power+powerDelta), 1)
+                
+                const usedEnergyBatteryBase = usedPv * value * staticPowerGeneration
+                const usedEnergyBattery = usedBattery * energyForBattery
+
+				return {
+                    usedEnergyPv: acc.usedEnergyPv + usedEnergyPv,
+                    usedEnergyPvBase: acc.usedEnergyPvBase + usedEnergyPvBase,
+                    usedEnergyBattery: acc.usedEnergyBattery + usedEnergyBattery,
+                    usedEnergyBatteryBase: acc.usedEnergyBatteryBase + usedEnergyBatteryBase,
+                    usedPv: acc.usedPv + usedPv
+                }
+
+            },{
+                usedEnergyPv: 0,
+                usedEnergyPvBase: 0,
+                usedEnergyBattery: 0,
+                usedEnergyBatteryBase: 0,
+                usedPv: 0
+            })
 	
-	const gridUsedEnergy = energyConsumption - selfUsedEnergy
+
+        const selfUsedEnergyPV = usedEnergyPv
+        const selfUsedEnergyBattery = Math.min(usedEnergyBattery, batterySoc) * batteryUnloadEfficiency
+        const lossesPvGeneration = usedEnergyPvBase - selfUsedEnergyPV 
+        const overflowPv = staticPowerGeneration - selfUsedEnergyPV - lossesPvGeneration
+        const lossesUnloadBattery = Math.min(usedEnergyBattery, batterySoc) * (1-batteryUnloadEfficiency)
+        const lossesLoadBattery = overflowPv * (1 - batteryLoadEfficiency)
+        const selfUsedEnergy = selfUsedEnergyBattery + selfUsedEnergyPV
+        // const newBatterySoc = batterySoc - lossesUnloadBattery - selfUsedEnergyBattery
+        const newBatterySocBase = overflowPv * batteryLoadEfficiency + batterySoc - lossesUnloadBattery - selfUsedEnergyBattery
+        const newBatterySoc = Math.min(newBatterySocBase, batterySocMax)
+        const feedInEnergyGrid = newBatterySocBase - newBatterySoc
+        const gridUsedEnergy = energyConsumption - selfUsedEnergy
+        const losses = lossesLoadBattery + lossesUnloadBattery + lossesPvGeneration
         
     return {
 		selfUsedEnergy,
-		gridUsedEnergy
+        selfUsedEnergyPV,
+        usedEnergyPvBase,
+		gridUsedEnergy,
+        selfUsedEnergyBattery,
+        feedInEnergyGrid,
+        lossesUnloadBattery,
+        lossesLoadBattery,
+        lossesPvGeneration,
+        losses,
+        newBatterySoc,
+        staticInverterEfficiency,
+        usedPv,
+        usedEnergyBatteryBase
+
 	}
 }
+
+
+// const regressionCalc = ({regressionDb, energyConsumption, energyOffer, maxPowerGenerationInverter }) => {
+
+	
+// 	const multiplicator = Math.min(energyConsumption, energyOffer)
+// 	if (multiplicator == 0 ) return {
+// 		selfUsedEnergy: 0,
+// 		gridUsedEnergy: energyConsumption,
+// 	}
+//     const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
+// 	const regressionKey = Math.floor(energyConsumption / 50)*50
+//     const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : lastRegression 
+
+//     const selfUsedEnergy = Math.min(Object.keys(regression)
+//             .reduce((acc, curr) => {
+// 				const power = parseInt(curr)
+// 				const value = regression[curr]
+// 				const inverterEfficiency = calcInverterEfficiency({maxPowerGenerationInverter, power: multiplicator})
+// 				return acc + Math.min(power/multiplicator,1) * value * multiplicator * inverterEfficiency
+
+//             },0), energyOffer)
+	
+// 	const gridUsedEnergy = energyConsumption - selfUsedEnergy
+        
+//     return {
+// 		selfUsedEnergy,
+// 		gridUsedEnergy
+// 	}
+// }
 
 const calcInverterEfficiency = ({maxPowerGenerationInverter, power}) => {
 	const inverterEfficiency = {
