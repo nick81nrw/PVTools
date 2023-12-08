@@ -197,12 +197,12 @@
                 <b-form-input v-model.number="input.maxPowerGenerationInverter" type="number" min="0" max="100000" />
               </b-input-group>
             </b-form-group>
-            <b-form-group label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
+            <!-- <b-form-group label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
               <b-input-group append="W">
                 <b-form-input v-model.number="input.maxPowerLoadBattery" type="number" min="0" max="100000" />
               </b-input-group>
-            </b-form-group>
-            <b-form-group label="Maximale Entladeleistung Speicher (0 = keine Prüfung):">
+            </b-form-group>-->
+            <b-form-group label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung):">
               <b-input-group append="W">
                 <b-form-input v-model.number="input.maxPowerGenerationBattery" type="number" min="0" max="100000" />
               </b-input-group>
@@ -305,11 +305,11 @@
             <b-card>
             <h4>Monatsverlauf</h4>
             <BarChart :datasets="[
-                                  {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.feedInEnergyGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.selfUsedEnergyPV/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.selfUsedEnergyBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
                                   {data: row.item.monthlyData.map(i=>i.gridUsedEnergy/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
-                                  // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
+                                  // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsedEnergyBattery+i.selfUsedEnergyPV)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
                                 ]"
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
                       />
@@ -389,7 +389,7 @@ export default {
         batteryLoadEfficiency: 99,
         batteryUnloadEfficiency: 99,
         batterySocMinPercent: 10,
-        year: 2020,
+        year: 2015,
         maxPowerGenerationInverter: 5000,
         maxPowerGenerationBattery: 0,
         maxPowerLoadBattery: 0,
@@ -532,14 +532,14 @@ export default {
 
         const generationYear = energyFlowData.reduce((prev, curr) => curr.powerProduction + prev, 0) / 1000
         // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.feedInPowerGrid + prev, 0) / 1000
-        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.powerConsumption  + prev, 0) / 1000
+        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.energyConsumption  + prev, 0) / 1000
         // const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.gridUsedEnergy + prev, 0) / 1000
         const gridUsedEnergy = energyFlowData.reduce((prev, curr) => curr.gridUsedEnergy + prev, 0) / 1000
-        const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.missedBatteryPower + prev, 0) / 1000
+        const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.lossesUnloadBattery + curr.lossesLoadBattery + prev, 0) / 1000
         const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
-        const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.missedInverterPower + prev, 0) / 1000
+        const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.lossesPvGeneration + prev, 0) / 1000
         const selfUsedEnergy = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + prev, 0) / 1000
-        const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev, 0) / 1000
+        const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInEnergyGrid + prev, 0) / 1000
         const selfSufficiencyRate = selfUsedEnergy / consumptionYear * 100 // Autarkiegrad
         // const selfSufficiencyRate = selfUsedEnergy / this.input.yearlyConsumption * 100 // Autarkiegrad
         const selfUseRate =  selfUsedEnergy / generationYear  * 100 // Eigenverbrauchsquote
@@ -556,25 +556,25 @@ export default {
             prev[month] = {
               batteryLoad: curr.batteryLoad <= 0 ? (curr.batteryLoad * -1) + prev[month].batteryLoad : curr.batteryLoad + prev[month].batteryLoad,
               gridUsedEnergy: curr.gridUsedEnergy + prev[month].gridUsedEnergy,
-              feedInPowerGrid: curr.feedInPowerGrid + prev[month].feedInPowerGrid,
+              feedInEnergyGrid: curr.feedInEnergyGrid + prev[month].feedInEnergyGrid,
               missedBatteryPower: curr.missedBatteryPower + prev[month].missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid + prev[month].missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower + prev[month].missedInverterPower,
               selfUsedEnergy: curr.selfUsedEnergy + prev[month].selfUsedEnergy,
-              selfUsagePowerBattery: curr.selfUsagePowerBattery + prev[month].selfUsagePowerBattery,
-              selfUsagePowerPv: curr.selfUsagePowerPv + prev[month].selfUsagePowerPv
+              selfUsedEnergyBattery: curr.selfUsedEnergyBattery + prev[month].selfUsedEnergyBattery,
+              selfUsedEnergyPV: curr.selfUsedEnergyPV + prev[month].selfUsedEnergyPV
             }
           } else {
             prev[month] = {
               batteryLoad: curr.batteryLoad <= 0 ? curr.batteryLoad * -1 : curr.batteryLoad,
               gridUsedEnergy: curr.gridUsedEnergy,
-              feedInPowerGrid: curr.feedInPowerGrid,
+              feedInEnergyGrid: curr.feedInEnergyGrid,
               missedBatteryPower: curr.missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower,
               selfUsedEnergy: curr.selfUsedEnergy,
-              selfUsagePowerBattery: curr.selfUsagePowerBattery,
-              selfUsagePowerPv: curr.selfUsagePowerPv
+              selfUsedEnergyBattery: curr.selfUsedEnergyBattery,
+              selfUsedEnergyPV: curr.selfUsedEnergyPV
             }
           }
           return prev
