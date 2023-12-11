@@ -280,8 +280,9 @@
                   { key: 'consumptionYear', label: 'Stromverbrauch', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'gridUsedEnergy', label: 'Netzbezug', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'missedFeedInPowerGrid', label: 'Fehlende Netzeinspeisung', formatter: (val) => (val).toFixed(1) + ' kWh' },
-                  { key: 'missedInverterPower', label: 'Fehlende Erzeugung Wechelrichter', formatter: (val) => (val).toFixed(1) + ' kWh' },
-                  { key: 'missedBatteryPower', label: 'Fehlende Erzeugung Speicher', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'lossesPvGeneration', label: 'Verluste Wirkungsgrad Wechselrichter', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedInverterPower', label: 'Verluste PV-Leistung > Wechelrichter Leistung', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedBatteryPower', label: 'Verluste Speicher', formatter: (val) => (val).toFixed(1) + ' kWh' },
                 ]"
                 small
                 responsive="sm"
@@ -535,7 +536,8 @@ export default {
         const gridUsedEnergy = energyFlowData.reduce((prev, curr) => curr.gridUsedEnergy + prev, 0) / 1000
         const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.lossesUnloadBattery + curr.lossesLoadBattery + prev, 0) / 1000
         const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
-        const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.lossesPvGeneration + prev, 0) / 1000
+        const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.missedInverterPower + prev, 0) / 1000
+        const lossesPvGeneration = energyFlowData.reduce((prev, curr) => curr.lossesPvGeneration + prev, 0) / 1000
         const selfUsedEnergy = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + prev, 0) / 1000
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInEnergyGrid + prev, 0) / 1000
         const selfSufficiencyRate = selfUsedEnergy / consumptionYear * 100 // Autarkiegrad
@@ -557,6 +559,7 @@ export default {
               missedBatteryPower: curr.missedBatteryPower + prev[month].missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid + prev[month].missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower + prev[month].missedInverterPower,
+              lossesPvGeneration: curr.lossesPvGeneration + prev[month].lossesPvGeneration,
               selfUsedEnergy: curr.selfUsedEnergy + prev[month].selfUsedEnergy,
               selfUsedEnergyBattery: curr.selfUsedEnergyBattery + prev[month].selfUsedEnergyBattery,
               selfUsedEnergyPV: curr.selfUsedEnergyPV + prev[month].selfUsedEnergyPV
@@ -569,6 +572,7 @@ export default {
               missedBatteryPower: curr.missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower,
+              lossesPvGeneration: curr.lossesPvGeneration,
               selfUsedEnergy: curr.selfUsedEnergy,
               selfUsedEnergyBattery: curr.selfUsedEnergyBattery,
               selfUsedEnergyPV: curr.selfUsedEnergyPV
@@ -618,6 +622,7 @@ export default {
           missedBatteryPower,
           missedFeedInPowerGrid,
           missedInverterPower,
+          lossesPvGeneration,
           gridUsedEnergy,
           selfSufficiencyRate,
           selfUseRate,
