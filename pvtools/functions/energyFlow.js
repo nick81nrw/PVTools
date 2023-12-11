@@ -62,7 +62,6 @@ const energyFlow = ( {
     } ) => {
     
     let 
-		missedFeedInPowerGrid = 0, 
 		missedInverterPower = 0, 
 		missedBatteryPower = 0
     
@@ -89,6 +88,7 @@ const energyFlow = ( {
         lossesPvGeneration,
         losses,
         newBatterySoc,
+        missedFeedInPowerGrid,
                 } = regressionCalc({
                         regressionDb, 
                         energyConsumption, 
@@ -96,6 +96,7 @@ const energyFlow = ( {
                         maxPowerStaticInverter: maxPowerGenerationInverter,
                         maxPowerDynamicInverter: maxPowerGenerationBattery,
                         batterySoc,
+                        maxPowerFeedIn,
                         batterySocMin,
                         batterySocMax,
                         batteryLoadEfficiency,
@@ -415,7 +416,7 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
 
 const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration = 0, dynamicEnergyOffer = 0, 
                             maxPowerStaticInverter = 0, maxPowerDynamicInverter = 0, 
-                            batterySoc = 0, batteryUnloadEfficiency = 1, batteryLoadEfficiency = 1, batterySocMin, batterySocMax }) => {
+                            batterySoc = 0, batteryUnloadEfficiency = 1, batteryLoadEfficiency = 1, batterySocMin, batterySocMax, maxPowerFeedIn = 9999999 }) => {
 
     let freePowerDynamicGeneration = 0
     if(maxPowerDynamicInverter > 0)  freePowerDynamicGeneration = maxPowerDynamicInverter
@@ -475,12 +476,16 @@ const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration 
         const lossesPvGeneration = usedEnergyPvBase - selfUsedEnergyPV 
         const overflowPv = staticPowerGeneration - selfUsedEnergyPV - lossesPvGeneration
         const lossesUnloadBattery = Math.min(usedEnergyBattery, batterySoc) * (1-batteryUnloadEfficiency)
-        const lossesLoadBattery = overflowPv * (1 - batteryLoadEfficiency)
-        const selfUsedEnergy = selfUsedEnergyBattery + selfUsedEnergyPV
-        // const newBatterySoc = batterySoc - lossesUnloadBattery - selfUsedEnergyBattery
+        const batterySoCAfterUnload = batterySoc  - selfUsedEnergyBattery - lossesUnloadBattery //sdfsds
         const newBatterySocBase = overflowPv * batteryLoadEfficiency + batterySoc - lossesUnloadBattery - selfUsedEnergyBattery
         const newBatterySoc = Math.min(newBatterySocBase, batterySocMax)
-        const feedInEnergyGrid = newBatterySocBase - newBatterySoc
+        const lossesLoadBatteryBase = Math.max(newBatterySoc - batterySoCAfterUnload, 0)
+        const lossesLoadBattery = lossesLoadBatteryBase * (1-batteryLoadEfficiency)
+        const selfUsedEnergy = selfUsedEnergyBattery + selfUsedEnergyPV
+        // const newBatterySoc = batterySoc - lossesUnloadBattery - selfUsedEnergyBattery
+        const feedInEnergyGridBase = newBatterySocBase - newBatterySoc
+        const feedInEnergyGrid = Math.min(feedInEnergyGridBase, maxPowerFeedIn)
+        const missedFeedInPowerGrid =  feedInEnergyGridBase - feedInEnergyGrid
         const gridUsedEnergy = energyConsumption - selfUsedEnergy
         const losses = lossesLoadBattery + lossesUnloadBattery + lossesPvGeneration
         
@@ -494,6 +499,7 @@ const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration 
         lossesUnloadBattery,
         lossesLoadBattery,
         lossesPvGeneration,
+        missedFeedInPowerGrid,
         losses,
         newBatterySoc,
         staticInverterEfficiency,

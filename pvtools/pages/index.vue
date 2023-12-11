@@ -531,9 +531,7 @@ export default {
         })
 
         const generationYear = energyFlowData.reduce((prev, curr) => curr.powerProduction + prev, 0) / 1000
-        // const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.feedInPowerGrid + prev, 0) / 1000
         const consumptionYear = energyFlowData.reduce((prev, curr) => curr.energyConsumption  + prev, 0) / 1000
-        // const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + curr.gridUsedEnergy + prev, 0) / 1000
         const gridUsedEnergy = energyFlowData.reduce((prev, curr) => curr.gridUsedEnergy + prev, 0) / 1000
         const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.lossesUnloadBattery + curr.lossesLoadBattery + prev, 0) / 1000
         const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
@@ -541,7 +539,6 @@ export default {
         const selfUsedEnergy = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + prev, 0) / 1000
         const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInEnergyGrid + prev, 0) / 1000
         const selfSufficiencyRate = selfUsedEnergy / consumptionYear * 100 // Autarkiegrad
-        // const selfSufficiencyRate = selfUsedEnergy / this.input.yearlyConsumption * 100 // Autarkiegrad
         const selfUseRate =  selfUsedEnergy / generationYear  * 100 // Eigenverbrauchsquote
         const costSavings = (selfUsedEnergy * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
         if (size == 1) costSavingWithoutBattery = costSavings;
