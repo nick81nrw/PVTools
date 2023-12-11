@@ -60,8 +60,13 @@ const createTemplateCsv = year => {
     return csv
 }
 
+const createDataCsv = (array) => {
+    const csv = Papa.unparse(array,{delimiter:';',quotes:true})
+    return csv
+}
 
 module.exports = {
     convertConsumptionCSV,
-    createTemplateCsv
+    createTemplateCsv,
+    createDataCsv
 }

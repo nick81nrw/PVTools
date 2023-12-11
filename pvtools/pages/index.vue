@@ -197,12 +197,12 @@
                 <b-form-input v-model.number="input.maxPowerGenerationInverter" type="number" min="0" max="100000" />
               </b-input-group>
             </b-form-group>
-            <b-form-group label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
+            <!-- <b-form-group label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
               <b-input-group append="W">
                 <b-form-input v-model.number="input.maxPowerLoadBattery" type="number" min="0" max="100000" />
               </b-input-group>
-            </b-form-group>
-            <b-form-group label="Maximale Entladeleistung Speicher (0 = keine Prüfung):">
+            </b-form-group>-->
+            <b-form-group label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung):">
               <b-input-group append="W">
                 <b-form-input v-model.number="input.maxPowerGenerationBattery" type="number" min="0" max="100000" />
               </b-input-group>
@@ -278,10 +278,11 @@
                 :fields="[
                   { key: 'generationYear', label: 'PV Erzeugung', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'consumptionYear', label: 'Stromverbrauch', formatter: (val) => (val).toFixed(1) + ' kWh' },
-                  { key: 'consumptionGrid', label: 'Netzbezug', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'gridUsedEnergy', label: 'Netzbezug', formatter: (val) => (val).toFixed(1) + ' kWh' },
                   { key: 'missedFeedInPowerGrid', label: 'Fehlende Netzeinspeisung', formatter: (val) => (val).toFixed(1) + ' kWh' },
-                  { key: 'missedInverterPower', label: 'Fehlende Erzeugung Wechelrichter', formatter: (val) => (val).toFixed(1) + ' kWh' },
-                  { key: 'missedBatteryPower', label: 'Fehlende Erzeugung Speicher', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'lossesPvGeneration', label: 'Verluste Wirkungsgrad Wechselrichter', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedInverterPower', label: 'Verluste PV-Leistung > Wechelrichter Leistung', formatter: (val) => (val).toFixed(1) + ' kWh' },
+                  { key: 'missedBatteryPower', label: 'Verluste Speicher', formatter: (val) => (val).toFixed(1) + ' kWh' },
                 ]"
                 small
                 responsive="sm"
@@ -299,15 +300,17 @@
                 small
                 responsive="sm"
               />
-          </b-card>
-          <b-card>
+              
+            </b-card>
+            <b-button @click="downloadDataCsv({array: row.item.energyFlow, filename: 'daten_'+ row.item.size+'.csv'})">Daten herunterladen</b-button>
+            <b-card>
             <h4>Monatsverlauf</h4>
             <BarChart :datasets="[
-                                  {data: row.item.monthlyData.map(i=>i.feedInPowerGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerPv/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.selfUsagePowerBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
-                                  {data: row.item.monthlyData.map(i=>i.consumptionGrid/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
-                                  // {data: row.item.monthlyData.map(i=>(i.consumptionGrid+i.selfUsagePowerBattery+i.selfUsagePowerPv)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
+                                  {data: row.item.monthlyData.map(i=>i.feedInEnergyGrid*-1/1000),label: 'Einspeisung', backgroundColor: 'orange', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.selfUsedEnergyPV/1000),label:'Selbstverbrauch PV', backgroundColor: 'green', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.selfUsedEnergyBattery/1000),label:'Selbstverbrauch Speicher', backgroundColor: 'blue', stack: 'Stack 0'},
+                                  {data: row.item.monthlyData.map(i=>i.gridUsedEnergy/1000),label:'Netzverbrauch', backgroundColor: 'red', stack: 'Stack 0'},
+                                  // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsedEnergyBattery+i.selfUsedEnergyPV)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
                                 ]"
                       :labels="['Jan','Feb','Mar','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']"
                       />
@@ -331,10 +334,12 @@ import {
   generateDayTimeValues,
   mergePowerGeneration,
   normalizeHourlyRadiation,
-  energyFlow
+  energyFlow,
+  regressionCalc
 } from "@/functions/energyFlow";
 import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
-import { convertConsumptionCSV, createTemplateCsv } from "@/functions/convertConsumpionUploads";
+import { convertConsumptionCSV, createTemplateCsv, createDataCsv} from "@/functions/convertConsumpionUploads";
+import regressionDb from '@/functions/regression.json'
 
 export default {
   name: 'IndexPage',
@@ -349,7 +354,7 @@ export default {
       returnedData: {},
       tableFields:[
         { key: 'size', label: 'Speichergröße', formatter: (val) => (val/1000).toFixed(1) + " kWh" },
-        { key: 'selfUsedPower', label: 'Selbstgenutzter Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
+        { key: 'selfUsedEnergy', label: 'Selbstgenutzter Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'fedInPower', label: 'Eingespeister Strom / Jahr', formatter: (val) => val.toFixed(2) + " kWh" },
         { key: 'selfUseRate', label: 'Eigenverbrauchsquote', formatter: (val) => val.toFixed(2) + " %" },
         { key: 'selfSufficiencyRate', label: 'Autarkiegrad', formatter: (val) => val.toFixed(2) + " %" },
@@ -385,8 +390,8 @@ export default {
         batteryLoadEfficiency: 99,
         batteryUnloadEfficiency: 99,
         batterySocMinPercent: 10,
-        year: 2020,
-        maxPowerGenerationInverter: 0,
+        year: 2015,
+        maxPowerGenerationInverter: 5000,
         maxPowerGenerationBattery: 0,
         maxPowerLoadBattery: 0,
         maxPowerFeedIn: 0,
@@ -481,27 +486,40 @@ export default {
       }
       const consumption = this.useImportData ? this.importConsumptionData : calculateConsumption({ year: this.input.year, consumptionYear: this.input.yearlyConsumption, profile: SLPH0, profileBase: PROFILEBASE, factorFunction })
       const powerGenAndConsumption = generateDayTimeValues({ consumption, powerGeneration: this.mergedPower, year: this.input.year })
-
+      
+      // const monGeneration = Object.keys(consumption).reduce((acc,key) => {
+      //   const mon = key.slice(-7).slice(0,2)
+      //   if (acc[mon]){
+      //     acc[mon].P = acc[mon].P + consumption[key].P
+      //   } else {
+      //     acc[mon] = {P:consumption[key].P}
+      //   }
+      //   return acc
+      // },{})
+      // console.log(monGeneration)
+      
       let costSavingWithoutBattery
 
 
       const batterySizesWithNoBattery = [1, ...this.batterySizes]
 
       let BatterySizeResults = batterySizesWithNoBattery.map(size => {
-        let newSoc = 100
+        const minSocWithoutBattery = 1
+        let newSoc = size == 1 ? minSocWithoutBattery : size * this.input.batterySocMinPercent / 100
 
 
 
-        const energyFlowData = powerGenAndConsumption.map(genConsumption => {
+        let energyFlowData = powerGenAndConsumption.map(genConsumption => {
           const energyFlowObj = {
-            powerGeneration: genConsumption.P,
-            powerConsumption: genConsumption.consumption,
+            energyGeneration: genConsumption.P,
+            energyConsumption: genConsumption.consumption,
             batterySoc: newSoc,
-            batterySocMax: size,
-            batterySocMin: size * this.input.batterySocMinPercent / 100,
+            batterySocMax: size, // * this.input.batterySocMaxPercent / 100,
+            batterySocMin: size == 1 ? minSocWithoutBattery : size * this.input.batterySocMinPercent / 100,
             batteryLoadEfficiency: this.input.batteryLoadEfficiency / 100,
             batteryUnloadEfficiency: this.input.batteryUnloadEfficiency / 100,
-            dayTime: genConsumption.dayTime
+            dayTime: genConsumption.dayTime,
+            regressionDb
           }
           if (this.input.maxPowerGenerationInverter && this.input.maxPowerGenerationInverter > 0) energyFlowObj.maxPowerGenerationInverter = this.input.maxPowerGenerationInverter
           if (this.input.maxPowerGenerationBattery && this.input.maxPowerGenerationBattery > 0) energyFlowObj.maxPowerGenerationBattery = this.input.maxPowerGenerationBattery
@@ -513,17 +531,18 @@ export default {
           return hourFlow
         })
 
-        const generationYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev, 0) / 1000
-        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev, 0) / 1000
-        const consumptionGrid = energyFlowData.reduce((prev, curr) => curr.consumptionGrid + prev, 0) / 1000
-        const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.missedBatteryPower + prev, 0) / 1000
+        const generationYear = energyFlowData.reduce((prev, curr) => curr.powerProduction + prev, 0) / 1000
+        const consumptionYear = energyFlowData.reduce((prev, curr) => curr.energyConsumption  + prev, 0) / 1000
+        const gridUsedEnergy = energyFlowData.reduce((prev, curr) => curr.gridUsedEnergy + prev, 0) / 1000
+        const missedBatteryPower = energyFlowData.reduce((prev, curr) => curr.lossesUnloadBattery + curr.lossesLoadBattery + prev, 0) / 1000
         const missedFeedInPowerGrid = energyFlowData.reduce((prev, curr) => curr.missedFeedInPowerGrid + prev, 0) / 1000
         const missedInverterPower = energyFlowData.reduce((prev, curr) => curr.missedInverterPower + prev, 0) / 1000
-        const selfUsedPower = energyFlowData.reduce((prev, curr) => curr.selfUsagePower + prev, 0) / 1000
-        const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInPowerGrid + prev, 0) / 1000
-        const selfSufficiencyRate = selfUsedPower / this.input.yearlyConsumption * 100 // Autarkiegrad
-        const selfUseRate = selfUsedPower / generationYear * 100 // Eigenverbrauchsquote
-        const costSavings = (selfUsedPower * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
+        const lossesPvGeneration = energyFlowData.reduce((prev, curr) => curr.lossesPvGeneration + prev, 0) / 1000
+        const selfUsedEnergy = energyFlowData.reduce((prev, curr) => curr.selfUsedEnergy + prev, 0) / 1000
+        const fedInPower = energyFlowData.reduce((prev, curr) => curr.feedInEnergyGrid + prev, 0) / 1000
+        const selfSufficiencyRate = selfUsedEnergy / consumptionYear * 100 // Autarkiegrad
+        const selfUseRate =  selfUsedEnergy / generationYear  * 100 // Eigenverbrauchsquote
+        const costSavings = (selfUsedEnergy * this.input.consumptionCosts + fedInPower * this.input.feedInCompensation)
         if (size == 1) costSavingWithoutBattery = costSavings;
         const amortization = (this.input.installationCostsWithoutBattery + this.input.batteryCostsPerKwh * (size / 1000)) / costSavings
         const costSavingsBattery = size == 1 ? 0 : costSavings - costSavingWithoutBattery
@@ -535,31 +554,34 @@ export default {
 
             prev[month] = {
               batteryLoad: curr.batteryLoad <= 0 ? (curr.batteryLoad * -1) + prev[month].batteryLoad : curr.batteryLoad + prev[month].batteryLoad,
-              consumptionGrid: curr.consumptionGrid + prev[month].consumptionGrid,
-              feedInPowerGrid: curr.feedInPowerGrid + prev[month].feedInPowerGrid,
+              gridUsedEnergy: curr.gridUsedEnergy + prev[month].gridUsedEnergy,
+              feedInEnergyGrid: curr.feedInEnergyGrid + prev[month].feedInEnergyGrid,
               missedBatteryPower: curr.missedBatteryPower + prev[month].missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid + prev[month].missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower + prev[month].missedInverterPower,
-              selfUsagePower: curr.selfUsagePower + prev[month].selfUsagePower,
-              selfUsagePowerBattery: curr.selfUsagePowerBattery + prev[month].selfUsagePowerBattery,
-              selfUsagePowerPv: curr.selfUsagePowerPv + prev[month].selfUsagePowerPv
+              lossesPvGeneration: curr.lossesPvGeneration + prev[month].lossesPvGeneration,
+              selfUsedEnergy: curr.selfUsedEnergy + prev[month].selfUsedEnergy,
+              selfUsedEnergyBattery: curr.selfUsedEnergyBattery + prev[month].selfUsedEnergyBattery,
+              selfUsedEnergyPV: curr.selfUsedEnergyPV + prev[month].selfUsedEnergyPV
             }
           } else {
             prev[month] = {
               batteryLoad: curr.batteryLoad <= 0 ? curr.batteryLoad * -1 : curr.batteryLoad,
-              consumptionGrid: curr.consumptionGrid,
-              feedInPowerGrid: curr.feedInPowerGrid,
+              gridUsedEnergy: curr.gridUsedEnergy,
+              feedInEnergyGrid: curr.feedInEnergyGrid,
               missedBatteryPower: curr.missedBatteryPower,
               missedFeedInPowerGrid: curr.missedFeedInPowerGrid,
               missedInverterPower: curr.missedInverterPower,
-              selfUsagePower: curr.selfUsagePower,
-              selfUsagePowerBattery: curr.selfUsagePowerBattery,
-              selfUsagePowerPv: curr.selfUsagePowerPv
+              lossesPvGeneration: curr.lossesPvGeneration,
+              selfUsedEnergy: curr.selfUsedEnergy,
+              selfUsedEnergyBattery: curr.selfUsedEnergyBattery,
+              selfUsedEnergyPV: curr.selfUsedEnergyPV
             }
           }
           return prev
         }, {})
 
+        
         const yearlyData = new Array(this.input.amortizationYears).fill(undefined).map((val,i)=>i).map((val) => {
 
             const conYear = consumptionYear * (100+ (this.input.linearConsumptionChange * val)) /100
@@ -568,12 +590,11 @@ export default {
             const suPower = generationYear*suRate/100
             const conCosts = this.input.consumptionCosts * ((100 + this.input.linearConsumptionCostsChange*val)/100)
             const fedIn = generationYear - suPower
-
             return {
               year: val,
               generationYear: generationYear * (100 - (this.input.linearDegrationModules * val)) /100,
               consumptionYear: conYear,
-              selfUsedPower: suPower,
+              selfUsedEnergy: suPower,
               fedInPower: fedIn,
               selfSufficiencyRate: suPower/conYear*100,
               selfUsedRate: selfUseRate,
@@ -589,18 +610,20 @@ export default {
           monthlyDataObj[key].month = parseInt(key)
           return monthlyDataObj[key]
         }).sort((a, b) => a.month - b.month)
-
+        
+        console.log(energyFlowData)
         return {
           size,
           energyFlow: energyFlowData,
           generationYear,
           consumptionYear,
-          selfUsedPower,
+          selfUsedEnergy,
           fedInPower,
           missedBatteryPower,
           missedFeedInPowerGrid,
           missedInverterPower,
-          consumptionGrid,
+          lossesPvGeneration,
+          gridUsedEnergy,
           selfSufficiencyRate,
           selfUseRate,
           costSavings,
@@ -608,14 +631,19 @@ export default {
           costSavingsBattery,
           batteryAmortization,
           monthlyData,
-          yearlyData
+          yearlyData,
+          // regressionEnergyFlow
         }
 
       })
 
+
       this.timeNeeded = performance.now() - now
       this.isCalculating = false
       this.displayData = BatterySizeResults
+      
+
+      
     },
     async getCoordinatesByAddress() {
       let osmReturn = (await this.$axios.post("/relay", {
@@ -672,10 +700,19 @@ export default {
       }
       // this.needFetch = true
     },
+    downloadDataCsv({array, filename}) {
+      const data = createDataCsv(array)
+      this.downloadCsv({data, filename})
+    },
     downloadCsvTemplate() {
       const filename = "verbrauch_"+this.input.year+".csv"
-      const csvFile = new File([createTemplateCsv(this.input.year)],filename,{type: 'text/plan'})
-      const blobUrl = URL.createObjectURL(csvFile)
+      const data = createTemplateCsv(this.input.year)
+      this.downloadCsv({data, filename})
+      
+    },    
+    downloadCsv({data, filename, type = 'text/plan'}) {
+      const file = new File([data],filename,{type})
+      const blobUrl = URL.createObjectURL(file)
       const link = document.createElement('a')
       link.href = blobUrl
       link.download = filename
@@ -690,7 +727,6 @@ export default {
       )
 
       document.body.removeChild(link)
-      
     },
     uploadCsvData() {
       const fr = new FileReader()

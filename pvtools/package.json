@@ -23,11 +23,13 @@
     "papaparse": "^5.4.1",
     "vue": "^2.6.14",
     "vue-chartjs": "^4.1.1",
+    "vue-gtag": "^1.16.1",
     "vue-server-renderer": "^2.6.14",
     "vue-template-compiler": "^2.6.14",
     "webpack": "^4.46.0"
   },
   "devDependencies": {
+    "csv-parse": "^5.5.2",
     "jest": "^28.1.3"
   }
 }
