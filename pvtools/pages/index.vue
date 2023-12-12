@@ -245,7 +245,7 @@
               :datasets="[
                 { data: displayData.map(item => item.selfUseRate), yAxisID: 'y1', label: 'Eigenverbrauchsquote', borderColor: 'blue' },
                 { data: displayData.map(item => item.selfSufficiencyRate), yAxisID: 'y1', label: 'Autarkiegrad', borderColor: 'green' },
-                { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortization', borderColor: 'red', }
+                { data: displayData.map(item => item.amortization), yAxisID: 'y2', label: 'Amortisation', borderColor: 'red', }
                 ]" />
           </div>
 
