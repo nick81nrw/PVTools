@@ -468,9 +468,10 @@ const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration 
     const staticInverterEfficiency = calcInverterEfficiency({maxPowerGenerationInverter: maxPowerStaticInverter, power: staticPowerGeneration}) 
     // const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
 	const regressionKey = Math.floor(energyConsumption / 50)*50
-    const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : createRegression({energyConsumption}).regression
+    const regressionBigConsumption = !regressionDb[regressionKey] ? createRegression({energyConsumption}) : null
+    const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : regressionBigConsumption.regression
 
-    const powerDelta = 25 // use the mid of two regressen keys. e.g. 50,100,150 > use 75,125,175
+    const powerDelta = regressionBigConsumption ? Math.floor(regressionBigConsumption.resulution/2) : 25 // use the mid of two regressen keys. e.g. 50,100,150 > use 75,125,175
 
     const {usedEnergyPv, usedEnergyPvBase, usedEnergyBattery, usedEnergyBatteryBase, usedPv} = Object.keys(regression)
             .reduce((acc, curr) => {
@@ -522,6 +523,16 @@ const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration 
         const missedFeedInPowerGrid =  feedInEnergyGridBase - feedInEnergyGrid
         const gridUsedEnergy = energyConsumption - selfUsedEnergy
         const losses = lossesLoadBattery + lossesUnloadBattery + lossesPvGeneration
+    
+    if (regressionBigConsumption) console.log({
+                                        selfUsedEnergy,
+                                        selfUsedEnergyPV,
+                                        gridUsedEnergy,
+                                        selfUsedEnergyBattery,
+                                        feedInEnergyGrid,
+                                        energyConsumption,
+                                        regressionBigConsumption
+                                    })
         
     return {
 		selfUsedEnergy,
