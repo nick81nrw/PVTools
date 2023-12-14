@@ -155,7 +155,7 @@
             <b-form-group label="Speichergrößen:">
               <b-input-group append="Wh">
                 <b-form-tags input-id="tags-basic" v-model="inputBatterySizes" :tag-validator="tagValidator"
-                  v-b-tooltip.hover title='Zwischen 0,2 und 200 kWh'
+                  v-b-tooltip.hover title='Zwischen 0,2 und 2000 kWh'
                   :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"></b-form-tags>
               </b-input-group>
             </b-form-group>
@@ -684,7 +684,7 @@ export default {
     },
     tagValidator(tag) {
 
-      return !isNaN(tag) && tag < 200000 && tag > 200
+      return !isNaN(tag) && tag <= 2000000 && tag >= 200
 
     },
     removeRoof(roof){

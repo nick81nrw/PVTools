@@ -413,8 +413,42 @@ const generateDayTimeValues = ({consumption, powerGeneration, year}) => {
 }
 
 
+const createRegression = ({energyConsumption}) => {
 
-const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration = 0, dynamicEnergyOffer = 0, 
+    const multiplicator = 8
+    const resulution = Math.max(Math.floor(((energyConsumption * multiplicator) / 100) /100) * 100,100)
+    const regressionKey = Math.floor(energyConsumption / resulution) * resulution
+
+    const sigma1 = energyConsumption * 0.195
+    const mu1 = energyConsumption/3 + 50
+    const sigma2 = energyConsumption * 0.1 
+    // const sigma2 = Math.max( -energyConsumption * (50/2000) + 500, 300 )
+    const mu2 = energyConsumption + energyConsumption/10
+
+
+
+    // const powers = new Array(100).fill(0).map((e,i)=> i* resulution)
+    const powers = new Array(regressionKey/resulution*multiplicator).fill(0).map((e,i)=> i* resulution)
+
+    const unnorm = powers.map(power => {
+        const val = ((1/(sigma1 * Math.sqrt(2 * Math.PI))) * Math.exp(1) ** (-0.5 * (((power - mu1)/sigma1) ** 2)))  +  
+                    ((1/(sigma2 * Math.sqrt(2 * Math.PI))) * Math.exp(1) ** (-0.5 * (((power - mu2)/sigma2) ** 2)))
+        return val
+
+    })
+    const sumUnnorm = unnorm.reduce((acc, curr) => acc + curr, 0)
+    const regression = unnorm.reduce((acc, curr,i) => {
+        acc[powers[i]] = curr * (1/sumUnnorm)
+        return acc
+    }, {})
+
+    return {regression, resulution,info: {sigma1, sigma2, mu1, mu2}}
+
+
+}
+
+
+const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration = 0,  
                             maxPowerStaticInverter = 0, maxPowerDynamicInverter = 0, 
                             batterySoc = 0, batteryUnloadEfficiency = 1, batteryLoadEfficiency = 1, batterySocMin, batterySocMax, maxPowerFeedIn = 9999999 }) => {
 
@@ -432,9 +466,9 @@ const regressionCalc = ({regressionDb, energyConsumption, staticPowerGeneration 
 	}
     
     const staticInverterEfficiency = calcInverterEfficiency({maxPowerGenerationInverter: maxPowerStaticInverter, power: staticPowerGeneration}) 
-    const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
+    // const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
 	const regressionKey = Math.floor(energyConsumption / 50)*50
-    const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : lastRegression 
+    const regression = regressionDb[regressionKey] ? regressionDb[regressionKey] : createRegression({energyConsumption}).regression
 
     const powerDelta = 25 // use the mid of two regressen keys. e.g. 50,100,150 > use 75,125,175
 
@@ -539,5 +573,6 @@ module.exports = {
     mergePowerGeneration,
     generateDayTimeValues,
     generateDayTimeOrder,
-    regressionCalc
+    regressionCalc,
+    createRegression
 }
