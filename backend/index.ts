@@ -3,8 +3,6 @@ import express from "express"
 import * as bodyParser from "body-parser"
 import {relayAPIRequest} from "./api/relay";
 
-//import {processContactRequest} from "./api/contact";
-
 /**
  * Setup some things so the frontend can communicate with the backend
  */
@@ -37,8 +35,6 @@ app.use(express.static(path.join(__dirname, '..', '..', 'pvtools', 'dist')))
 app.get("/", (req, res, next) => {
   res.sendFile(path.join(__dirname, '..', '..', 'pvtools', 'dist', 'index.html'))
 })
-
-//app.post("/contact", processContactRequest)
 
 app.post("/relay", relayAPIRequest)
 
