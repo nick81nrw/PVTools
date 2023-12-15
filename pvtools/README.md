@@ -1,5 +1,10 @@
 # pvtools
 
+## Requirements
+
+- Node.js >= 20
+- NPM
+
 ## Build Setup
 
 ```bash
@@ -18,6 +23,14 @@ $ npm run generate
 ```
 
 For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
+
+## Enviroment variables
+
+| Variable | Description | Default if not set |
+| -------- | ----------- | ------------------ |
+| APP_URL  | Domain name and Port that is used to access the API backend when NODE_ENV='production' | localhost:8082 |
+| NODE_ENV | Using the value 'production' changes the API backend URL to https://APP_URL. Attention: in production mode 'https' is always set as protocol | (not set) |
+| GOOGLE_ANALYTICS_ID | Google Analytics ID that is embeded in the UI | (not set) |
 
 ## Special Directories
 
