@@ -11,51 +11,67 @@
 
 <script>
 import { Line as LineChartGenerator } from 'vue-chartjs/legacy'
-import { Chart as ChartJS, Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement } from 'chart.js'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+} from 'chart.js'
 
-ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement)
-
+ChartJS.register(
+  Title,
+  Tooltip,
+  Legend,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+)
 
 export default {
-  name: "Chart",
+  name: 'Chart',
   components: { LineChartGenerator },
   props: {
     chartId: {
       type: String,
-      default: 'line-chart'
+      default: 'line-chart',
     },
     datasetIdKey: {
       type: String,
-      default: 'label'
+      default: 'label',
     },
     width: {
       type: Number,
-      default: 400
+      default: 400,
     },
     height: {
       type: Number,
-      default: 100
+      default: 100,
     },
     cssClasses: {
       default: '',
-      type: String
-    },/*
+      type: String,
+    } /*
     styles: {
       type: Object,
       default: () => {}
-    },*/
+    },*/,
     plugins: {
       type: Object,
-      default: () => {}
+      default: () => {},
     },
     labels: {
       type: Array,
-      default: []
+      default: [],
     },
     datasets: {
       type: Array,
-      default: []
-    }
+      default: [],
+    },
   },
   data() {
     return {
@@ -67,15 +83,15 @@ export default {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          y1:{
+          y1: {
             type: 'linear',
             display: true,
             position: 'left',
             ticks: {
               callback(value) {
                 return value + ' %'
-              }
-            }
+              },
+            },
           },
           y2: {
             type: 'linear',
@@ -84,31 +100,28 @@ export default {
             ticks: {
               callback(value) {
                 return value + ' Jahre'
-              }
-            }
+              },
+            },
           },
           x: {
             title: {
-              text: "Speichergröße",
-              display: true
-            }
-          }
-        }
-      }
+              text: 'Speichergröße',
+              display: true,
+            },
+          },
+        },
+      },
     }
   },
   computed: {
-    chartData(){
+    chartData() {
       return {
         labels: this.labels,
-        datasets: this.datasets
+        datasets: this.datasets,
       }
-    }
-  }
-
+    },
+  },
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -8,60 +8,70 @@
  * @return {Object}                         {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
  */
 
+module.exports = ({
+  year,
+  consumptionYear,
+  profile,
+  profileBase = 1000,
+  factorFunction,
+}) => {
+  // IF profil is based on 1000kWh per year, it must be multiplied by difference of real consumption (e.g. 5000kWh = multiplier 5x)
+  const consumptionFactor = consumptionYear / profileBase
+  let currentDay = new Date(Date.UTC(year, 0, 1, 0, 0))
+  const lastDay = new Date(Date.UTC(year + 1, 0, 1, 0, 0))
 
-module.exports = ({year, consumptionYear, profile, profileBase = 1000, factorFunction}) => {
+  const days = {}
+  // Needed for factorFunction "Standardlastprofil BDEW"
+  let dayTimer = 1
 
-    // IF profil is based on 1000kWh per year, it must be multiplied by difference of real consumption (e.g. 5000kWh = multiplier 5x)
-    const consumptionFactor = consumptionYear / profileBase
-    let currentDay = new Date(Date.UTC(year,    0, 1,0,0))
-    const lastDay = new Date(Date.UTC(year + 1, 0, 1,0,0))
-    
-    const days = {}
-    // Needed for factorFunction "Standardlastprofil BDEW"
-    let dayTimer = 1
+  while (currentDay <= lastDay) {
+    let currentProfile = profile.find(
+      (season) => new Date(season.till + '/' + year) >= currentDay,
+    ) // TODO/BUG: this finds the next season one day earlier (03/21 is falsy at currentDay 03/21)
 
-    while (currentDay <= lastDay) {
-        
-        
-        let currentProfile = profile
-        .find(season => new Date(season.till + "/" + year ) >= currentDay) // TODO/BUG: this finds the next season one day earlier (03/21 is falsy at currentDay 03/21)
+    if (!currentProfile) {
+      //TODO/BUG: The date "till: 12/31" aren't find correctly.
+      currentProfile = profile.find((season) => season.last)
+    }
 
-        if (!currentProfile) {                  //TODO/BUG: The date "till: 12/31" aren't find correctly.
-            currentProfile = profile
-            .find(season => season.last)
-    
-        } 
+    for (let hour = 0; hour < 24; hour++) {
+      const timeString = `${year}${('00' + (currentDay.getMonth() + 1)).slice(
+        -2,
+      )}${('00' + currentDay.getDate()).slice(-2)}:${('00' + hour).slice(-2)}`
+      let consumption
+      switch (
+        currentDay.getDay() // find the right day for profile | 0 = sun, 1 = mon, ..., 6 = sat
+      ) {
+        case 0:
+          consumption =
+            currentProfile.profileDays['sun'][hour] ||
+            currentProfile.profileDays['default'][hour]
+          break
+        case 6:
+          consumption =
+            currentProfile.profileDays['sat'][hour] ||
+            currentProfile.profileDays['default'][hour]
+          break
 
-        for (let hour = 0; hour < 24; hour++) {
+        default:
+          consumption =
+            currentProfile.profileDays['weekdays'][hour] ||
+            currentProfile.profileDays['default'][hour]
+          break
+      }
 
-            const timeString = `${year}${('00' + (currentDay.getMonth() + 1)).slice(-2)}${('00' + (currentDay.getDate())).slice(-2)}:${('00' + hour).slice(-2)}`
-            let consumption
-            switch (currentDay.getDay()) {      // find the right day for profile | 0 = sun, 1 = mon, ..., 6 = sat
-                case 0:
-                    consumption = currentProfile.profileDays['sun'][hour] || currentProfile.profileDays['default'][hour] 
-                    break;
-                case 6:
-                    consumption = currentProfile.profileDays['sat'][hour] || currentProfile.profileDays['default'][hour] 
-                    break;
-                    
-                default:
-                    consumption = currentProfile.profileDays['weekdays'][hour] || currentProfile.profileDays['default'][hour] 
-                    break;
-            }
-            
-            if (factorFunction){                // if function set, use function for "Standardlastprofil BDEW"
+      if (factorFunction) {
+        // if function set, use function for "Standardlastprofil BDEW"
 
-                days[timeString] = {P:factorFunction(dayTimer, consumption * consumptionFactor)} 
-            }
-            else {
-                
-                days[timeString] = {P:consumption * consumptionFactor}
-            }
-            
+        days[timeString] = {
+          P: factorFunction(dayTimer, consumption * consumptionFactor),
         }
-        currentDay.setDate(currentDay.getDate() + 1)    // set one day after
-        dayTimer++
-
-    } 
-    return days
+      } else {
+        days[timeString] = { P: consumption * consumptionFactor }
+      }
+    }
+    currentDay.setDate(currentDay.getDate() + 1) // set one day after
+    dayTimer++
+  }
+  return days
 }

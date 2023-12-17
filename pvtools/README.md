@@ -26,11 +26,11 @@ For detailed explanation on how things work, check out the [documentation](https
 
 ## Enviroment variables
 
-| Variable | Description | Default if not set |
-| -------- | ----------- | ------------------ |
-| APP_URL  | Domain name and Port that is used to access the API backend when NODE_ENV='production' | localhost:8082 |
-| NODE_ENV | Using the value 'production' changes the API backend URL to https://APP_URL. Attention: in production mode 'https' is always set as protocol | (not set) |
-| GOOGLE_ANALYTICS_ID | Google Analytics ID that is embeded in the UI | (not set) |
+| Variable            | Description                                                                                                                                  | Default if not set |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| APP_URL             | Domain name and Port that is used to access the API backend when NODE_ENV='production'                                                       | localhost:8082     |
+| NODE_ENV            | Using the value 'production' changes the API backend URL to https://APP_URL. Attention: in production mode 'https' is always set as protocol | (not set)          |
+| GOOGLE_ANALYTICS_ID | Google Analytics ID that is embeded in the UI                                                                                                | (not set)          |
 
 ## Special Directories
 
@@ -53,7 +53,6 @@ More information about the usage of this directory in [the documentation](https:
 Layouts are a great help when you want to change the look and feel of your Nuxt app, whether you want to include a sidebar or have distinct layouts for mobile and desktop.
 
 More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/layouts).
-
 
 ### `pages`
 
