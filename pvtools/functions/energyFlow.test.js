@@ -20,8 +20,8 @@ describe('testNormalize function',()=>{
 describe('PV > Consumption',() => {
     test('pv generation is more than consumption, battery is loading', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 4000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 4000, 
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -29,12 +29,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 1000 * .99 + 5000,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 4000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 4000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 0,
             batteryLoad: 1000 * .99,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -44,8 +44,8 @@ describe('PV > Consumption',() => {
     
     test('pv generation is more than consumption, max battery power load is lower than generation and split in feed in and load', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 0, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 0, 
                     batterySoc: 5000, 
                     batterySocMax: 8000, 
                     batterySocMin: 100, 
@@ -54,12 +54,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 2000 + 5000,
-            selfUsagePower: 0,
-            selfUsagePowerPv: 0,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 3000 * .99,
+            selfUsedEnergy: 0,
+            selfUsedEnergyPv: 0,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 3000 * .99,
             batteryLoad: 2000,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -69,8 +69,8 @@ describe('PV > Consumption',() => {
     
     test('pv generation is more than consumption, max battery power load is lower than generation, only load in battery', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 2000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 2000, 
                     batterySoc: 5000, 
                     batterySocMax: 8000, 
                     batterySocMin: 100, 
@@ -79,12 +79,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 2000 + 5000,
-            selfUsagePower: 2000,
-            selfUsagePowerPv: 2000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 1000 * .99,
+            selfUsedEnergy: 2000,
+            selfUsedEnergyPv: 2000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 1000 * .99,
             batteryLoad: 2000,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -94,8 +94,8 @@ describe('PV > Consumption',() => {
     
     test('pv generation is more than inverter max power generation', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 4000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 4000, 
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -104,12 +104,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 500 * .99 + 5000,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 4000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 4000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 0,
             batteryLoad: 500 * .99,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 500,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -119,8 +119,8 @@ describe('PV > Consumption',() => {
     
     test('pv generation is more than consumption, battery load efficiency diff than unload', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 4000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 4000, 
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -129,12 +129,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 1000 * .95 + 5000,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 4000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 4000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 0,
             batteryLoad: 1000 * .95,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -144,8 +144,8 @@ describe('PV > Consumption',() => {
     
     test('pv generation is more than consumption, battery is full, power is feed in', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 4000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 4000, 
                     batterySoc: 5000, 
                     batterySocMax: 5000, 
                     batterySocMin: 100, 
@@ -153,12 +153,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 5000,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 4000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 1000,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 4000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 1000,
             batteryLoad: 0,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -167,8 +167,8 @@ describe('PV > Consumption',() => {
     })
     test('pv generation is more than consumption, battery is full, power is feed in, max feedin power less then generation', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 2000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 2000, 
                     batterySoc: 5000, 
                     batterySocMax: 5000, 
                     batterySocMin: 100, 
@@ -177,12 +177,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 5000,
-            selfUsagePower: 2000,
-            selfUsagePowerPv: 2000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 2000,
+            selfUsedEnergy: 2000,
+            selfUsedEnergyPv: 2000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 2000,
             batteryLoad: 0,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 1000,
@@ -192,8 +192,8 @@ describe('PV > Consumption',() => {
     
     test('pv generation is more than consumption, battery will be fullfilled, diff power is feed in', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 4000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 4000, 
                     batterySoc: 5000, 
                     batterySocMax: 5500, 
                     batterySocMin: 100, 
@@ -201,12 +201,12 @@ describe('PV > Consumption',() => {
                 })
         expect(data).toEqual({
             newBatterySoc: 5500,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 4000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 500 * .99,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 4000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 500 * .99,
             batteryLoad: 500,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -219,8 +219,8 @@ describe('PV > Consumption',() => {
 describe('PV < Consumption', () => {
     test('pv generation is less than consumption, battery is discharging', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 6000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 6000, 
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -228,12 +228,12 @@ describe('PV < Consumption', () => {
                 })
         expect(data).toEqual({
             newBatterySoc: 5000 - 1000 / 0.99,
-            selfUsagePower: 6000,
-            selfUsagePowerPv: 5000,
-            selfUsagePowerBattery: 1000,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 6000,
+            selfUsedEnergyPv: 5000,
+            selfUsedEnergyBattery: 1000,
+            feedInEnergyGrid: 0,
             batteryLoad: -1000 / 0.99,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -243,8 +243,8 @@ describe('PV < Consumption', () => {
 
     test('pv generation is less than consumption, battery is discharging, Batterypower is lower then consumption', () => {
         const data = energyFlow({   
-                    powerGeneration: 3000, 
-                    powerConsumption: 6000, 
+                    energyGeneration: 3000, 
+                    energyConsumption: 6000, 
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -253,12 +253,12 @@ describe('PV < Consumption', () => {
                 })
         expect(data).toEqual({
             newBatterySoc: 5000 - 1000 / 0.99,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 3000,
-            selfUsagePowerBattery: 1000,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 3000,
+            selfUsedEnergyBattery: 1000,
+            feedInEnergyGrid: 0,
             batteryLoad: -1000 / 0.99,
-            consumptionGrid: 2000,
+            gridUsedEnergy: 2000,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -268,8 +268,8 @@ describe('PV < Consumption', () => {
    
     test('pv generation is less than consumption, battery is discharging, Batterypower is lower then consumption, battery will be empty', () => {
         const data = energyFlow({   
-                    powerGeneration: 3000, 
-                    powerConsumption: 6000, 
+                    energyGeneration: 3000, 
+                    energyConsumption: 6000, 
                     batterySoc: 3000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -278,12 +278,12 @@ describe('PV < Consumption', () => {
                 })
         expect(data).toEqual({
             newBatterySoc: 3000 - 1000 / 0.99,
-            selfUsagePower: 4000,
-            selfUsagePowerPv: 3000,
-            selfUsagePowerBattery: 1000,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 4000,
+            selfUsedEnergyPv: 3000,
+            selfUsedEnergyBattery: 1000,
+            feedInEnergyGrid: 0,
             batteryLoad: -1000 / 0.99,
-            consumptionGrid: 2000,
+            gridUsedEnergy: 2000,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -293,8 +293,8 @@ describe('PV < Consumption', () => {
     
     test('pv generation is less than consumption, battery unload efficiency is differnt then load', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 6000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 6000, 
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -303,12 +303,12 @@ describe('PV < Consumption', () => {
                 })
         expect(data).toEqual({
             newBatterySoc: 5000 - 1000 / 0.80,
-            selfUsagePower: 6000,
-            selfUsagePowerPv: 5000,
-            selfUsagePowerBattery: 1000,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 6000,
+            selfUsedEnergyPv: 5000,
+            selfUsedEnergyBattery: 1000,
+            feedInEnergyGrid: 0,
             batteryLoad: -1000 / 0.80,
-            consumptionGrid: 0,
+            gridUsedEnergy: 0,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -318,8 +318,8 @@ describe('PV < Consumption', () => {
     
     test('pv generation is less than consumption, battery is empty, cunsumpion from grid', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 6000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 6000, 
                     batterySoc: 100, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
@@ -327,12 +327,12 @@ describe('PV < Consumption', () => {
                 })
         expect(data).toEqual({
             newBatterySoc: 100,
-            selfUsagePower: 5000,
-            selfUsagePowerPv: 5000,
-            selfUsagePowerBattery: 0,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 5000,
+            selfUsedEnergyPv: 5000,
+            selfUsedEnergyBattery: 0,
+            feedInEnergyGrid: 0,
             batteryLoad: 0,
-            consumptionGrid: 1000,
+            gridUsedEnergy: 1000,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -342,8 +342,8 @@ describe('PV < Consumption', () => {
     
     test('pv generation is less than consumption, battery is nearly empty, diff cunsumpion from grid', () => {
         const data = energyFlow({   
-                    powerGeneration: 5000, 
-                    powerConsumption: 6000, 
+                    energyGeneration: 5000, 
+                    energyConsumption: 6000, 
                     batterySoc: 1000, 
                     batterySocMax: 10000, 
                     batterySocMin: 500, 
@@ -351,12 +351,12 @@ describe('PV < Consumption', () => {
                 })
         expect(data).toEqual({
             newBatterySoc: 500,
-            selfUsagePower: 5500,
-            selfUsagePowerPv: 5000,
-            selfUsagePowerBattery: 500,
-            feedInPowerGrid: 0,
+            selfUsedEnergy: 5500,
+            selfUsedEnergyPv: 5000,
+            selfUsedEnergyBattery: 500,
+            feedInEnergyGrid: 0,
             batteryLoad: -500,
-            consumptionGrid: 500 / 0.99,
+            gridUsedEnergy: 500 / 0.99,
             missedInverterPower: 0,
             missedBatteryPower: 0,
             missedFeedInPowerGrid: 0,
@@ -446,8 +446,8 @@ describe('merge powergeneration arrays', () => {
 //         const dayTime = '20200518:18'
 //         // console.log(consumption[dayTime])
 //         const result = energyFlow({
-//             powerGeneration: mergedPowerGeneration[dayTime].P, //473.34000000000003
-//             powerConsumption: consumption[dayTime].P, //3093.3675000000003
+//             energyGeneration: mergedPowerGeneration[dayTime].P, //473.34000000000003
+//             energyConsumption: consumption[dayTime].P, //3093.3675000000003
 //             batterySoc:5000, 
 //             batterySocMax: 10000, 
 //             batterySocMin: 100, 
@@ -457,15 +457,15 @@ describe('merge powergeneration arrays', () => {
 //         expect(mergedPowerGeneration[dayTime].P).toBe(473.34000000000003)
 //         expect(result).toEqual({
 //                "batteryLoad": -4900,
-//                "consumptionGrid": 1515.9696969696975,
-//                "feedInPowerGrid": 0,
+//                "gridUsedEnergy": 1515.9696969696975,
+//                "feedInEnergyGrid": 0,
 //                "missedBatteryPower": 0,
 //                "missedFeedInPowerGrid": 0,
 //                "missedInverterPower": 0,
 //                "newBatterySoc": 100,
-//                "selfUsagePower": 5373.34,
-//                "selfUsagePowerBattery": 4900,
-//                "selfUsagePowerPv": 473.34000000000003,
+//                "selfUsedEnergy": 5373.34,
+//                "selfUsedEnergyBattery": 4900,
+//                "selfUsedEnergyPv": 473.34000000000003,
 //              })
 
 //     })
@@ -474,22 +474,22 @@ describe('merge powergeneration arrays', () => {
         
 //         let yearSum = {
 //             "batteryLoad": 0,
-//             "consumptionGrid": 0,
-//             "feedInPowerGrid": 0,
+//             "gridUsedEnergy": 0,
+//             "feedInEnergyGrid": 0,
 //             "missedBatteryPower": 0,
 //             "missedFeedInPowerGrid": 0,
 //             "missedInverterPower": 0,
 //             "newBatterySoc": 0,
-//             "selfUsagePower": 0,
-//             "selfUsagePowerBattery": 0,
-//             "selfUsagePowerPv": 0,
+//             "selfUsedEnergy": 0,
+//             "selfUsedEnergyBattery": 0,
+//             "selfUsedEnergyPv": 0,
 //         }
 
 //         dayTimeOrder.forEach(key => {
 
 //             const result = energyFlow({
-//                 powerGeneration: mergedPowerGeneration[key].P, 
-//                 powerConsumption: consumption[key].P, 
+//                 energyGeneration: mergedPowerGeneration[key].P, 
+//                 energyConsumption: consumption[key].P, 
 //                 batterySoc: yearSum.newBatterySoc, 
 //                 batterySocMax: 20000, 
 //                 batterySocMin: 100, 
@@ -497,14 +497,14 @@ describe('merge powergeneration arrays', () => {
 //             })
 
 //             yearSum.batteryLoad = yearSum.batteryLoad + result.batteryLoad
-//             yearSum.consumptionGrid = yearSum.consumptionGrid + result.consumptionGrid
-//             yearSum.feedInPowerGrid = yearSum.feedInPowerGrid + result.feedInPowerGrid
+//             yearSum.gridUsedEnergy = yearSum.consumptionGrid + result.consumptionGrid
+//             yearSum.feedInEnergyGrid = yearSum.feedInPowerGrid + result.feedInPowerGrid
 //             yearSum.missedBatteryPower = yearSum.missedBatteryPower + result.missedBatteryPower
 //             yearSum.missedFeedInPowerGrid = yearSum.missedFeedInPowerGrid + result.missedFeedInPowerGrid
 //             yearSum.missedInverterPower = yearSum.missedInverterPower + result.missedInverterPower
-//             yearSum.selfUsagePower = yearSum.selfUsagePower + result.selfUsagePower
-//             yearSum.selfUsagePowerBattery = yearSum.selfUsagePowerBattery + result.selfUsagePowerBattery
-//             yearSum.selfUsagePowerPv = yearSum.selfUsagePowerPv + result.selfUsagePowerPv
+//             yearSum.selfUsedEnergy = yearSum.selfUsagePower + result.selfUsagePower
+//             yearSum.selfUsedEnergyBattery = yearSum.selfUsedEnergyBattery + result.selfUsagePowerBattery
+//             yearSum.selfUsedEnergyPv = yearSum.selfUsedEnergyPV + result.selfUsagePowerPv
 //             yearSum.newBatterySoc = result.newBatterySoc
         
             
@@ -513,15 +513,15 @@ describe('merge powergeneration arrays', () => {
 //         // expect(consumption[dayTime].P).toBe(6874.150000000001)
 //         expect(yearSum).toEqual({
 //                "batteryLoad": 100,
-//                "consumptionGrid": 7017443.115791865,
-//                "feedInPowerGrid": 3488849.343801145,
+//                "gridUsedEnergy": 7017443.115791865,
+//                "feedInEnergyGrid": 3488849.343801145,
 //                "missedBatteryPower": 0,
 //                "missedFeedInPowerGrid": 0,
 //                "missedInverterPower": 0,
 //                "newBatterySoc": 100,
-//                "selfUsagePower": 12522855.128756072,
-//                "selfUsagePowerBattery": 5269271.398256048,
-//                "selfUsagePowerPv": 7253583.730499969
+//                "selfUsedEnergy": 12522855.128756072,
+//                "selfUsedEnergyBattery": 5269271.398256048,
+//                "selfUsedEnergyPv": 7253583.730499969
 //              })
 
 //     })
