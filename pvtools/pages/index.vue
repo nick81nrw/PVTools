@@ -338,7 +338,7 @@ import {
   regressionCalc
 } from "@/functions/energyFlow";
 import { factorFunction, PROFILEBASE, SLPH0 } from "@/functions/SLP";
-import { convertConsumptionCSV, createTemplateCsv, createDataCsv} from "@/functions/convertConsumpionUploads";
+import { convertConsumptionCSV, createTemplateCsv, createDataCsv} from "@/functions/convertConsumptionUploads";
 import regressionDb from '@/functions/regression.json'
 
 export default {

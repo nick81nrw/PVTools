@@ -1,6 +1,6 @@
 
 const fs = require('fs')
-const {convertConsumptionCSV,createTemplateCsv} = require('./convertConsumpionUploads')
+const {convertConsumptionCSV,createTemplateCsv} = require('./convertConsumptionUploads')
 
 
 const csvData = fs.readFileSync(__dirname + '/ImportTest.csv','utf8')
