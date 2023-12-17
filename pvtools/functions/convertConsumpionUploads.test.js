@@ -13,12 +13,13 @@ describe('read csv file', ()=> {
         console.log(result)
         expect(typeof result == 'object' ).toBe(true)
     })
-    // test('createCsv', ()=> {
-    //     const csv = createTemplateCsv(2023)
-    //     // fs.writeFileSync(__dirname+'/TEST.csv',csv)
-    //     expect(csv.length).toBe(2333)
-    // })
-    
+    test('createCsv', ()=> {
+        const csv = createTemplateCsv(2023)
+        // Linecount for 2023: 1 headline + 24h*356d data lines
+        expect(csv.split("\n").length).toBe(1+(24*365))
+        // Filesize for 2023 template
+        expect(csv.length).toBe(140178)
+    })
 })
 
 
