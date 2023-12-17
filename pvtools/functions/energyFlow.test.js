@@ -6,6 +6,7 @@ const seriescalc2 = require('./seriescalc2.json')
 const normalizedHR = normalizeHourlyRadiation(seriescalc.outputs.hourly)
 const normalizedHR2 = normalizeHourlyRadiation(seriescalc2.outputs.hourly)
 
+const regressionDb = require('./regression.json')
 
 describe('testNormalize function',()=>{
     test('check P and temperature values', () => {
@@ -25,7 +26,8 @@ describe('PV > Consumption',() => {
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
-                    batteryEfficiency: .99
+                    batteryEfficiency: .99,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 1000 * .99 + 5000,
@@ -50,7 +52,8 @@ describe('PV > Consumption',() => {
                     batterySocMax: 8000, 
                     batterySocMin: 100, 
                     batteryEfficiency: .99,
-                    maxPowerLoadBattery: 2000
+                    maxPowerLoadBattery: 2000,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 2000 + 5000,
@@ -100,7 +103,8 @@ describe('PV > Consumption',() => {
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
                     batteryEfficiency: .99,
-                    maxPowerGenerationInverter: 4500
+                    maxPowerGenerationInverter: 4500,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 500 * .99 + 5000,
@@ -125,7 +129,8 @@ describe('PV > Consumption',() => {
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
                     batteryLoadEfficiency: .95,
-                    batteryEfficiency: .99 // unload as default
+                    batteryEfficiency: .99, // unload as default
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 1000 * .95 + 5000,
@@ -149,7 +154,8 @@ describe('PV > Consumption',() => {
                     batterySoc: 5000, 
                     batterySocMax: 5000, 
                     batterySocMin: 100, 
-                    batteryEfficiency: .99
+                    batteryEfficiency: .99,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 5000,
@@ -173,7 +179,8 @@ describe('PV > Consumption',() => {
                     batterySocMax: 5000, 
                     batterySocMin: 100, 
                     batteryEfficiency: .99,
-                    maxPowerFeedIn: 2000
+                    maxPowerFeedIn: 2000,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 5000,
@@ -197,7 +204,8 @@ describe('PV > Consumption',() => {
                     batterySoc: 5000, 
                     batterySocMax: 5500, 
                     batterySocMin: 100, 
-                    batteryEfficiency: .99
+                    batteryEfficiency: .99,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 5500,
@@ -224,7 +232,8 @@ describe('PV < Consumption', () => {
                     batterySoc: 5000, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
-                    batteryEfficiency: .99
+                    batteryEfficiency: .99,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 5000 - 1000 / 0.99,
@@ -249,7 +258,8 @@ describe('PV < Consumption', () => {
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
                     batteryEfficiency: .99,
-                    maxPowerGenerationBattery: 1000
+                    maxPowerGenerationBattery: 1000,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 5000 - 1000 / 0.99,
@@ -274,7 +284,8 @@ describe('PV < Consumption', () => {
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
                     batteryEfficiency: .99,
-                    maxPowerGenerationBattery: 1000
+                    maxPowerGenerationBattery: 1000,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 3000 - 1000 / 0.99,
@@ -299,7 +310,8 @@ describe('PV < Consumption', () => {
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
                     batteryEfficiency: .99,
-                    batteryUnloadEfficiency: .80
+                    batteryUnloadEfficiency: .80,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 5000 - 1000 / 0.80,
@@ -323,7 +335,8 @@ describe('PV < Consumption', () => {
                     batterySoc: 100, 
                     batterySocMax: 10000, 
                     batterySocMin: 100, 
-                    batteryEfficiency: .99
+                    batteryEfficiency: .99,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 100,
@@ -347,7 +360,8 @@ describe('PV < Consumption', () => {
                     batterySoc: 1000, 
                     batterySocMax: 10000, 
                     batterySocMin: 500, 
-                    batteryEfficiency: .99
+                    batteryEfficiency: .99,
+                    regressionDb
                 })
         expect(data).toEqual({
             newBatterySoc: 500,
