@@ -1,10 +1,11 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "PVTools API backend",
   "main": "index.js",
   "scripts": {
-    "start-server": "tsc && node dist/index.js",
+    "compile-ts": "tsc",
+    "start-server": "npm run compile-ts && node dist/index.js",
     "start": "nodemon -e ts -w ./ -x npm run start-server"
   },
   "keywords": [],
