@@ -1,19 +1,16 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "PVTools API backend",
+  "description": "",
   "main": "index.js",
   "scripts": {
-    "compile-ts": "tsc",
-    "start-server": "npm run compile-ts && node dist/index.js",
+    "start-server": "tsc && node dist/index.js",
     "start": "nodemon -e ts -w ./ -x npm run start-server"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.10.4",
     "axios": "^1.6.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
@@ -22,5 +19,7 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.4"
   }
 }

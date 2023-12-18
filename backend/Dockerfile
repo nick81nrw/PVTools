@@ -1,15 +1,6 @@
-ARG NODE_BASEIMAGE=node:21.4.0-alpine3.19
-
-FROM ${NODE_BASEIMAGE} AS builder
+FROM node:21.4.0-alpine3.19
 WORKDIR /app
+COPY package*.json ./
+RUN npm install
 COPY . .
-RUN npm ci --omit=dev && \
-    npm run compile-ts
-
-FROM ${NODE_BASEIMAGE}
-RUN apk add --no-cache tini
-WORKDIR /app
-COPY --from=builder /app/node_modules /app/node_modules
-COPY --from=builder /app/dist /app/dist
-USER node
-CMD [ "tini", "node", "--", "dist/index.js" ]
+CMD ["npm", "run",  "start-server"]
