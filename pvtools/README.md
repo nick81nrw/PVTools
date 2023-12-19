@@ -32,6 +32,18 @@ For detailed explanation on how things work, check out the [documentation](https
 | NODE_ENV | Using the value 'production' changes the API backend URL to https://APP_URL. Attention: in production mode 'https' is always set as protocol | (not set) |
 | GOOGLE_ANALYTICS_ID | Google Analytics ID that is embeded in the UI | (not set) |
 
+## Docker
+```bash
+# Build image with defaults
+$ docker build --tag pvtools-frontend:latest .
+
+# Build image for production with custom settings
+$ docker build --build-arg APP_URL=backend.exmaple.com:8443 --build-arg NODE_ENV=production --build-arg GOOGLE_ANALYTICS_ID=example123 --tag pvtools-frontend:latest .
+
+# Run image
+$ docker run --publish 8080:8080 pvtools-frontend:latest
+```
+
 ## Special Directories
 
 You can create the following extra directories, some of which have special behaviors. Only `pages` is required; you can delete them if you don't want to use their functionality.

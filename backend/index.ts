@@ -29,13 +29,6 @@ app.use(bodyParser.json())
 /**
  * Open endpoints
  */
-
-app.use(express.static(path.join(__dirname, '..', '..', 'pvtools', 'dist')))
-
-app.get("/", (req, res, next) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'pvtools', 'dist', 'index.html'))
-})
-
 app.post("/relay", relayAPIRequest)
 
 /**
