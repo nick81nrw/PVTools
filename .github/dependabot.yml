@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "npm"
+    directory: "/pvtools"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # Block major upgrade of nuxt and its core dependencies
+      - dependency-name: "bootstrap"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "nuxt"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vue"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vue-server-renderer"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vue-template-compiler"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "webpack"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@fortawesome/vue-fontawesome"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
