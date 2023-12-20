@@ -1,93 +1,75 @@
-# pvtools
+# Nuxt 3 Minimal Starter
 
-## Requirements
+Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
-- Node.js >= 20
-- NPM
+## Setup
 
-## Build Setup
+Make sure to install the dependencies:
 
 ```bash
-# install dependencies
-$ npm install
+# npm
+npm install
 
-# serve with hot reload at localhost:3000
-$ npm run dev
+# pnpm
+pnpm install
 
-# build for production and launch server
-$ npm run build
-$ npm run start
+# yarn
+yarn install
 
-# generate static project
-$ npm run generate
+# bun
+bun install
 ```
 
-For detailed explanation on how things work, check out the [documentation](https://nuxtjs.org).
+## Development Server
 
-## Enviroment variables
+Start the development server on `http://localhost:3000`:
 
-| Variable            | Description                                                                                                                                  | Default if not set |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| APP_URL             | Domain name and Port that is used to access the API backend when NODE_ENV='production'                                                       | localhost:8082     |
-| NODE_ENV            | Using the value 'production' changes the API backend URL to https://APP_URL. Attention: in production mode 'https' is always set as protocol | (not set)          |
-| GOOGLE_ANALYTICS_ID | Google Analytics ID that is embeded in the UI                                                                                                | (not set)          |
-
-## Docker
 ```bash
-# Build image with defaults
-$ docker build --tag pvtools-frontend:latest .
+# npm
+npm run dev
 
-# Build image for production with custom settings
-$ docker build --build-arg APP_URL=backend.exmaple.com:8443 --build-arg NODE_ENV=production --build-arg GOOGLE_ANALYTICS_ID=example123 --tag pvtools-frontend:latest .
+# pnpm
+pnpm run dev
 
-# Run image
-$ docker run --publish 8080:8080 pvtools-frontend:latest
+# yarn
+yarn dev
+
+# bun
+bun run dev
 ```
 
-## Special Directories
+## Production
 
-You can create the following extra directories, some of which have special behaviors. Only `pages` is required; you can delete them if you don't want to use their functionality.
+Build the application for production:
 
-### `assets`
+```bash
+# npm
+npm run build
 
-The assets directory contains your uncompiled assets such as Stylus or Sass files, images, or fonts.
+# pnpm
+pnpm run build
 
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/assets).
+# yarn
+yarn build
 
-### `components`
+# bun
+bun run build
+```
 
-The components directory contains your Vue.js components. Components make up the different parts of your page and can be reused and imported into your pages, layouts and even other components.
+Locally preview production build:
 
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/components).
+```bash
+# npm
+npm run preview
 
-### `layouts`
+# pnpm
+pnpm run preview
 
-Layouts are a great help when you want to change the look and feel of your Nuxt app, whether you want to include a sidebar or have distinct layouts for mobile and desktop.
+# yarn
+yarn preview
 
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/layouts).
+# bun
+bun run preview
+```
 
-### `pages`
-
-This directory contains your application views and routes. Nuxt will read all the `*.vue` files inside this directory and setup Vue Router automatically.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/get-started/routing).
-
-### `plugins`
-
-The plugins directory contains JavaScript plugins that you want to run before instantiating the root Vue.js Application. This is the place to add Vue plugins and to inject functions or constants. Every time you need to use `Vue.use()`, you should create a file in `plugins/` and add its path to plugins in `nuxt.config.js`.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/plugins).
-
-### `static`
-
-This directory contains your static files. Each file inside this directory is mapped to `/`.
-
-Example: `/static/robots.txt` is mapped as `/robots.txt`.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/static).
-
-### `store`
-
-This directory contains your Vuex store files. Creating a file in this directory automatically activates Vuex.
-
-More information about the usage of this directory in [the documentation](https://nuxtjs.org/docs/2.x/directory-structure/store).
+Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

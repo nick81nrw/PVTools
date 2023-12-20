@@ -12,8 +12,8 @@
   />
 </template>
 
-<script>
-import { Bar } from 'vue-chartjs/legacy'
+<script setup lang="ts">
+import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
@@ -24,83 +24,48 @@ import {
   LinearScale,
 } from 'chart.js'
 
+import type { ChartOptions } from 'chart.js'
+
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
-export default {
-  name: 'BarChart',
-  components: { Bar },
-  props: {
-    chartId: {
-      type: String,
-      default: 'bar-chart',
-    },
-    datasetIdKey: {
-      type: String,
-      default: 'label',
-    },
-    //   chartData: {
-    //     type: Object,
-    //     required: true
-    // //   },
-    //   chartOptions: {
-    //     type: Object,
-    //     default: () => {}
-    //   },
-    width: {
-      type: Number,
-      default: 400,
-    },
-    height: {
-      type: Number,
-      default: 400,
-    },
-    cssClasses: {
-      default: '',
-      type: String,
-    },
-    styles: {
-      type: Object,
-      default: () => {},
-    },
-    plugins: {
-      type: Object,
-      default: () => {},
-    },
-    labels: {
-      type: Array,
-      default: [],
-    },
-    datasets: {
-      type: Array,
-      default: [],
-    },
-  },
-  computed: {
-    chartData() {
-      return {
-        labels: this.labels,
-        datasets: this.datasets,
-      }
-    },
-  },
-  data() {
-    return {
-      // chartData: {
-      //   labels: [ 'January', 'February', 'March' ],
-      //   datasets: [ { data: [40, 20, 12] } ]
-      // },
-      chartOptions: {
-        responsive: true,
-        scales: {
-          x: {
-            stacked: true,
-          },
-          y: {
-            stacked: true,
-          },
-        },
-      },
-    }
-  },
+interface Props {
+  chartId: string
+  datasetIdKey: string
+  width: number
+  height: number
+  cssClasses: string
+  plugins: any
+  labels: string[]
+  datasets: string[]
 }
+
+const props = withDefaults(defineProps<Props>(), {
+  chartId: 'bar-chart',
+  datasetIdKey: 'label',
+  width: 400,
+  height: 400,
+  cssClasses: '',
+  plugins: {},
+  labels: [],
+  datasets: [],
+})
+
+const chartData = computed(() => {
+  return {
+    labels: labels.value,
+    datasets: datasets.value,
+  }
+})
+
+const chartOptions = ref<ChartOptions>({
+  responsive: true,
+  scales: {
+    x: {
+      stacked: true,
+    },
+    y: {
+      stacked: true,
+    },
+  },
+})
 </script>

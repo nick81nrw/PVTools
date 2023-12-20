@@ -9,8 +9,8 @@
   />
 </template>
 
-<script>
-import { Line as LineChartGenerator } from 'vue-chartjs/legacy'
+<script setup lang="ts">
+import { Line as LineChartGenerator } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
@@ -21,6 +21,7 @@ import {
   LinearScale,
   PointElement,
 } from 'chart.js'
+import type { ChartOptions } from 'chart.js'
 
 ChartJS.register(
   Title,
@@ -29,99 +30,70 @@ ChartJS.register(
   LineElement,
   CategoryScale,
   LinearScale,
-  PointElement,
+  PointElement
 )
 
-export default {
-  name: 'Chart',
-  components: { LineChartGenerator },
-  props: {
-    chartId: {
-      type: String,
-      default: 'line-chart',
-    },
-    datasetIdKey: {
-      type: String,
-      default: 'label',
-    },
-    width: {
-      type: Number,
-      default: 400,
-    },
-    height: {
-      type: Number,
-      default: 100,
-    },
-    cssClasses: {
-      default: '',
-      type: String,
-    } /*
-    styles: {
-      type: Object,
-      default: () => {}
-    },*/,
-    plugins: {
-      type: Object,
-      default: () => {},
-    },
-    labels: {
-      type: Array,
-      default: [],
-    },
-    datasets: {
-      type: Array,
-      default: [],
-    },
-  },
-  data() {
-    return {
-      /*chartData: {
-        labels: [ 'January', 'February', 'March' ],
-        datasets: [ { data: [40, 20, 12] } ]
-      },*/
-      chartOptions: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y1: {
-            type: 'linear',
-            display: true,
-            position: 'left',
-            ticks: {
-              callback(value) {
-                return value + ' %'
-              },
-            },
-          },
-          y2: {
-            type: 'linear',
-            display: true,
-            position: 'right',
-            ticks: {
-              callback(value) {
-                return value + ' Jahre'
-              },
-            },
-          },
-          x: {
-            title: {
-              text: 'Speichergröße',
-              display: true,
-            },
-          },
+interface Props {
+  chartId: string
+  datasetIdKey: string
+  width: number
+  height: number
+  cssClasses: string
+  plugins: any
+  labels: string[]
+  datasets: string[]
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  chartId: 'line-chart',
+  datasetIdKey: 'label',
+  width: 400,
+  height: 100,
+  cssClasses: '',
+  plugins: {},
+  labels: [],
+  datasets: [],
+})
+
+const chartOptions = ref<ChartOptions>({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y1: {
+      type: 'linear',
+      display: true,
+      position: 'left',
+      ticks: {
+        callback(value) {
+          return value + ' %'
         },
       },
-    }
-  },
-  computed: {
-    chartData() {
-      return {
-        labels: this.labels,
-        datasets: this.datasets,
-      }
+    },
+    y2: {
+      type: 'linear',
+      display: true,
+      position: 'right',
+      ticks: {
+        callback(value) {
+          return value + ' Jahre'
+        },
+      },
+    },
+    x: {
+      title: {
+        text: 'Speichergröße',
+        display: true,
+      },
     },
   },
-}
+})
+
+const chartData = computed(() => {
+  return {
+    labels: labels.value,
+    datasets: datasets.value,
+  }
+})
 </script>
 
 <style scoped></style>
