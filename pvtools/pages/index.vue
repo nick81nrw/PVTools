@@ -46,21 +46,18 @@
       <div>
         <div id="inputCollapse" visible>
           <v-form>
-            <fieldset label="Adresse:">
-              <div append="Straße, PLZ Stadt">
-                <v-text-field
-                  v-model="inputAddressSearchString"
-                  placeholder="z.B. 50667 Köln"
-                  v-b-tooltip.hover
-                  title="Beim verlassen des Feldes wird der Standort gesucht"
-                />
-              </div>
-              <label>
-                <v-btn variant="info" @click="getCoordinatesByAddress">
-                  Suche nach Adresse
-                </v-btn>
-              </label>
-            </fieldset>
+            <v-text-field
+              v-model="inputAddressSearchString"
+              placeholder="z.B. 50667 Köln"
+              v-b-tooltip.hover
+              title="Beim verlassen des Feldes wird der Standort gesucht"
+              label="Adresse"
+            />
+            <label>
+              <v-btn @click="getCoordinatesByAddress">
+                Suche nach Adresse
+              </v-btn>
+            </label>
 
             <fieldset
               label="Koordinaten:"
@@ -290,83 +287,70 @@
                 Deaktiviere Datei
               </v-btn>
             </fieldset>
-            <fieldset label="Systemverluste PV:">
-              <div append="%">
-                <v-text-field
-                  v-model.number="input.systemloss"
-                  type="number"
-                  min="0"
-                  max="100"
-                />
-              </div>
-            </fieldset>
-            <fieldset label="Minimaler Ladezustand Speicher:">
-              <div append="%">
-                <v-text-field
-                  v-model.number="input.batterySocMinPercent"
-                  type="number"
-                  min="0"
-                  max="100"
-                />
-              </div>
-            </fieldset>
-            <fieldset label="Ladeeffizenz Speicher (Laden / Entladen):">
-              <div append="%">
-                <v-text-field
-                  v-model.number="input.batteryLoadEfficiency"
-                  type="number"
-                  min="0"
-                  max="100"
-                />
-                <v-text-field
-                  v-model.number="input.batteryUnloadEfficiency"
-                  type="number"
-                  min="0"
-                  max="100"
-                />
-              </div>
-            </fieldset>
-            <fieldset
-              label="Maximalleistung Wechelrichter (0 = keine Prüfung):"
-            >
-              <div append="W">
-                <v-text-field
-                  v-model.number="input.maxPowerGenerationInverter"
-                  type="number"
-                  min="0"
-                  max="100000"
-                />
-              </div>
-            </fieldset>
+            <v-text-field
+              v-model.number="input.systemloss"
+              type="number"
+              min="0"
+              max="100"
+              suffix="%"
+              label="Systemverluste PV"
+            />
+
+            <v-text-field
+              v-model.number="input.batterySocMinPercent"
+              type="number"
+              min="0"
+              max="100"
+              suffix="%"
+              label="Minimaler Ladezustand Speicher"
+            />
+
+            <v-text-field
+              v-model.number="input.batteryLoadEfficiency"
+              type="number"
+              min="0"
+              max="100"
+              suffix="%"
+              label="Ladeeffizenz Speicher Laden"
+            />
+            <v-text-field
+              v-model.number="input.batteryUnloadEfficiency"
+              type="number"
+              min="0"
+              max="100"
+              suffix="%"
+              label="Ladeeffizenz Speicher Entladen"
+            />
+            <v-text-field
+              v-model.number="input.maxPowerGenerationInverter"
+              type="number"
+              min="0"
+              max="100000"
+              suffix="W"
+              label="Maximalleistung Wechelrichter (0 = keine Prüfung)"
+            />
             <!-- <fieldset label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
               <div append="W">
                 <input v-model.number="input.maxPowerLoadBattery" type="number" min="0" max="100000" />
               </div>
             </fieldset>-->
-            <fieldset
-              label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung):"
-            >
-              <div append="W">
-                <v-text-field
-                  v-model.number="input.maxPowerGenerationBattery"
-                  type="number"
-                  min="0"
-                  max="100000"
-                />
-              </div>
-            </fieldset>
-            <fieldset
-              label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung):"
-            >
-              <div append="W">
-                <v-text-field
-                  v-model.number="input.maxPowerFeedIn"
-                  type="number"
-                  min="0"
-                  max="100000"
-                />
-              </div>
-            </fieldset>
+
+            <v-text-field
+              v-model.number="input.maxPowerGenerationBattery"
+              type="number"
+              min="0"
+              max="100000"
+              suffix="W"
+              label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung)"
+            />
+            <v-text-field
+              v-model.number="input.maxPowerFeedIn"
+              type="number"
+              min="0"
+              max="100000"
+              suffix="W"
+              label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung)"
+            />
             <!-- <fieldset label="Lineare Degradation der PV-Module pro Jahr:">
               <div append="%">
                 <input v-model.number="input.linearDegrationModules" type="number" min="0" max="10" />
@@ -800,30 +784,27 @@ async function generateData() {
 
     const generationData = await Promise.all(
       input.value.roofs.map((roof) => {
-        return $axios
-          .post('/relay', {
-            url: buildQueryString({
-              aspect: roof.aspect,
-              angle: roof.angle,
-              lat: adressData.value.lat,
-              lon: adressData.value.lon,
-              peakpower: roof.peakpower / 1000,
-              loss: input.value.systemloss,
-              startyear: input.value.year,
-              endyear: input.value.year,
-            }),
-            method: 'GET',
-            body: {},
-          })
-          .then((response) => response.data)
-          .then((data) => {
-            const normData = normalizeHourlyRadiation(data.outputs.hourly)
-            const generationYear =
-              Object.values(normData).reduce((prev, curr) => prev + curr.P, 0) /
-              1000
-            roofsData.value.push({ ...roof, generationYear })
-            return normData
-          })
+        return $fetch('/api/pvgis', {
+          url: buildQueryString({
+            aspect: roof.aspect,
+            angle: roof.angle,
+            lat: adressData.value.lat,
+            lon: adressData.value.lon,
+            peakpower: roof.peakpower / 1000,
+            loss: input.value.systemloss,
+            startyear: input.value.year,
+            endyear: input.value.year,
+          }),
+          method: 'GET',
+          body: {},
+        }).then((data) => {
+          const normData = normalizeHourlyRadiation(data)
+          const generationYear =
+            Object.values(normData).reduce((prev, curr) => prev + curr.P, 0) /
+            1000
+          roofsData.value.push({ ...roof, generationYear })
+          return normData
+        })
       })
     )
 
@@ -1078,21 +1059,20 @@ async function generateData() {
 }
 
 async function getCoordinatesByAddress() {
-  let osmReturn = (
-    await $axios.post('/relay', {
+  let osmReturn = await $fetch('/api/osm', {
+    method: 'POST',
+    body: {
       url:
         'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' +
         encodeURIComponent(inputAddressSearchString.value),
-      method: 'GET',
-      body: {},
-    })
-  ).data
+    },
+  })
 
   if (osmReturn.length == 0) {
     adressData.value = 'no_address'
     console.log('Detected Wrong')
   } else if (osmReturn[0]) {
-    adressData.value = osmReturn[0]
+    adressData.value = osmReturn
     inputAddressSearchString.value = adressData.value.display_name
   }
 }
