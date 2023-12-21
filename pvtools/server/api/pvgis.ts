@@ -243,25 +243,14 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  const pvgisBody: PVGIS = await $fetch(body.url)
-
-  return pvgisBody.outputs.hourly
+  try {
+    const pvgisBody: PVGIS = await $fetch(body.url)
+    return pvgisBody.outputs.hourly
+  } catch (error) {
+    if (error)
+      throw createError({
+        statusCode: error.statusCode,
+        message: error.data,
+      })
+  }
 })
-
-// import {RequestHandler} from "express";
-// // let axios = require("axios")
-
-// export const relayAPIRequest:RequestHandler = ((req,res, next) => {
-//     if (!req.body.url.startsWith("https://re.jrc.ec.europa.eu/") &&
-// 	!req.body.url.startsWith("https://nominatim.openstreetmap.org/")) {
-//         return res.send(403)
-//     }
-//     if(req.body.method == "GET"){
-//         axios.get(req.body.url)
-//             .then((result:any) => res.json(result.data))
-//             .catch((error:any) => console.error(error))
-//     } else {
-//         return res.send(403)
-//     }
-
-// })
