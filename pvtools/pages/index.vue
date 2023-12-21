@@ -597,16 +597,16 @@
 //   createDataCsv,
 // } from '@/functions/convertConsumptionUploads'
 // import regressionDb from '@/functions/regression.json'
-import { ref, computed, onMounted, watch } from 'vue'
+// import { ref, computed, onMounted, watch } from 'vue'
 
-const localStorage = {
-  getItem(name) {
-    return null
-  },
-  setItem(name, value) {
-    return null
-  },
-}
+// const localStorage = {
+//   getItem(name) {
+//     return null
+//   },
+//   setItem(name, value) {
+//     return null
+//   },
+// }
 
 const displayData = ref([])
 const returnedData = ref({})
