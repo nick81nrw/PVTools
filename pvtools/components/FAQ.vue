@@ -1,25 +1,29 @@
 <template>
   <div>
-    <v-btn v-b-toggle.collapseFaq>FAQs und News</v-btn>
-    <b-collapse id="collapseFaq">
-      <template v-for="realm in getRealms()" v-bind:key="realm">
-        <h3>{{ realm }}</h3>
-        <!-- <b-card v-for="(faq,i) in getFaqs(realm)" v-bind:key="i"> -->
-        <v-expansion-panels>
-          <v-expansion-panel
-            v-for="(faq, i) in getFaqs(realm)"
-            v-bind:key="i"
-            :title="faq.title"
-            :text="faq.text"
-          >
-          </v-expansion-panel>
-        </v-expansion-panels>
-      </template>
-    </b-collapse>
+    <v-btn @click="collapseFaq = !collapseFaq">FAQs und News</v-btn>
+    <v-expand-transition>
+      <div id="collapseFaq" v-show="collapseFaq">
+        <template v-for="realm in getRealms()" v-bind:key="realm">
+          <h3>{{ realm }}</h3>
+          <!-- <b-card v-for="(faq,i) in getFaqs(realm)" v-bind:key="i"> -->
+          <v-expansion-panels>
+            <v-expansion-panel
+              v-for="(faq, i) in getFaqs(realm)"
+              v-bind:key="i"
+              :title="faq.title"
+              :text="faq.text"
+            >
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </template>
+      </div>
+    </v-expand-transition>
   </div>
 </template>
 
 <script setup lang="ts">
+const collapseFaq = ref(false)
+
 const faqs = ref([
   {
     realm: 'Neuigkeiten',

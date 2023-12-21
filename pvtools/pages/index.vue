@@ -38,13 +38,13 @@
     </div>
     <div>
       <div>
-        <v-btn v-b-toggle.inputCollapse>Daten eingeben</v-btn>
+        <v-btn @click="inputCollapse = !inputCollapse">Daten eingeben</v-btn>
       </div>
     </div>
 
     <div cols="1" cols-md="2">
-      <div>
-        <div id="inputCollapse" visible>
+      <v-expand-transition>
+        <div id="inputCollapse" v-show="inputCollapse">
           <v-form>
             <v-text-field
               v-model="inputAddressSearchString"
@@ -120,11 +120,7 @@
               label="Speicherkosten pro kWh"
             />
           </v-form>
-        </div>
-      </div>
 
-      <div>
-        <div id="inputCollapse" visible>
           <v-form @submit="addRoof" @submit.stop.prevent>
             <div bg-variant="light">
               <v-text-field
@@ -163,11 +159,9 @@
                 label="Installierte Leistung"
               />
 
-              <div>
-                <v-btn type="submit">
-                  Ausrichtung zur Berechnung hinzufügen
-                </v-btn>
-              </div>
+              <v-btn type="submit">
+                Ausrichtung zur Berechnung hinzufügen
+              </v-btn>
             </div>
           </v-form>
           <div class="mt-3">
@@ -182,26 +176,14 @@
                 Ausrichtung {{ roof.aspect }}° - Neigung: {{ roof.angle }}° -
                 {{ roof.peakpower }} Wp
                 <div>
-                  <!-- <v-btn
-                    variant="primary"
-                    @click="
-                      roofInput.aspect = roof.aspect
-                      roofInput.angle = roof.angle
-                      roofInput.peakpower = roof.peakpower
-                      input.roofs = input.roofs.filter(
-                        (roofEntry) =>
-                          !(
-                            roof.aspect == roofEntry.aspect &&
-                            roof.angle == roofEntry.angle &&
-                            roof.peakpower == roofEntry.peakpower
-                          )
-                      )
-                    "
+                  <v-btn
+                    variant="outlined"
+                    @click="editRoof(roof.aspect, roof.angle, roof.peakpower)"
                   >
-                    <font-awesome-icon icon="pen" />
-                  </v-btn> -->
-                  <v-btn variant="danger" @click="removeRoof(roof)">
-                    <font-awesome-icon icon="trash" />
+                    <IconsEditSolid />
+                  </v-btn>
+                  <v-btn variant="flat" @click="removeRoof(roof)">
+                    <IconsTrashSolid />
                   </v-btn>
                 </div>
               </div>
@@ -232,126 +214,143 @@
               Berechnen
             </v-btn>
             <v-btn variant="danger" @click="resetValues">Zurücksetzen</v-btn>
-            <v-btn v-b-toggle.extensionsCollapse>
+            <v-btn @click="extensionsCollapse = !extensionsCollapse">
               Erweiterte Einstellungen
             </v-btn>
           </div>
-
-          <div id="extensionsCollapse">
-            <fieldset label="Speichergrößen:">
-              <div append="Wh">
-                <form-tags
-                  input-id="tags-basic"
-                  v-model="inputBatterySizes"
-                  :tag-validator="tagValidator"
-                  v-b-tooltip.hover
-                  title="Zwischen 0,2 und 2000 kWh"
-                  :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
-                ></form-tags>
-              </div>
-            </fieldset>
-            <fieldset label="Vergleichsjahr:">
-              <form-select v-model="input.year" :options="years"></form-select>
-            </fieldset>
-            <fieldset label="Import individueller stündlicher Verbauch:">
-              <v-btn size="sm" @click="downloadCsvTemplate">
-                {{
-                  'Vorlage herunterladen für das o.g. Vergleichsjahr ' +
-                  input.year
-                }}
-              </v-btn>
-              <form-file
-                v-model="csvFile"
-                :state="Boolean(csvFile)"
-                placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
-                drop-placeholder="Drop file here..."
-                accept=".csv"
-                plain
-              ></form-file>
-              <div
-                show
-                :show="!!importCsvErrorMessage"
-                dismissible
-                variant="danger"
+          <v-expand-transition>
+            <div id="extensionsCollapse" v-show="extensionsCollapse">
+              <v-chip
+                v-for="(tag, index) in inputBatterySizes"
+                :key="index"
+                closable
+                @click:close="
+                  inputBatterySizes.splice(inputBatterySizes.indexOf(tag), 1)
+                "
               >
-                {{ importCsvErrorMessage }}
-              </div>
-              <v-btn size="sm" :disabled="useImportData" @click="uploadCsvData">
-                Aktiviere CSV Datei
-              </v-btn>
-              <v-btn
-                size="sm"
-                :disabled="!useImportData"
-                @click="deleteCsvFile"
-              >
-                Deaktiviere Datei
-              </v-btn>
-            </fieldset>
-            <v-text-field
-              v-model.number="input.systemloss"
-              type="number"
-              min="0"
-              max="100"
-              suffix="%"
-              label="Systemverluste PV"
-            />
+                {{ tag }}
+              </v-chip>
+              <v-combobox
+                input-id="tags-basic"
+                v-model="inputBatterySizes"
+                :tag-validator="tagValidator"
+                v-b-tooltip.hover
+                title="Zwischen 0,2 und 2000 kWh"
+                :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
+                multiple
+                chips
+                suffix="Wh"
+                label="Speichergrößen"
+              />
+              <v-select
+                v-model="input.year"
+                :items="years.map((x) => x.value)"
+                label="Vergleichsjahr"
+              />
 
-            <v-text-field
-              v-model.number="input.batterySocMinPercent"
-              type="number"
-              min="0"
-              max="100"
-              suffix="%"
-              label="Minimaler Ladezustand Speicher"
-            />
+              <fieldset label="Import individueller stündlicher Verbauch:">
+                <v-btn size="sm" @click="downloadCsvTemplate">
+                  {{
+                    'Vorlage herunterladen für das o.g. Vergleichsjahr ' +
+                    input.year
+                  }}
+                </v-btn>
+                <form-file
+                  v-model="csvFile"
+                  :state="Boolean(csvFile)"
+                  placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
+                  drop-placeholder="Drop file here..."
+                  accept=".csv"
+                  plain
+                ></form-file>
+                <div
+                  show
+                  :show="!!importCsvErrorMessage"
+                  dismissible
+                  variant="danger"
+                >
+                  {{ importCsvErrorMessage }}
+                </div>
+                <v-btn
+                  size="sm"
+                  :disabled="useImportData"
+                  @click="uploadCsvData"
+                >
+                  Aktiviere CSV Datei
+                </v-btn>
+                <v-btn
+                  size="sm"
+                  :disabled="!useImportData"
+                  @click="deleteCsvFile"
+                >
+                  Deaktiviere Datei
+                </v-btn>
+              </fieldset>
+              <v-text-field
+                v-model.number="input.systemloss"
+                type="number"
+                min="0"
+                max="100"
+                suffix="%"
+                label="Systemverluste PV"
+              />
 
-            <v-text-field
-              v-model.number="input.batteryLoadEfficiency"
-              type="number"
-              min="0"
-              max="100"
-              suffix="%"
-              label="Ladeeffizenz Speicher Laden"
-            />
-            <v-text-field
-              v-model.number="input.batteryUnloadEfficiency"
-              type="number"
-              min="0"
-              max="100"
-              suffix="%"
-              label="Ladeeffizenz Speicher Entladen"
-            />
-            <v-text-field
-              v-model.number="input.maxPowerGenerationInverter"
-              type="number"
-              min="0"
-              max="100000"
-              suffix="W"
-              label="Maximalleistung Wechelrichter (0 = keine Prüfung)"
-            />
-            <!-- <fieldset label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
+              <v-text-field
+                v-model.number="input.batterySocMinPercent"
+                type="number"
+                min="0"
+                max="100"
+                suffix="%"
+                label="Minimaler Ladezustand Speicher"
+              />
+
+              <v-text-field
+                v-model.number="input.batteryLoadEfficiency"
+                type="number"
+                min="0"
+                max="100"
+                suffix="%"
+                label="Ladeeffizenz Speicher Laden"
+              />
+              <v-text-field
+                v-model.number="input.batteryUnloadEfficiency"
+                type="number"
+                min="0"
+                max="100"
+                suffix="%"
+                label="Ladeeffizenz Speicher Entladen"
+              />
+              <v-text-field
+                v-model.number="input.maxPowerGenerationInverter"
+                type="number"
+                min="0"
+                max="100000"
+                suffix="W"
+                label="Maximalleistung Wechelrichter (0 = keine Prüfung)"
+              />
+              <!-- <fieldset label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
               <div append="W">
                 <input v-model.number="input.maxPowerLoadBattery" type="number" min="0" max="100000" />
               </div>
             </fieldset>-->
 
-            <v-text-field
-              v-model.number="input.maxPowerGenerationBattery"
-              type="number"
-              min="0"
-              max="100000"
-              suffix="W"
-              label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung)"
-            />
-            <v-text-field
-              v-model.number="input.maxPowerFeedIn"
-              type="number"
-              min="0"
-              max="100000"
-              suffix="W"
-              label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung)"
-            />
-            <!-- <fieldset label="Lineare Degradation der PV-Module pro Jahr:">
+              <v-text-field
+                v-model.number="input.maxPowerGenerationBattery"
+                type="number"
+                min="0"
+                max="100000"
+                suffix="W"
+                label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung)"
+              />
+              <v-text-field
+                v-model.number="input.maxPowerFeedIn"
+                type="number"
+                min="0"
+                max="100000"
+                suffix="W"
+                label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung)"
+              />
+              <!-- <fieldset label="Lineare Degradation der PV-Module pro Jahr:">
               <div append="%">
                 <input v-model.number="input.linearDegrationModules" type="number" min="0" max="10" />
               </div>
@@ -371,9 +370,10 @@
                 <input v-model.number="input.linearSelfUseRateChange" type="number" min="-10" max="10" />
               </div>
             </fieldset> -->
-          </div>
+            </div>
+          </v-expand-transition>
         </div>
-      </div>
+      </v-expand-transition>
     </div>
     <div :show="isCalculating" rounded="sm">
       <div>
@@ -762,6 +762,9 @@ const years = ref([
   { value: 2015, text: '2015' },
 ])
 
+const inputCollapse = ref(true)
+const extensionsCollapse = ref(false)
+
 async function generateData() {
   if (localStorage /* function to detect if localstorage is supported*/) {
     localStorage.setItem('storedInput', JSON.stringify(input))
@@ -1125,6 +1128,20 @@ function addRoof(e) {
     length: 0,
   }
   // needFetch = true
+}
+
+function editRoof(aspect: number, angle: number, peakpower: number) {
+  roofInput.value.aspect = aspect
+  roofInput.value.angle = angle
+  roofInput.value.peakpower = peakpower
+  input.value.roofs = input.value.roofs.filter(
+    (roofEntry) =>
+      !(
+        aspect == roofEntry.aspect &&
+        angle == roofEntry.angle &&
+        peakpower == roofEntry.peakpower
+      )
+  )
 }
 
 function downloadDataCsv({ array, filename }) {
