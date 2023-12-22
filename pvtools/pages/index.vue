@@ -199,7 +199,6 @@
 
           <div class="mt-3">
             <v-btn
-              variant="primary"
               @click="generateData"
               :disabled="
                 (!adressData.lat && !adressData.lon) || input.roofs.length == 0
@@ -213,7 +212,7 @@
             >
               Berechnen
             </v-btn>
-            <v-btn variant="danger" @click="resetValues">Zurücksetzen</v-btn>
+            <v-btn @click="resetValues">Zurücksetzen</v-btn>
             <v-btn @click="extensionsCollapse = !extensionsCollapse">
               Erweiterte Einstellungen
             </v-btn>
@@ -379,7 +378,7 @@
       <div>
         <div>
           <div id="chartContainer">
-            <ChartVue
+            <Chart
               id="chart"
               v-if="displayData.length > 0"
               :labels="displayData.map((item) => item.size)"
@@ -408,7 +407,7 @@
         </div>
       </div>
 
-      <div
+      <v-data-table
         v-if="displayData.length > 0"
         striped
         hover
@@ -418,24 +417,24 @@
         responsive="sm"
       >
         <template>
-          <v-btn size="sm" @click="row.toggleDetails">
+          <v-btn size="sm" @click="showDetails(item)">
             Details
-            <font-awesome-icon
+            <!-- <font-awesome-icon
               v-if="row.detailsShowing"
               icon="fa-square-caret-up"
             />
             <font-awesome-icon
               v-if="!row.detailsShowing"
               icon="fa-square-caret-down"
-            />
+            /> -->
             <!-- {{ row.detailsShowing ? 'Hide' : 'Show'}} Details -->
           </v-btn>
         </template>
-        <template>
+        <!-- <template v-if="false">
           <div
             striped
             hover
-            :items="[row.item]"
+            :items="[item]"
             :fields="[
               {
                 key: 'generationYear',
@@ -570,8 +569,8 @@
               ]"
             />
           </div>
-        </template>
-      </div>
+        </template> -->
+      </v-data-table>
     </div>
     <FAQ />
     <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
@@ -742,15 +741,17 @@ const useImportData = ref(false)
 interface ConsumptionObject {
   P: number
 }
-const importConsumptionData = ref<Record<string, ConsumptionObject>>({})
+const importConsumptionData = ref<Record<string, ConsumptionObject> | null>({})
 const importCsvErrorMessage = ref(null)
 const roofsData = ref<Roof[]>([])
 const inputAddressSearchString = ref(
   localStorage.getItem('storedInputAddressSearchString') || ''
 )
-const adressData = ref<Adress>(
-  JSON.parse(localStorage.getItem('storedAddress')) || {}
-)
+const adressData = ref<Adress | Object>({})
+
+onMounted(() => {
+  adressData.value = JSON.parse(localStorage.getItem('storedAddress')) || {}
+})
 const costSavingsWithoutBattery = ref(0)
 const screenHeight = ref(0)
 const years = ref([
@@ -765,15 +766,17 @@ const years = ref([
 const inputCollapse = ref(true)
 const extensionsCollapse = ref(false)
 
+function showDetails(item) {}
+
 async function generateData() {
   if (localStorage /* function to detect if localstorage is supported*/) {
-    localStorage.setItem('storedInput', JSON.stringify(input))
+    localStorage.setItem('storedInput', JSON.stringify(input.value))
     localStorage.setItem(
       'storedInputAddressSearchString',
       inputAddressSearchString.value
     )
     localStorage.setItem('storedSizes', JSON.stringify(batterySizes.value))
-    localStorage.setItem('storedAddress', JSON.stringify(adressData))
+    localStorage.setItem('storedAddress', JSON.stringify(adressData.value))
   }
 
   inputBatterySizes.value = [...batterySizes.value]
@@ -788,18 +791,19 @@ async function generateData() {
     const generationData = await Promise.all(
       input.value.roofs.map((roof) => {
         return $fetch('/api/pvgis', {
-          url: buildQueryString({
-            aspect: roof.aspect,
-            angle: roof.angle,
-            lat: adressData.value.lat,
-            lon: adressData.value.lon,
-            peakpower: roof.peakpower / 1000,
-            loss: input.value.systemloss,
-            startyear: input.value.year,
-            endyear: input.value.year,
-          }),
-          method: 'GET',
-          body: {},
+          method: 'POST',
+          body: {
+            url: buildQueryString({
+              aspect: roof.aspect,
+              angle: roof.angle,
+              lat: adressData.value.lat,
+              lon: adressData.value.lon,
+              peakpower: roof.peakpower / 1000,
+              loss: input.value.systemloss,
+              startyear: input.value.year,
+              endyear: input.value.year,
+            }),
+          },
         }).then((data) => {
           const normData = normalizeHourlyRadiation(data)
           const generationYear =
@@ -1071,10 +1075,10 @@ async function getCoordinatesByAddress() {
     },
   })
 
-  if (osmReturn.length == 0) {
+  if (!osmReturn.lat) {
     adressData.value = 'no_address'
     console.log('Detected Wrong')
-  } else if (osmReturn[0]) {
+  } else {
     adressData.value = osmReturn
     inputAddressSearchString.value = adressData.value.display_name
   }

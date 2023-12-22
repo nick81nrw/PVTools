@@ -1,14 +1,14 @@
 <template>
   <Bar
-    :chart-options="chartOptions"
-    :chart-data="chartData"
-    :chart-id="chartId"
-    :dataset-id-key="datasetIdKey"
-    :plugins="plugins"
-    :css-classes="cssClasses"
+    :options="chartOptions"
+    :data="chartData"
+    :id="props.chartId"
+    :dataset-id-key="props.datasetIdKey"
+    :plugins="props.plugins"
+    :css-classes="props.cssClasses"
     :styles="styles"
-    :width="width"
-    :height="height"
+    :width="props.width"
+    :height="props.height"
   />
 </template>
 
@@ -52,8 +52,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const chartData = computed(() => {
   return {
-    labels: labels.value,
-    datasets: datasets.value,
+    labels: props.labels,
+    datasets: props.datasets,
   }
 })
 
