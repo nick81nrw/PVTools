@@ -68,10 +68,10 @@
                 <input readonly v-model="adressData.lon" />
               </div>
             </fieldset>
-            <div v-else-if="adressData == 'no_address'" variant="danger" show>
+            <v-tooltip v-show="adressData == 'no_address'" variant="danger">
               Die eingegebende Adresse konnte nicht gefunden werden. Bitte
               versuchen Sie es erneut.
-            </div>
+            </v-tooltip>
 
             <v-text-field
               v-model.number="input.yearlyConsumption"
@@ -254,14 +254,15 @@
                     input.year
                   }}
                 </v-btn>
-                <form-file
+                <v-file-input
                   v-model="csvFile"
                   :state="Boolean(csvFile)"
                   placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
                   drop-placeholder="Drop file here..."
                   accept=".csv"
                   plain
-                ></form-file>
+                >
+                </v-file-input>
                 <div
                   show
                   :show="!!importCsvErrorMessage"
@@ -409,167 +410,28 @@
 
       <v-data-table
         v-if="displayData.length > 0"
-        striped
-        hover
         :items="displayData"
-        :fields="tableFields"
-        small
-        responsive="sm"
+        :headers="tableFields"
+        item-value="size"
+        items-per-page="-1"
+        v-model:expanded="expandedData"
+        show-expand
       >
-        <template>
-          <v-btn size="sm" @click="showDetails(item)">
-            Details
-            <!-- <font-awesome-icon
-              v-if="row.detailsShowing"
-              icon="fa-square-caret-up"
-            />
-            <font-awesome-icon
-              v-if="!row.detailsShowing"
-              icon="fa-square-caret-down"
-            /> -->
-            <!-- {{ row.detailsShowing ? 'Hide' : 'Show'}} Details -->
-          </v-btn>
+        <template v-slot:expanded-row="{ columns, item }">
+          <tr>
+            <td :colspan="columns.length">
+              <DetailsView
+                :columns="columns"
+                :item="item"
+                :roofs-data="roofsData"
+              />
+            </td>
+          </tr>
         </template>
-        <!-- <template v-if="false">
-          <div
-            striped
-            hover
-            :items="[item]"
-            :fields="[
-              {
-                key: 'generationYear',
-                label: 'PV Erzeugung',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-              {
-                key: 'consumptionYear',
-                label: 'Stromverbrauch',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-              {
-                key: 'gridUsedEnergy',
-                label: 'Netzbezug',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-              {
-                key: 'missedFeedInPowerGrid',
-                label: 'Fehlende Netzeinspeisung',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-              {
-                key: 'lossesPvGeneration',
-                label: 'Verluste Wirkungsgrad Wechselrichter',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-              {
-                key: 'missedInverterPower',
-                label: 'Verluste PV-Leistung > Wechelrichter Leistung',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-              {
-                key: 'missedBatteryPower',
-                label: 'Verluste Speicher',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-            ]"
-            small
-            responsive="sm"
-          />
-          <h4>Einzelne Erträge der Ausrichtungen</h4>
-          <div
-            striped
-            hover
-            :items="roofsData"
-            :fields="[
-              {
-                key: 'aspect',
-                label: 'Ausrichtung',
-                formatter: (val) => val.toFixed(1) + '°',
-              },
-              {
-                key: 'angle',
-                label: 'Neigung',
-                formatter: (val) => val.toFixed(1) + '°',
-              },
-              {
-                key: 'peakpower',
-                label: 'Leistung',
-                formatter: (val) => (val / 1000).toFixed(1) + ' kWp',
-              },
-              {
-                key: 'generationYear',
-                label: 'PV-Ertrag',
-                formatter: (val) => val.toFixed(1) + ' kWh',
-              },
-            ]"
-            small
-            responsive="sm"
-          ></div>
-          <v-btn
-            @click="
-              downloadDataCsv({
-                array: row.item.energyFlow,
-                filename: 'daten_' + row.item.size + '.csv',
-              })
-            "
-          >
-            Daten herunterladen
-          </v-btn>
-          <div>
-            <h4>Monatsverlauf</h4>
-            <BarChartVue
-              :datasets="[
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => (i.feedInEnergyGrid * -1) / 1000
-                  ),
-                  label: 'Einspeisung',
-                  backgroundColor: 'orange',
-                  stack: 'Stack 0',
-                },
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => i.selfUsedEnergyPV / 1000
-                  ),
-                  label: 'Selbstverbrauch PV',
-                  backgroundColor: 'green',
-                  stack: 'Stack 0',
-                },
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => i.selfUsedEnergyBattery / 1000
-                  ),
-                  label: 'Selbstverbrauch Speicher',
-                  backgroundColor: 'blue',
-                  stack: 'Stack 0',
-                },
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => i.gridUsedEnergy / 1000
-                  ),
-                  label: 'Netzverbrauch',
-                  backgroundColor: 'red',
-                  stack: 'Stack 0',
-                },
-                // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsedEnergyBattery+i.selfUsedEnergyPV)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
-              ]"
-              :labels="[
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'Mai',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Okt',
-                'Nov',
-                'Dez',
-              ]"
-            />
-          </div>
-        </template> -->
+
+        <template v-slot:bottom>
+          <!-- hide page select   -->
+        </template>
       </v-data-table>
     </div>
     <FAQ />
@@ -608,54 +470,55 @@
 // }
 
 const displayData = ref([])
+const expandedData = ref([])
 const returnedData = ref({})
 const tableFields = ref([
   {
     key: 'size',
-    label: 'Speichergröße',
-    formatter: (val) => (val / 1000).toFixed(1) + ' kWh',
+    title: 'Speichergröße',
+    value: (item) => item.size.toFixed(1) + ' kWh',
   },
   {
     key: 'selfUsedEnergy',
-    label: 'Selbstgenutzter Strom / Jahr',
-    formatter: (val) => val.toFixed(2) + ' kWh',
+    title: 'Selbstgenutzter Strom / Jahr',
+    value: (item) => item.selfUsedEnergy.toFixed(2) + ' kWh',
   },
   {
     key: 'fedInPower',
-    label: 'Eingespeister Strom / Jahr',
-    formatter: (val) => val.toFixed(2) + ' kWh',
+    title: 'Eingespeister Strom / Jahr',
+    value: (item) => item.fedInPower.toFixed(2) + ' kWh',
   },
   {
     key: 'selfUseRate',
-    label: 'Eigenverbrauchsquote',
-    formatter: (val) => val.toFixed(2) + ' %',
+    title: 'Eigenverbrauchsquote',
+    value: (item) => item.selfUseRate.toFixed(2) + ' %',
   },
   {
     key: 'selfSufficiencyRate',
-    label: 'Autarkiegrad',
-    formatter: (val) => val.toFixed(2) + ' %',
+    title: 'Autarkiegrad',
+    value: (item) => item.selfSufficiencyRate.toFixed(2) + ' %',
   },
   {
     key: 'costSavingsBattery',
-    label: 'Ersparnis / Jahr durch Akku',
-    formatter: (val) => val.toFixed(2) + ' €',
+    title: 'Ersparnis / Jahr durch Akku',
+    value: (item) => item.costSavingsBattery.toFixed(2) + ' €',
   },
   {
     key: 'batteryAmortization',
-    label: 'Amortisation nur Speicher',
-    formatter: (val) => val.toFixed(2) + ' Jahre',
+    title: 'Amortisation nur Speicher',
+    value: (item) => item.batteryAmortization.toFixed(2) + ' Jahre',
   },
   {
     key: 'costSavings',
-    label: 'Ersparnis / Jahr Anlage',
-    formatter: (val) => val.toFixed(2) + ' €',
+    title: 'Ersparnis / Jahr Anlage',
+    value: (item) => item.costSavings.toFixed(2) + ' €',
   },
   {
     key: 'amortization',
-    label: 'Amortisation Anlage',
-    formatter: (val) => val.toFixed(2) + ' Jahre',
+    title: 'Amortisation Anlage',
+    value: (item) => item.amortization.toFixed(2) + ' Jahre',
   },
-  { key: 'show_details', label: 'Weitere Details' },
+  { key: 'data-table-expand', title: 'Weitere Details' },
 ])
 
 const inputBatterySizes = ref<number[]>([])
@@ -1075,7 +938,7 @@ async function getCoordinatesByAddress() {
     },
   })
 
-  if (!osmReturn.lat) {
+  if (!osmReturn) {
     adressData.value = 'no_address'
     console.log('Detected Wrong')
   } else {
@@ -1146,11 +1009,6 @@ function editRoof(aspect: number, angle: number, peakpower: number) {
         peakpower == roofEntry.peakpower
       )
   )
-}
-
-function downloadDataCsv({ array, filename }) {
-  const data = createDataCsv(array)
-  downloadCsv({ data, filename })
 }
 
 function downloadCsvTemplate() {

@@ -29,11 +29,11 @@ import type { ChartOptions } from 'chart.js'
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 interface Props {
-  chartId: string
-  datasetIdKey: string
-  width: number
-  height: number
-  cssClasses: string
+  chartId?: string
+  datasetIdKey?: string
+  width?: number
+  height?: number
+  cssClasses?: string
   plugins: any
   labels: string[]
   datasets: string[]

@@ -34,11 +34,11 @@ ChartJS.register(
 )
 
 interface Props {
-  chartId: string
-  datasetIdKey: string
-  width: number
-  height: number
-  cssClasses: string
+  chartId?: string
+  datasetIdKey?: string
+  width?: number
+  height?: number
+  cssClasses?: string
   plugins: any
   labels: string[]
   datasets: string[]
