@@ -2,7 +2,6 @@
 import { stringifyQuery } from 'vue-router'
 
 interface Props {
-  columns: any
   item: any
   roofsData: any
 }
@@ -37,77 +36,88 @@ function colFormatter(text: number): string {
 }
 </script>
 <template>
-  <v-table>
-    <thead>
-      <tr>
-        <th>PV Erzeugung</th>
-        <th>Stromverbrauch</th>
-        <th>Netzbezug</th>
-        <th>Fehlende Netzeinspeisung</th>
-        <th>Verluste Wirkungsgrad Wechselrichter</th>
-        <th>Verluste PV-Leistung > Wechelrichter Leistung</th>
-        <th>Verluste Speicher</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>{{ colFormatter(item.generationYear) }}</td>
-        <td>{{ colFormatter(item.consumptionYear) }}</td>
-        <td>{{ colFormatter(item.gridUsedEnergy) }}</td>
-        <td>{{ colFormatter(item.missedFeedInPowerGrid) }}</td>
-        <td>{{ colFormatter(item.lossesPvGeneration) }}</td>
-        <td>{{ colFormatter(item.missedInverterPower) }}</td>
-        <td>{{ colFormatter(item.missedBatteryPower) }}</td>
-      </tr>
-    </tbody>
-  </v-table>
-  <h4>Einzelne Erträge der Ausrichtungen</h4>
-  <v-table>
-    <thead>
-      <tr>
-        <th>Ausrichtung</th>
-        <th>Neigung</th>
-        <th>Leistung</th>
-        <th>PV-Ertrag</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(roof, index) in roofsData" :key="index">
-        <td>{{ `${roof.aspect.toFixed(1)} °` }}</td>
-        <td>{{ `${roof.angle.toFixed(1)} °` }}</td>
-        <td>{{ `${(roof.peakpower / 1000).toFixed(1)} kWp` }}</td>
-        <td>{{ `${roof.generationYear.toFixed(1)} kWh` }}</td>
-      </tr>
-    </tbody>
-  </v-table>
-  <div
-    :items="roofsData"
-    :fields="[
+  <q-table
+    :rows="[item]"
+    :columns="[
       {
-        key: 'aspect',
-        label: 'Ausrichtung',
-        formatter: (val) => val.toFixed(1) + '°',
+        name: 'generationYear',
+        label: 'PV Erzeugung',
+        field: 'generationYear',
+        format: (val) => val.toFixed(1) + ' kWh',
       },
       {
-        key: 'angle',
-        label: 'Neigung',
-        formatter: (val) => val.toFixed(1) + '°',
+        name: 'consumptionYear',
+        label: 'Stromverbrauch',
+        field: 'consumptionYear',
+        format: (val) => val.toFixed(1) + ' kWh',
       },
       {
-        key: 'peakpower',
-        label: 'Leistung',
-        formatter: (val) => (val / 1000).toFixed(1) + ' kWp',
+        name: 'gridUsedEnergy',
+        label: 'Netzbezug',
+        field: 'gridUsedEnergy',
+        format: (val) => val.toFixed(1) + ' kWh',
       },
       {
-        key: 'generationYear',
-        label: 'PV-Ertrag',
-        formatter: (val) => val.toFixed(1) + ' kWh',
+        name: 'missedFeedInPowerGrid',
+        label: 'Fehlende Netzeinspeisung',
+        field: 'missedFeedInPowerGrid',
+        format: (val) => val.toFixed(1) + ' kWh',
+      },
+      {
+        name: 'lossesPvGeneration',
+        label: 'Verluste Wirkungsgrad Wechselrichter',
+        field: 'lossesPvGeneration',
+        format: (val) => val.toFixed(1) + ' kWh',
+      },
+      {
+        name: 'missedInverterPower',
+        label: 'Verluste PV-Leistung > Wechelrichter Leistung',
+        field: 'missedInverterPower',
+        format: (val) => val.toFixed(1) + ' kWh',
+      },
+      {
+        name: 'missedBatteryPower',
+        label: 'Verluste Speicher',
+        field: 'missedBatteryPower',
+        format: (val) => val.toFixed(1) + ' kWh',
       },
     ]"
     small
     responsive="sm"
-  ></div>
-  <v-btn
+  />
+  <h4>Einzelne Erträge der Ausrichtungen</h4>
+  <q-table
+    :rows="roofsData"
+    :columns="[
+      {
+        name: 'aspect',
+        label: 'Ausrichtung',
+        field: 'aspect',
+        format: (val) => val.toFixed(1) + '°',
+      },
+      {
+        name: 'angle',
+        label: 'Neigung',
+        field: 'angle',
+        format: (val) => val.toFixed(1) + '°',
+      },
+      {
+        name: 'peakpower',
+        label: 'Leistung',
+        field: 'peakpower',
+        format: (val) => (val / 1000).toFixed(1) + ' kWp',
+      },
+      {
+        name: 'generationYear',
+        label: 'PV-Ertrag',
+        field: 'generationYear',
+        format: (val) => val.toFixed(1) + ' kWh',
+      },
+    ]"
+    small
+    responsive="sm"
+  ></q-table>
+  <q-btn
     @click="
       downloadDataCsv({
         array: props.item.energyFlow,
@@ -116,7 +126,7 @@ function colFormatter(text: number): string {
     "
   >
     Daten herunterladen
-  </v-btn>
+  </q-btn>
   <div>
     <h4>Monatsverlauf</h4>
     <BarChart

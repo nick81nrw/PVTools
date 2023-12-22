@@ -17,7 +17,7 @@
         ></iframe> -->
       </div>
       <div align-v="baseline" cols="auto">
-        <v-form
+        <q-form
           action="https://www.paypal.me/akkudoktor"
           method="post"
           target="_blank"
@@ -32,325 +32,295 @@
             alt="Spenden mit dem PayPal-Button"
           />
           <!-- <img alt="" border="0" src="https://www.paypal.com/de_DE/i/scr/pixel.gif" width="1" height="1" /> -->
-        </v-form>
+        </q-form>
         <p>Nutze als Grund: "PV-Tool"</p>
       </div>
     </div>
-    <div>
-      <div>
-        <v-btn @click="inputCollapse = !inputCollapse">Daten eingeben</v-btn>
-      </div>
-    </div>
 
-    <div cols="1" cols-md="2">
-      <v-expand-transition>
-        <div id="inputCollapse" v-show="inputCollapse">
-          <v-form>
-            <v-text-field
-              v-model="inputAddressSearchString"
-              placeholder="z.B. 50667 Köln"
+    <q-list cols="1" cols-md="2">
+      <q-expansion-item label="Daten eingeben">
+        <q-form>
+          <q-input
+            v-model="inputAddressSearchString"
+            placeholder="z.B. 50667 Köln"
+            v-b-tooltip.hover
+            title="Beim verlassen des Feldes wird der Standort gesucht"
+            label="Adresse"
+          />
+          <label>
+            <q-btn @click="getCoordinatesByAddress"> Suche nach Adresse </q-btn>
+          </label>
+
+          <fieldset
+            label="Koordinaten:"
+            v-if="adressData.lon && adressData.lat"
+          >
+            <div>
+              <input readonly v-model="adressData.lat" />
+              <input readonly v-model="adressData.lon" />
+            </div>
+          </fieldset>
+          <q-tooltip v-show="adressData == 'no_address'" variant="danger">
+            Die eingegebende Adresse konnte nicht gefunden werden. Bitte
+            versuchen Sie es erneut.
+          </q-tooltip>
+
+          <q-input
+            v-model.number="input.yearlyConsumption"
+            min="0"
+            type="number"
+            step="1"
+            suffix="kWh"
+            label="Jährlicher Stromverbrauch"
+          />
+          <div variant="danger" :show="useImportData">
+            Es wird ein individueller Verbrauch genutzt
+          </div>
+
+          <q-input
+            v-model.number="input.consumptionCosts"
+            type="number"
+            min="0"
+            step="0.01"
+            suffix="€ / kWh"
+            label="Stromkosten"
+          />
+          <q-input
+            v-model.number="input.feedInCompensation"
+            min="0"
+            type="number"
+            step="0.001"
+            suffix="€ / kWh"
+            label="Einspeisevergütung"
+          />
+
+          <q-input
+            v-model.number="input.installationCostsWithoutBattery"
+            min="0"
+            type="number"
+            step="1"
+            suffix="€"
+            label="Installationskosten ohne Akku"
+          />
+
+          <q-input
+            v-model.number="input.batteryCostsPerKwh"
+            min="0"
+            type="number"
+            step="1"
+            suffix="€"
+            label="Speicherkosten pro kWh"
+          />
+        </q-form>
+
+        <q-form @submit="addRoof" @submit.stop.prevent>
+          <div bg-variant="light">
+            <q-input
+              v-model.number="roofInput.aspect"
+              type="number"
+              min="-180"
+              max="180"
+              required
               v-b-tooltip.hover
-              title="Beim verlassen des Feldes wird der Standort gesucht"
-              label="Adresse"
+              title="0 = Süden, 90 = Westen, -90 = Osten"
+              suffix="° Grad Azimuth"
+              label="Ausrichtung"
             />
-            <label>
-              <v-btn @click="getCoordinatesByAddress">
-                Suche nach Adresse
-              </v-btn>
-            </label>
 
-            <fieldset
-              label="Koordinaten:"
-              v-if="adressData.lon && adressData.lat"
-            >
-              <div>
-                <input readonly v-model="adressData.lat" />
-                <input readonly v-model="adressData.lon" />
-              </div>
-            </fieldset>
-            <v-tooltip v-show="adressData == 'no_address'" variant="danger">
-              Die eingegebende Adresse konnte nicht gefunden werden. Bitte
-              versuchen Sie es erneut.
-            </v-tooltip>
-
-            <v-text-field
-              v-model.number="input.yearlyConsumption"
+            <q-input
+              v-model.number="roofInput.angle"
+              type="number"
               min="0"
+              max="90"
+              required
+              v-b-tooltip.hover
+              title="0 = waargerecht, 90 = senkrecht"
+              suffix="° Grad"
+              label="Neigung"
+            />
+
+            <q-input
+              v-model.number="roofInput.peakpower"
+              min="1"
               type="number"
               step="1"
-              suffix="kWh"
-              label="Jährlicher Stromverbrauch"
-            />
-            <div variant="danger" :show="useImportData">
-              Es wird ein individueller Verbrauch genutzt
-            </div>
-
-            <v-text-field
-              v-model.number="input.consumptionCosts"
-              type="number"
-              min="0"
-              step="0.01"
-              suffix="€ / kWh"
-              label="Stromkosten"
-            />
-            <v-text-field
-              v-model.number="input.feedInCompensation"
-              min="0"
-              type="number"
-              step="0.001"
-              suffix="€ / kWh"
-              label="Einspeisevergütung"
+              required
+              v-b-tooltip.hover
+              title='Bei 10kWp muss "10000" eingetragen werden'
+              suffix="Wp"
+              label="Installierte Leistung"
             />
 
-            <v-text-field
-              v-model.number="input.installationCostsWithoutBattery"
-              min="0"
-              type="number"
-              step="1"
-              suffix="€"
-              label="Installationskosten ohne Akku"
-            />
-
-            <v-text-field
-              v-model.number="input.batteryCostsPerKwh"
-              min="0"
-              type="number"
-              step="1"
-              suffix="€"
-              label="Speicherkosten pro kWh"
-            />
-          </v-form>
-
-          <v-form @submit="addRoof" @submit.stop.prevent>
-            <div bg-variant="light">
-              <v-text-field
-                v-model.number="roofInput.aspect"
-                type="number"
-                min="-180"
-                max="180"
-                required
-                v-b-tooltip.hover
-                title="0 = Süden, 90 = Westen, -90 = Osten"
-                suffix="° Grad Azimuth"
-                label="Ausrichtung"
-              />
-
-              <v-text-field
-                v-model.number="roofInput.angle"
-                type="number"
-                min="0"
-                max="90"
-                required
-                v-b-tooltip.hover
-                title="0 = waargerecht, 90 = senkrecht"
-                suffix="° Grad"
-                label="Neigung"
-              />
-
-              <v-text-field
-                v-model.number="roofInput.peakpower"
-                min="1"
-                type="number"
-                step="1"
-                required
-                v-b-tooltip.hover
-                title='Bei 10kWp muss "10000" eingetragen werden'
-                suffix="Wp"
-                label="Installierte Leistung"
-              />
-
-              <v-btn type="submit">
-                Ausrichtung zur Berechnung hinzufügen
-              </v-btn>
-            </div>
-          </v-form>
-          <div class="mt-3">
+            <q-btn type="submit"> Ausrichtung zur Berechnung hinzufügen </q-btn>
+          </div>
+        </q-form>
+        <div class="mt-3">
+          <div
+            v-for="roof in input.roofs"
+            :key="roof.aspect + roof.angle + roof.peakpower"
+          >
             <div
-              v-for="roof in input.roofs"
-              :key="roof.aspect + roof.angle + roof.peakpower"
+              button
+              :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower"
             >
-              <div
-                button
-                :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower"
-              >
-                Ausrichtung {{ roof.aspect }}° - Neigung: {{ roof.angle }}° -
-                {{ roof.peakpower }} Wp
-                <div>
-                  <v-btn
-                    variant="outlined"
-                    @click="editRoof(roof.aspect, roof.angle, roof.peakpower)"
-                  >
-                    <IconsEditSolid />
-                  </v-btn>
-                  <v-btn variant="flat" @click="removeRoof(roof)">
-                    <IconsTrashSolid />
-                  </v-btn>
-                </div>
+              Ausrichtung {{ roof.aspect }}° - Neigung: {{ roof.angle }}° -
+              {{ roof.peakpower }} Wp
+              <div>
+                <q-btn
+                  variant="outlined"
+                  @click="editRoof(roof.aspect, roof.angle, roof.peakpower)"
+                >
+                  <IconsEditSolid />
+                </q-btn>
+                <q-btn variant="flat" @click="removeRoof(roof)">
+                  <IconsTrashSolid />
+                </q-btn>
               </div>
-              <!-- <div
+            </div>
+            <!-- <div
                 :id="'roof' + roof.aspect + roof.angle + roof.peakpower"
                 accordion="roofs"
                 visible
               >
                 {{'roof' + roof.aspect + roof.angle + roof.peakpower}}
               </div> -->
-            </div>
           </div>
+        </div>
 
-          <div class="mt-3">
-            <v-btn
-              @click="generateData"
-              :disabled="
-                (!adressData.lat && !adressData.lon) || input.roofs.length == 0
-              "
-              :title="
-                (!adressData.lat && !adressData.lon) || input.roofs.length == 0
-                  ? 'Füge eine Adresse und mindestens eine PV Ausrichtung hinzu'
-                  : ''
-              "
-              v-b-toggle.inputCollapse
+        <div class="mt-3">
+          <q-btn
+            @click="generateData"
+            :disabled="
+              (!adressData.lat && !adressData.lon) || input.roofs.length == 0
+            "
+            :title="
+              (!adressData.lat && !adressData.lon) || input.roofs.length == 0
+                ? 'Füge eine Adresse und mindestens eine PV Ausrichtung hinzu'
+                : ''
+            "
+            v-b-toggle.inputCollapse
+          >
+            Berechnen
+          </q-btn>
+          <q-btn @click="resetValues">Zurücksetzen</q-btn>
+        </div>
+        <q-expansion-item label="Erweiterte Einstellungen">
+          <q-select
+            filled
+            input-id="tags-basic"
+            v-model="inputBatterySizes"
+            multiple
+            use-chips
+            use-input
+            new-value-mode="add"
+            :tag-validator="tagValidator"
+            title="Zwischen 0,2 und 2000 kWh"
+            :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
+            suffix="Wh"
+            label="Speichergrößen"
+          />
+          <q-select
+            v-model="input.year"
+            :options="years.map((x) => x.value)"
+            label="Vergleichsjahr"
+          />
+
+          <fieldset label="Import individueller stündlicher Verbauch:">
+            <q-btn size="sm" @click="downloadCsvTemplate">
+              {{
+                'Vorlage herunterladen für das o.g. Vergleichsjahr ' +
+                input.year
+              }}
+            </q-btn>
+            <q-file
+              v-model="csvFile"
+              :state="Boolean(csvFile)"
+              placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
+              drop-placeholder="Drop file here..."
+              accept=".csv"
+              plain
             >
-              Berechnen
-            </v-btn>
-            <v-btn @click="resetValues">Zurücksetzen</v-btn>
-            <v-btn @click="extensionsCollapse = !extensionsCollapse">
-              Erweiterte Einstellungen
-            </v-btn>
-          </div>
-          <v-expand-transition>
-            <div id="extensionsCollapse" v-show="extensionsCollapse">
-              <v-chip
-                v-for="(tag, index) in inputBatterySizes"
-                :key="index"
-                closable
-                @click:close="
-                  inputBatterySizes.splice(inputBatterySizes.indexOf(tag), 1)
-                "
-              >
-                {{ tag }}
-              </v-chip>
-              <v-combobox
-                input-id="tags-basic"
-                v-model="inputBatterySizes"
-                :tag-validator="tagValidator"
-                v-b-tooltip.hover
-                title="Zwischen 0,2 und 2000 kWh"
-                :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
-                multiple
-                chips
-                suffix="Wh"
-                label="Speichergrößen"
-              />
-              <v-select
-                v-model="input.year"
-                :items="years.map((x) => x.value)"
-                label="Vergleichsjahr"
-              />
+            </q-file>
+            <div
+              show
+              :show="!!importCsvErrorMessage"
+              dismissible
+              variant="danger"
+            >
+              {{ importCsvErrorMessage }}
+            </div>
+            <q-btn size="sm" :disabled="useImportData" @click="uploadCsvData">
+              Aktiviere CSV Datei
+            </q-btn>
+            <q-btn size="sm" :disabled="!useImportData" @click="deleteCsvFile">
+              Deaktiviere Datei
+            </q-btn>
+          </fieldset>
+          <q-input
+            v-model.number="input.systemloss"
+            type="number"
+            min="0"
+            max="100"
+            suffix="%"
+            label="Systemverluste PV"
+          />
 
-              <fieldset label="Import individueller stündlicher Verbauch:">
-                <v-btn size="sm" @click="downloadCsvTemplate">
-                  {{
-                    'Vorlage herunterladen für das o.g. Vergleichsjahr ' +
-                    input.year
-                  }}
-                </v-btn>
-                <v-file-input
-                  v-model="csvFile"
-                  :state="Boolean(csvFile)"
-                  placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
-                  drop-placeholder="Drop file here..."
-                  accept=".csv"
-                  plain
-                >
-                </v-file-input>
-                <div
-                  show
-                  :show="!!importCsvErrorMessage"
-                  dismissible
-                  variant="danger"
-                >
-                  {{ importCsvErrorMessage }}
-                </div>
-                <v-btn
-                  size="sm"
-                  :disabled="useImportData"
-                  @click="uploadCsvData"
-                >
-                  Aktiviere CSV Datei
-                </v-btn>
-                <v-btn
-                  size="sm"
-                  :disabled="!useImportData"
-                  @click="deleteCsvFile"
-                >
-                  Deaktiviere Datei
-                </v-btn>
-              </fieldset>
-              <v-text-field
-                v-model.number="input.systemloss"
-                type="number"
-                min="0"
-                max="100"
-                suffix="%"
-                label="Systemverluste PV"
-              />
+          <q-input
+            v-model.number="input.batterySocMinPercent"
+            type="number"
+            min="0"
+            max="100"
+            suffix="%"
+            label="Minimaler Ladezustand Speicher"
+          />
 
-              <v-text-field
-                v-model.number="input.batterySocMinPercent"
-                type="number"
-                min="0"
-                max="100"
-                suffix="%"
-                label="Minimaler Ladezustand Speicher"
-              />
-
-              <v-text-field
-                v-model.number="input.batteryLoadEfficiency"
-                type="number"
-                min="0"
-                max="100"
-                suffix="%"
-                label="Ladeeffizenz Speicher Laden"
-              />
-              <v-text-field
-                v-model.number="input.batteryUnloadEfficiency"
-                type="number"
-                min="0"
-                max="100"
-                suffix="%"
-                label="Ladeeffizenz Speicher Entladen"
-              />
-              <v-text-field
-                v-model.number="input.maxPowerGenerationInverter"
-                type="number"
-                min="0"
-                max="100000"
-                suffix="W"
-                label="Maximalleistung Wechelrichter (0 = keine Prüfung)"
-              />
-              <!-- <fieldset label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
+          <q-input
+            v-model.number="input.batteryLoadEfficiency"
+            type="number"
+            min="0"
+            max="100"
+            suffix="%"
+            label="Ladeeffizenz Speicher Laden"
+          />
+          <q-input
+            v-model.number="input.batteryUnloadEfficiency"
+            type="number"
+            min="0"
+            max="100"
+            suffix="%"
+            label="Ladeeffizenz Speicher Entladen"
+          />
+          <q-input
+            v-model.number="input.maxPowerGenerationInverter"
+            type="number"
+            min="0"
+            max="100000"
+            suffix="W"
+            label="Maximalleistung Wechelrichter (0 = keine Prüfung)"
+          />
+          <!-- <fieldset label="Maximale Ladeleistung Speicher (0 = keine Prüfung):">
               <div append="W">
                 <input v-model.number="input.maxPowerLoadBattery" type="number" min="0" max="100000" />
               </div>
             </fieldset>-->
 
-              <v-text-field
-                v-model.number="input.maxPowerGenerationBattery"
-                type="number"
-                min="0"
-                max="100000"
-                suffix="W"
-                label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung)"
-              />
-              <v-text-field
-                v-model.number="input.maxPowerFeedIn"
-                type="number"
-                min="0"
-                max="100000"
-                suffix="W"
-                label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung)"
-              />
-              <!-- <fieldset label="Lineare Degradation der PV-Module pro Jahr:">
+          <q-input
+            v-model.number="input.maxPowerGenerationBattery"
+            type="number"
+            min="0"
+            max="100000"
+            suffix="W"
+            label="Maximale Lade/Entladeleistung Speicher (0 = keine Prüfung)"
+          />
+          <q-input
+            v-model.number="input.maxPowerFeedIn"
+            type="number"
+            min="0"
+            max="100000"
+            suffix="W"
+            label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung)"
+          />
+          <!-- <fieldset label="Lineare Degradation der PV-Module pro Jahr:">
               <div append="%">
                 <input v-model.number="input.linearDegrationModules" type="number" min="0" max="10" />
               </div>
@@ -370,11 +340,9 @@
                 <input v-model.number="input.linearSelfUseRateChange" type="number" min="-10" max="10" />
               </div>
             </fieldset> -->
-            </div>
-          </v-expand-transition>
-        </div>
-      </v-expand-transition>
-    </div>
+        </q-expansion-item>
+      </q-expansion-item>
+    </q-list>
     <div :show="isCalculating" rounded="sm">
       <div>
         <div>
@@ -408,31 +376,40 @@
         </div>
       </div>
 
-      <v-data-table
+      <q-table
         v-if="displayData.length > 0"
-        :items="displayData"
-        :headers="tableFields"
-        item-value="size"
-        items-per-page="-1"
-        v-model:expanded="expandedData"
-        show-expand
+        :rows="displayData"
+        :columns="tableFields"
+        row-key="size"
+        :rows-per-page-options="[0]"
       >
-        <template v-slot:expanded-row="{ columns, item }">
-          <tr>
-            <td :colspan="columns.length">
-              <DetailsView
-                :columns="columns"
-                :item="item"
-                :roofs-data="roofsData"
+        <template v-slot:body="props">
+          <q-tr :props="props">
+            <q-td v-for="col in props.cols" :key="col.name" :props="props">
+              {{ col.value }}
+            </q-td>
+            <q-td auto-width>
+              <q-btn
+                size="sm"
+                color="accent"
+                round
+                dense
+                @click="props.expand = !props.expand"
+                :icon="props.expand ? 'remove' : 'add'"
               />
-            </td>
-          </tr>
+            </q-td>
+          </q-tr>
+          <q-tr v-show="props.expand" :props="props">
+            <q-td colspan="100%">
+              <DetailsView :item="props.row" :roofs-data="roofsData" />
+            </q-td>
+          </q-tr>
         </template>
 
         <template v-slot:bottom>
           <!-- hide page select   -->
         </template>
-      </v-data-table>
+      </q-table>
     </div>
     <FAQ />
     <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
@@ -474,51 +451,60 @@ const expandedData = ref([])
 const returnedData = ref({})
 const tableFields = ref([
   {
-    key: 'size',
-    title: 'Speichergröße',
-    value: (item) => item.size.toFixed(1) + ' kWh',
+    name: 'size',
+    label: 'Speichergröße',
+    field: 'size',
+    format: (val, row) => val.toFixed(1) + ' kWh',
   },
   {
-    key: 'selfUsedEnergy',
-    title: 'Selbstgenutzter Strom / Jahr',
-    value: (item) => item.selfUsedEnergy.toFixed(2) + ' kWh',
+    name: 'selfUsedEnergy',
+    label: 'Selbstgenutzter Strom / Jahr',
+    field: 'selfUsedEnergy',
+    format: (val, row) => val.toFixed(2) + ' kWh',
   },
   {
-    key: 'fedInPower',
-    title: 'Eingespeister Strom / Jahr',
-    value: (item) => item.fedInPower.toFixed(2) + ' kWh',
+    name: 'fedInPower',
+    label: 'Eingespeister Strom / Jahr',
+    field: 'fedInPower',
+    format: (val, row) => val.toFixed(2) + ' kWh',
   },
   {
-    key: 'selfUseRate',
-    title: 'Eigenverbrauchsquote',
-    value: (item) => item.selfUseRate.toFixed(2) + ' %',
+    name: 'selfUseRate',
+    label: 'Eigenverbrauchsquote',
+    field: 'selfUseRate',
+    format: (val, row) => val.toFixed(2) + ' %',
   },
   {
-    key: 'selfSufficiencyRate',
-    title: 'Autarkiegrad',
-    value: (item) => item.selfSufficiencyRate.toFixed(2) + ' %',
+    name: 'selfSufficiencyRate',
+    label: 'Autarkiegrad',
+    field: 'selfSufficiencyRate',
+    format: (val, row) => val.toFixed(2) + ' %',
   },
   {
-    key: 'costSavingsBattery',
-    title: 'Ersparnis / Jahr durch Akku',
-    value: (item) => item.costSavingsBattery.toFixed(2) + ' €',
+    name: 'costSavingsBattery',
+    label: 'Ersparnis / Jahr durch Akku',
+    field: 'costSavingsBattery',
+    format: (val, row) => val.toFixed(2) + ' €',
   },
   {
-    key: 'batteryAmortization',
-    title: 'Amortisation nur Speicher',
-    value: (item) => item.batteryAmortization.toFixed(2) + ' Jahre',
+    name: 'batteryAmortization',
+    label: 'Amortisation nur Speicher',
+    field: 'batteryAmortization',
+    format: (val, row) => val.toFixed(2) + ' Jahre',
   },
   {
-    key: 'costSavings',
-    title: 'Ersparnis / Jahr Anlage',
-    value: (item) => item.costSavings.toFixed(2) + ' €',
+    name: 'costSavings',
+    label: 'Ersparnis / Jahr Anlage',
+    field: 'costSavings',
+    format: (val, row) => val.toFixed(2) + ' €',
   },
   {
-    key: 'amortization',
-    title: 'Amortisation Anlage',
-    value: (item) => item.amortization.toFixed(2) + ' Jahre',
+    name: 'amortization',
+    label: 'Amortisation Anlage',
+    field: 'amortization',
+    format: (val, row) => val.toFixed(2) + ' Jahre',
   },
-  { key: 'data-table-expand', title: 'Weitere Details' },
+  { name: 'data-table-expand', label: 'Weitere Details' },
 ])
 
 const inputBatterySizes = ref<number[]>([])

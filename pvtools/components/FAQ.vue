@@ -1,21 +1,26 @@
 <template>
   <div>
-    <v-btn @click="collapseFaq = !collapseFaq">FAQs und News</v-btn>
+    <q-btn @click="collapseFaq = !collapseFaq">FAQs und News</q-btn>
     <v-expand-transition>
       <div id="collapseFaq" v-show="collapseFaq">
-        <template v-for="realm in getRealms()" v-bind:key="realm">
+        <q-list v-for="realm in getRealms()" v-bind:key="realm">
           <h3>{{ realm }}</h3>
           <!-- <b-card v-for="(faq,i) in getFaqs(realm)" v-bind:key="i"> -->
-          <v-expansion-panels>
-            <v-expansion-panel
-              v-for="(faq, i) in getFaqs(realm)"
-              v-bind:key="i"
-              :title="faq.title"
-              :text="faq.text"
-            >
-            </v-expansion-panel>
-          </v-expansion-panels>
-        </template>
+
+          <q-expansion-item
+            v-for="(faq, i) in getFaqs(realm)"
+            v-bind:key="i"
+            :label="faq.title"
+            :group="realm"
+          >
+            <q-card>
+              <q-card-section>
+                {{ faq.text }}
+              </q-card-section>
+            </q-card>
+            <q-separator />
+          </q-expansion-item>
+        </q-list>
       </div>
     </v-expand-transition>
   </div>
