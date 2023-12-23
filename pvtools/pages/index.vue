@@ -38,7 +38,7 @@
     </div>
 
     <q-list cols="1" cols-md="2">
-      <q-expansion-item label="Daten eingeben">
+      <q-expansion-item label="Daten eingeben" default-opened>
         <q-form>
           <q-input
             v-model="inputAddressSearchString"
@@ -212,7 +212,7 @@
             multiple
             use-chips
             use-input
-            new-value-mode="add"
+            new-value-mode="add-unique"
             :tag-validator="tagValidator"
             title="Zwischen 0,2 und 2000 kWh"
             :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
