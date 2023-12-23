@@ -1,12 +1,14 @@
-const axios = require('axios')
-const {
+import ofetch from 'ofetch'
+import {
   energyFlow,
   normalizeHourlyRadiation,
   mergePowerGeneration,
   generateDayTimeValues,
   calculateConsumption,
-} = require('./energyFlow')
-const { SLPH0, PROFILEBASE, factorFunction } = require('./SLP')
+} from './energyFlow'
+import { expect, test, describe, beforeAll } from 'vitest'
+
+import { SLPH0, PROFILEBASE, factorFunction } from './SLP'
 
 const string1url =
   'https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=10&loss=12&angle=25&aspect=0'
@@ -24,8 +26,8 @@ describe.skip('intertation', () => {
 
   beforeAll(async () => {
     jest.setTimeout(10000)
-    results1 = await axios.get(string1url).then((res) => res.data)
-    results2 = await axios.get(string2url).then((res) => res.data)
+    results1 = await ofetch(string1url, { method: 'GET' })
+    results2 = await ofetch(string2url, { method: 'GET' })
     normResult1 = normalizeHourlyRadiation(results1.outputs.hourly)
     normResult2 = normalizeHourlyRadiation(results2.outputs.hourly)
     mergedPower = mergePowerGeneration([normResult1, normResult2])
@@ -81,7 +83,7 @@ describe.skip('intertation', () => {
   })
   test('day/time values are also in merged power generation', () => {
     expect(
-      powerGenAndConsumption.find((v) => v.dayTime == '20200405:14'),
+      powerGenAndConsumption.find((v) => v.dayTime == '20200405:14')
     ).toEqual({
       dayTime: '20200405:14',
       P: 6324.3 + 558.6,
@@ -91,7 +93,7 @@ describe.skip('intertation', () => {
   })
   test('energyFlow with real data on one day', () => {
     const genConsumption = powerGenAndConsumption.find(
-      (v) => v.dayTime == '20200405:14',
+      (v) => v.dayTime == '20200405:14'
     )
 
     const energyFlowData = energyFlow({
@@ -132,19 +134,19 @@ describe.skip('intertation', () => {
     const generationYear =
       energyFlowData.reduce(
         (prev, curr) => curr.selfUsagePower + curr.feedInPowerGrid + prev,
-        0,
+        0
       ) / 1000
     const consumptionYear =
       energyFlowData.reduce(
         (prev, curr) => curr.selfUsagePower + curr.consumptionGrid + prev,
-        0,
+        0
       ) / 1000
 
     expect(
-      generationYear > 19000 * 0.9 && generationYear < 19000 * 1.1,
+      generationYear > 19000 * 0.9 && generationYear < 19000 * 1.1
     ).toEqual(true)
     expect(
-      consumptionYear > 6000 * 0.9 && consumptionYear < 6000 * 1.1,
+      consumptionYear > 6000 * 0.9 && consumptionYear < 6000 * 1.1
     ).toEqual(true)
   })
 })

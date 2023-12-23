@@ -1,5 +1,7 @@
-const { SLPH0, PROFILEBASE, factorFunction } = require('./SLP')
-const calcProfile = require('./calcProfile')
+import { SLPH0, PROFILEBASE, factorFunction } from './SLP'
+import { expect, test, describe } from 'vitest'
+
+import calcProfile from './calcProfile'
 
 describe('test SPL functions', () => {
   const results = calcProfile({
@@ -33,13 +35,13 @@ describe('test SPL functions', () => {
     })
 
     expect(results['19960601:02'].P.toFixed(5)).toBe(
-      (45.840113499345804 * 5).toFixed(5),
+      (45.840113499345804 * 5).toFixed(5)
     )
   })
   test('full powerconsumption of is near the input consumption with max 1% defference', () => {
     const power = Object.values(results).reduce(
       (prev, curr) => prev + curr.P,
-      0,
+      0
     )
 
     expect(power > 5000 * 1000 * 0.9 && power < 5000 * 1000 * 1.1).toBeTruthy()

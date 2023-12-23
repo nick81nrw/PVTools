@@ -1,24 +1,25 @@
-const { calcHeatingTempMap, calcHeatEfficiencyMap } = require('./calcHeatpump')
+import { calcHeatingTempMap, calcHeatEfficiencyMap } from './calcHeatpump'
+import { expect, test, describe } from 'vitest'
 
 describe('calculate heating temperature', () => {
   test('test failure input parameters', () => {
     expect(() => calcHeatingTempMap({ tempMap: 1 })).toThrow(
-      'maxHeatTemp not given',
+      'maxHeatTemp not given'
     )
     expect(() => calcHeatingTempMap({ maxHeatTemp: 15 })).toThrow(
-      'tempMap is not given',
+      'tempMap is not given'
     )
     expect(() =>
-      calcHeatingTempMap({ maxHeatTemp: 15, tempMap: 'text' }),
+      calcHeatingTempMap({ maxHeatTemp: 15, tempMap: 'text' })
     ).toThrow('tempMap is not an array')
     expect(() => calcHeatingTempMap({ maxHeatTemp: 15, tempMap: [] })).toThrow(
-      'tempMap length must be greater then 0',
+      'tempMap length must be greater then 0'
     )
     expect(() =>
-      calcHeatingTempMap({ maxHeatTemp: 15, tempMap: ['text'] }),
+      calcHeatingTempMap({ maxHeatTemp: 15, tempMap: ['text'] })
     ).toThrow('tempMap elements must be also an array')
     expect(() =>
-      calcHeatingTempMap({ maxHeatTemp: 15, tempMap: [[1]] }),
+      calcHeatingTempMap({ maxHeatTemp: 15, tempMap: [[1]] })
     ).toThrow('tempMap elements must be also an array with the length of 2')
   })
   test('test temp calculations', () => {
@@ -40,17 +41,17 @@ describe('calculate efficiency Map', () => {
   test('test failure input parameters', () => {
     expect(() => calcHeatEfficiencyMap({})).toThrow('maxHeatTemp not given')
     expect(() => calcHeatEfficiencyMap({ maxHeatTemp: 3 })).toThrow(
-      'minHeatTemp not given',
+      'minHeatTemp not given'
     )
     expect(() =>
-      calcHeatEfficiencyMap({ maxHeatTemp: 3, minHeatTemp: 4 }),
+      calcHeatEfficiencyMap({ maxHeatTemp: 3, minHeatTemp: 4 })
     ).toThrow('maxTargetTemp not given')
     expect(() =>
       calcHeatEfficiencyMap({
         maxHeatTemp: 3,
         minHeatTemp: 4,
         maxTargetTemp: 4,
-      }),
+      })
     ).toThrow('minTargetTemp not given')
     expect(() =>
       calcHeatEfficiencyMap({
@@ -58,7 +59,7 @@ describe('calculate efficiency Map', () => {
         minHeatTemp: 4,
         maxTargetTemp: 4,
         minTargetTemp: 4,
-      }),
+      })
     ).toThrow('efficiencyMap is not given')
     expect(() =>
       calcHeatEfficiencyMap({
@@ -67,7 +68,7 @@ describe('calculate efficiency Map', () => {
         maxTargetTemp: 4,
         minTargetTemp: 4,
         efficiencyMap: 33,
-      }),
+      })
     ).toThrow('efficiencyMap is not an array')
     expect(() =>
       calcHeatEfficiencyMap({
@@ -79,9 +80,9 @@ describe('calculate efficiency Map', () => {
           [-7, 35, 3.14],
           [-7, 55, 2.13],
         ],
-      }),
+      })
     ).toThrow(
-      'efficiencyMap need two efficiency values with same heat temprature',
+      'efficiencyMap need two efficiency values with same heat temprature'
     )
     expect(() =>
       calcHeatEfficiencyMap({
@@ -93,7 +94,7 @@ describe('calculate efficiency Map', () => {
           [-7, 35, 3.14],
           [2, 35, 4.61],
         ],
-      }),
+      })
     ).toThrow('efficiencyMap need two efficiency values with same temprature')
   })
   test('test efficiency calculations', () => {

@@ -1,17 +1,18 @@
-const {
+import {
   energyFlow,
   calculateConsumption,
   normalizeHourlyRadiation,
   mergePowerGeneration,
-} = require('./energyFlow')
+} from './energyFlow'
+import { expect, test, describe } from 'vitest'
 
-const seriescalc = require('./seriescalc.json')
-const seriescalc2 = require('./seriescalc2.json')
+import seriescalc from './seriescalc.json'
+import seriescalc2 from './seriescalc2.json'
 
 const normalizedHR = normalizeHourlyRadiation(seriescalc.outputs.hourly)
 const normalizedHR2 = normalizeHourlyRadiation(seriescalc2.outputs.hourly)
 
-const regressionDb = require('./regression.json')
+import regressionDb from './regression.js'
 
 describe('testNormalize function', () => {
   test('check P and temperature values', () => {

@@ -8,7 +8,7 @@
  * @return {Object}                         {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
  */
 
-module.exports = ({
+export default ({
   year,
   consumptionYear,
   profile,
@@ -26,7 +26,7 @@ module.exports = ({
 
   while (currentDay <= lastDay) {
     let currentProfile = profile.find(
-      (season) => new Date(season.till + '/' + year) >= currentDay,
+      (season) => new Date(season.till + '/' + year) >= currentDay
     ) // TODO/BUG: this finds the next season one day earlier (03/21 is falsy at currentDay 03/21)
 
     if (!currentProfile) {
@@ -36,7 +36,7 @@ module.exports = ({
 
     for (let hour = 0; hour < 24; hour++) {
       const timeString = `${year}${('00' + (currentDay.getMonth() + 1)).slice(
-        -2,
+        -2
       )}${('00' + currentDay.getDate()).slice(-2)}:${('00' + hour).slice(-2)}`
       let consumption
       switch (
