@@ -18,7 +18,7 @@ export default defineNuxtConfig({
     },
   },
   gtag: {
-    id: 'G-XXXXXXXXXX',
+    id: process.env.GOOGLE_ANALYTICS_ID,
     initialConsent: false,
   },
   devtools: { enabled: true },
