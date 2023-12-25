@@ -213,7 +213,7 @@
             use-chips
             use-input
             new-value-mode="add-unique"
-            :tag-validator="tagValidator"
+            :rules="[(val) => !tagValidator(val) || 'not a number']"
             title="Zwischen 0,2 und 2000 kWh"
             :input-attrs="{ 'aria-describedby': 'tags-validation-help' }"
             suffix="Wh"
@@ -956,8 +956,14 @@ function resetValues() {
   location.reload()
 }
 
-function tagValidator(tag: number) {
-  return !isNaN(tag) && tag <= 2000000 && tag >= 200
+function tagValidator(tag: string[]): boolean {
+  let test = false
+  tag.forEach((val) => {
+    if (isNaN(val) || val > 2000000 || val < 200) {
+      test = true
+    }
+  })
+  return test
 }
 
 function removeRoof(roof: Roof) {
