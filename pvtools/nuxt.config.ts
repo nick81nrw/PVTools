@@ -16,6 +16,7 @@ export default defineNuxtConfig({
       ],
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
+    baseURL: '/',
   },
   gtag: {
     id: process.env.GOOGLE_ANALYTICS_ID,

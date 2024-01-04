@@ -1,0 +1,13 @@
+ARG NODE_BASEIMAGE=node:21.4.0-alpine3.19
+
+FROM ${NODE_BASEIMAGE} AS builder
+WORKDIR /app
+COPY . .
+RUN npm ci && \
+    npm run build
+FROM ${NODE_BASEIMAGE}
+WORKDIR /app
+USER node
+COPY --from=builder /app  .
+CMD ["node", ".output/server/index.mjs" ]
+EXPOSE 3000

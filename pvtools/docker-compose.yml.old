@@ -1,0 +1,8 @@
+version: '3.3'
+services:
+  pv_tool_new:
+    build: .
+    container_name: pv_tool_new
+    restart: unless-stopped
+    ports:
+      - 8080:8080
