@@ -4,8 +4,6 @@ services:
   backend:
     build:
       dockerfile: Dockerfile.backend
-    ports:
-        - "3000:3000"
   frontend:
     build:
       dockerfile: Dockerfile.frontend
@@ -13,8 +11,6 @@ services:
         - APP_URL=http://localhost:8888
         - NODE_ENV=production
         - GOOGLE_ANALYTICS_ID=UA-xxxxxx
-      ports:
-        - "8080:8080"
   proxy:
     image: nginx:alpine
     volumes:
