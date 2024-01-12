@@ -41,7 +41,7 @@
       <q-expansion-item label="Daten eingeben" default-opened>
         <q-form>
           <q-input
-            v-model="inputAddressSearchString"
+            v-model="compInputAddressSearchString"
             placeholder="z.B. 50667 Köln"
             v-b-tooltip.hover
             title="Beim verlassen des Feldes wird der Standort gesucht"
@@ -208,7 +208,7 @@
           <q-select
             filled
             input-id="tags-basic"
-            v-model="inputBatterySizes"
+            v-model="compInputBatterySizes"
             multiple
             use-chips
             use-input
@@ -220,7 +220,7 @@
             label="Speichergrößen"
           />
           <q-select
-            v-model="input.year"
+            v-model="compYear"
             :options="years.map((x) => x.value)"
             label="Vergleichsjahr"
           />
@@ -257,7 +257,7 @@
             </q-btn>
           </fieldset>
           <q-input
-            v-model.number="input.systemloss"
+            v-model.number="compSystemloss"
             type="number"
             min="0"
             max="100"
@@ -598,6 +598,48 @@ const inputAddressSearchString = ref(
 )
 const adressData = ref<Adress | Object>({})
 
+const compYear = computed({
+  get() {
+    return input.value.year
+  },
+  set(newValue) {
+    input.value.year = newValue
+    needFetch.value = true
+  },
+})
+
+const compSystemloss = computed({
+  get() {
+    return input.value.systemloss
+  },
+  set(newValue) {
+    input.value.systemloss = newValue
+    needFetch.value = true
+  },
+})
+
+const compInputAddressSearchString = computed({
+  get() {
+    return inputAddressSearchString.value
+  },
+  set(newValue) {
+    inputAddressSearchString.value = newValue
+    needFetch.value = true
+  },
+})
+
+const compInputBatterySizes = computed({
+  get() {
+    return inputBatterySizes.value
+  },
+  set(newValue) {
+    inputBatterySizes.value = newValue
+    batterySizes.value = newValue
+      .map((val) => Number(val))
+      .sort((a, b) => a - b)
+  },
+})
+
 onMounted(() => {
   adressData.value = JSON.parse(localStorage.getItem('storedAddress')) || {}
 })
@@ -667,6 +709,7 @@ async function generateData() {
     mergedPower.value = mergePowerGeneration(generationData)
     needFetch.value = false
   }
+
   const consumption = useImportData.value
     ? importConsumptionData.value
     : calculateConsumption({
@@ -676,6 +719,7 @@ async function generateData() {
         profileBase: PROFILEBASE,
         factorFunction,
       })
+
   const powerGenAndConsumption = generateDayTimeValues({
     consumption,
     powerGeneration: mergedPower.value,
@@ -975,7 +1019,7 @@ function removeRoof(roof: Roof) {
         roof.peakpower == roofEntry.peakpower
       )
   )
-  // needFetch = true
+  needFetch.value = true
 }
 
 function addRoof(e) {
@@ -986,7 +1030,7 @@ function addRoof(e) {
     peakpower: 0,
     length: 0,
   }
-  // needFetch = true
+  needFetch.value = true
 }
 
 function editRoof(aspect: number, angle: number, peakpower: number) {
@@ -1001,6 +1045,7 @@ function editRoof(aspect: number, angle: number, peakpower: number) {
         peakpower == roofEntry.peakpower
       )
   )
+  needFetch.value = true
 }
 
 function downloadCsvTemplate() {
@@ -1066,25 +1111,6 @@ onMounted(() => {
 
   inputBatterySizes.value = [...batterySizes.value]
 })
-
-// watch(inputBatterySizes(newValue) {
-//       batterySizes = newValue
-//         .map((val) => Number(val))
-//         .sort((a, b) => a - b)
-//     },
-//     'input.value.systemloss'() {
-//       needFetch = true
-//     },
-//     'input.value.year'() {
-//       needFetch = true
-//     },
-//     'input.value.roofs'() {
-//       needFetch = true
-//     },
-//     inputAddressSearchString.value() {
-//       needFetch = true
-//     },
-//     {deep: true})
 </script>
 
 <style>
