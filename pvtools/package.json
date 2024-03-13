@@ -1,37 +1,32 @@
 {
-  "name": "pvtools",
-  "version": "1.0.0",
+  "name": "nuxt-app",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "nuxt",
     "build": "nuxt build",
-    "start": "nuxt start",
+    "dev": "nuxt dev",
     "generate": "nuxt generate",
-    "test": "jest --watch",
-    "test-all": "jest --all"
-  },
-  "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.5.1",
-    "@fortawesome/free-solid-svg-icons": "^6.5.1",
-    "@fortawesome/vue-fontawesome": "^2.0.10",
-    "@nuxtjs/axios": "^5.13.6",
-    "@nuxtjs/google-analytics": "^2.4.0",
-    "bootstrap": "^4.6.2",
-    "bootstrap-vue": "^2.21.2",
-    "chart.js": "^3.9.1",
-    "core-js": "^3.34.0",
-    "nuxt": "^2.17.2",
-    "papaparse": "^5.4.1",
-    "vue": "^2.7.15",
-    "vue-chartjs": "^4.1.2",
-    "vue-gtag": "^1.16.1",
-    "vue-server-renderer": "^2.7.15",
-    "vue-template-compiler": "^2.7.15",
-    "webpack": "^4.47.0"
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "csv-parse": "^5.5.2",
-    "jest": "^29.7.0",
-    "prettier": "^3.1.1"
+    "@nuxt/devtools": "latest",
+    "@nuxt/test-utils": "^3.9.0",
+    "@vue/test-utils": "^2.4.3",
+    "happy-dom": "^12.10.3",
+    "nuxt": "^3.10.0",
+    "nuxt-gtag": "^1.1.2",
+    "nuxt-quasar-ui": "^2.0.7",
+    "vitest": "^1.1.0",
+    "vue": "^3.3.12",
+    "vue-router": "^4.2.5"
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.16.9",
+    "chart.js": "^4.4.1",
+    "papaparse": "^5.4.1",
+    "quasar": "^2.14.2",
+    "vue-chartjs": "^5.3.0"
   }
 }
