@@ -53,7 +53,7 @@
                   v-model="inputAddressSearchString"
                   placeholder="z.B. 50667 Köln"
                   v-b-tooltip.hover
-                  title="Beim verlassen des Feldes wird der Standort gesucht"
+                  title="Beim Verlassen des Feldes wird der Standort gesucht"
                 />
               </b-input-group>
               <b-input-group-append>
@@ -77,7 +77,7 @@
               variant="danger"
               show
             >
-              Die eingegebende Adresse konnte nicht gefunden werden. Bitte
+              Die eingegebene Adresse konnte nicht gefunden werden. Bitte
               versuchen Sie es erneut.
             </b-alert>
             <b-form-group
@@ -145,7 +145,7 @@
           <b-form @submit="addRoof" @submit.stop.prevent>
             <b-card bg-variant="light">
               <b-form-group label="Ausrichtung:">
-                <b-input-group append="° Grad Azimuth">
+                <b-input-group append="° Grad Azimut">
                   <b-form-input
                     v-model.number="roofInput.aspect"
                     type="number"
@@ -166,7 +166,7 @@
                     max="90"
                     required
                     v-b-tooltip.hover
-                    title="0 = waargerecht, 90 = senkrecht"
+                    title="0 = waagerecht, 90 = senkrecht"
                   />
                 </b-input-group>
               </b-form-group>
@@ -332,7 +332,7 @@
                 />
               </b-input-group>
             </b-form-group>
-            <b-form-group label="Ladeeffizenz Speicher (Laden / Entladen):">
+            <b-form-group label="Ladeeffizienz Speicher (Laden / Entladen):">
               <b-input-group append="%">
                 <b-form-input
                   v-model.number="input.batteryLoadEfficiency"
@@ -349,7 +349,7 @@
               </b-input-group>
             </b-form-group>
             <b-form-group
-              label="Maximalleistung Wechelrichter (0 = keine Prüfung):"
+              label="Maximalleistung Wechselrichter (0 = keine Prüfung):"
             >
               <b-input-group append="W">
                 <b-form-input
@@ -503,7 +503,7 @@
                 },
                 {
                   key: 'missedInverterPower',
-                  label: 'Verluste PV-Leistung > Wechelrichter Leistung',
+                  label: 'Verluste PV-Leistung > Wechselrichter-Leistung',
                   formatter: (val) => val.toFixed(1) + ' kWh',
                 },
                 {
