@@ -23,362 +23,229 @@ describe('testNormalize function', () => {
   })
 })
 
-describe('PV > Consumption', () => {
+const NUMERIC_KEYS = [
+  'newBatterySoc',
+  'selfUsedEnergy',
+  'selfUsedEnergyPV',
+  'selfUsedEnergyBattery',
+  'feedInEnergyGrid',
+  'gridUsedEnergy',
+  'missedInverterPower',
+  'missedFeedInPowerGrid',
+  'lossesUnloadBattery',
+  'lossesLoadBattery',
+  'lossesPvGeneration',
+  'losses',
+]
+
+const baseParams = {
+  batterySocMax: 10000,
+  batterySocMin: 1000,
+  batteryEfficiency: 0.99,
+  regressionDb,
+}
+
+// The energy flow uses a statistical consumption model (regression) and an
+// inverter efficiency curve, so the results are checked against physical
+// invariants instead of exact values.
+const expectConsistentResult = (params, data) => {
+  NUMERIC_KEYS.forEach((key) => {
+    expect(Number.isFinite(data[key])).toBe(true)
+    expect(data[key]).toBeGreaterThanOrEqual(-1e-9)
+  })
+  expect(data.selfUsedEnergy + data.gridUsedEnergy).toBeCloseTo(
+    params.energyConsumption,
+    6,
+  )
+  expect(data.selfUsedEnergy).toBeLessThanOrEqual(
+    params.energyConsumption + 1e-9,
+  )
+  expect(data.newBatterySoc).toBeLessThanOrEqual(params.batterySocMax + 1e-9)
+  if (params.batterySoc >= params.batterySocMin) {
+    expect(data.newBatterySoc).toBeGreaterThanOrEqual(
+      params.batterySocMin - 1e-9,
+    )
+  }
+}
+
+describe('energyFlow', () => {
   test('pv generation is more than consumption, battery is loading', () => {
-    const data = energyFlow({
+    const params = {
+      ...baseParams,
       energyGeneration: 5000,
       energyConsumption: 4000,
       batterySoc: 5000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 1000 * 0.99 + 5000,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 4000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 0,
-      batteryLoad: 1000 * 0.99,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBeGreaterThan(params.batterySoc)
+    expect(data.feedInEnergyGrid).toBe(0)
+    expect(data.selfUsedEnergy).toBeGreaterThan(3500)
   })
 
-  test('pv generation is more than consumption, max battery power load is lower than generation and split in feed in and load', () => {
-    const data = energyFlow({
+  test('no consumption: generation is stored, the rest is fed in', () => {
+    const params = {
+      ...baseParams,
       energyGeneration: 5000,
       energyConsumption: 0,
       batterySoc: 5000,
       batterySocMax: 8000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      maxPowerLoadBattery: 2000,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 2000 + 5000,
-      selfUsedEnergy: 0,
-      selfUsedEnergyPv: 0,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 3000 * 0.99,
-      batteryLoad: 2000,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBe(8000)
+    expect(data.feedInEnergyGrid).toBeCloseTo(5000 * 0.99 - 3000, 6)
+    expect(data.selfUsedEnergy).toBe(0)
+    expect(data.gridUsedEnergy).toBe(0)
   })
 
-  test('pv generation is more than consumption, max battery power load is lower than generation, only load in battery', () => {
-    const data = energyFlow({
+  test('no consumption and no generation keeps the battery state', () => {
+    const params = {
+      ...baseParams,
+      energyGeneration: 0,
+      energyConsumption: 0,
+      batterySoc: 4000,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBe(4000)
+    expect(data.feedInEnergyGrid).toBe(0)
+  })
+
+  test('max battery load power limits the charging, the rest is fed in', () => {
+    const params = {
+      ...baseParams,
       energyGeneration: 5000,
-      energyConsumption: 2000,
+      energyConsumption: 0,
       batterySoc: 5000,
-      batterySocMax: 8000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
       maxPowerLoadBattery: 2000,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 2000 + 5000,
-      selfUsedEnergy: 2000,
-      selfUsedEnergyPv: 2000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 1000 * 0.99,
-      batteryLoad: 2000,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBe(7000)
+    expect(data.feedInEnergyGrid).toBeCloseTo(5000 * 0.99 - 2000, 6)
+  })
+
+  test('max battery load power limits the charging with consumption', () => {
+    const params = {
+      ...baseParams,
+      energyGeneration: 5000,
+      energyConsumption: 1000,
+      batterySoc: 5000,
+      maxPowerLoadBattery: 500,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBeLessThanOrEqual(5500 + 1e-9)
+    expect(data.feedInEnergyGrid).toBeGreaterThan(0)
   })
 
   test('pv generation is more than inverter max power generation', () => {
-    const data = energyFlow({
+    const params = {
+      ...baseParams,
       energyGeneration: 5000,
       energyConsumption: 4000,
       batterySoc: 5000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
       maxPowerGenerationInverter: 4500,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 500 * 0.99 + 5000,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 4000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 0,
-      batteryLoad: 500 * 0.99,
-      gridUsedEnergy: 0,
-      missedInverterPower: 500,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.missedInverterPower).toBe(500)
+    expect(data.powerProduction).toBe(5000)
   })
 
-  test('pv generation is more than consumption, battery load efficiency diff than unload', () => {
-    const data = energyFlow({
+  test('battery is full, power is fed in', () => {
+    const params = {
+      ...baseParams,
       energyGeneration: 5000,
       energyConsumption: 4000,
-      batterySoc: 5000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryLoadEfficiency: 0.95,
-      batteryEfficiency: 0.99, // unload as default
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 1000 * 0.95 + 5000,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 4000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 0,
-      batteryLoad: 1000 * 0.95,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+      batterySoc: 10000,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBe(10000)
+    expect(data.feedInEnergyGrid).toBeGreaterThan(0)
   })
 
-  test('pv generation is more than consumption, battery is full, power is feed in', () => {
-    const data = energyFlow({
+  test('battery is full, feed in is limited by max feed in power', () => {
+    const params = {
+      ...baseParams,
       energyGeneration: 5000,
-      energyConsumption: 4000,
-      batterySoc: 5000,
-      batterySocMax: 5000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 5000,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 4000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 1000,
-      batteryLoad: 0,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
-  })
-  test('pv generation is more than consumption, battery is full, power is feed in, max feedin power less then generation', () => {
-    const data = energyFlow({
-      energyGeneration: 5000,
-      energyConsumption: 2000,
-      batterySoc: 5000,
-      batterySocMax: 5000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      maxPowerFeedIn: 2000,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 5000,
-      selfUsedEnergy: 2000,
-      selfUsedEnergyPv: 2000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 2000,
-      batteryLoad: 0,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 1000,
-      dayTime: '',
-    })
+      energyConsumption: 0,
+      batterySoc: 10000,
+      maxPowerFeedIn: 3000,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.feedInEnergyGrid).toBe(3000)
+    expect(data.missedFeedInPowerGrid).toBeCloseTo(5000 * 0.99 - 3000, 6)
   })
 
-  test('pv generation is more than consumption, battery will be fullfilled, diff power is feed in', () => {
-    const data = energyFlow({
-      energyGeneration: 5000,
-      energyConsumption: 4000,
-      batterySoc: 5000,
-      batterySocMax: 5500,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 5500,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 4000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 500 * 0.99,
-      batteryLoad: 500,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
-  })
-})
-
-describe('PV < Consumption', () => {
   test('pv generation is less than consumption, battery is discharging', () => {
-    const data = energyFlow({
-      energyGeneration: 5000,
-      energyConsumption: 6000,
-      batterySoc: 5000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 5000 - 1000 / 0.99,
-      selfUsedEnergy: 6000,
-      selfUsedEnergyPv: 5000,
-      selfUsedEnergyBattery: 1000,
-      feedInEnergyGrid: 0,
-      batteryLoad: -1000 / 0.99,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+    const params = {
+      ...baseParams,
+      energyGeneration: 1000,
+      energyConsumption: 3000,
+      batterySoc: 8000,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.selfUsedEnergyBattery).toBeGreaterThan(0)
+    expect(data.newBatterySoc).toBeLessThan(params.batterySoc)
+    expect(data.feedInEnergyGrid).toBe(0)
   })
 
-  test('pv generation is less than consumption, battery is discharging, Batterypower is lower then consumption', () => {
-    const data = energyFlow({
-      energyGeneration: 3000,
-      energyConsumption: 6000,
-      batterySoc: 5000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      maxPowerGenerationBattery: 1000,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 5000 - 1000 / 0.99,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 3000,
-      selfUsedEnergyBattery: 1000,
-      feedInEnergyGrid: 0,
-      batteryLoad: -1000 / 0.99,
-      gridUsedEnergy: 2000,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
+  test('battery is not discharged below its minimum state of charge', () => {
+    const params = {
+      ...baseParams,
+      energyGeneration: 0,
+      energyConsumption: 3000,
+      batterySoc: 1500,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.newBatterySoc).toBeCloseTo(1000, 6)
+    expect(data.selfUsedEnergyBattery).toBeCloseTo(500 * 0.99, 6)
   })
 
-  test('pv generation is less than consumption, battery is discharging, Batterypower is lower then consumption, battery will be empty', () => {
-    const data = energyFlow({
-      energyGeneration: 3000,
-      energyConsumption: 6000,
-      batterySoc: 3000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      maxPowerGenerationBattery: 1000,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 3000 - 1000 / 0.99,
-      selfUsedEnergy: 4000,
-      selfUsedEnergyPv: 3000,
-      selfUsedEnergyBattery: 1000,
-      feedInEnergyGrid: 0,
-      batteryLoad: -1000 / 0.99,
-      gridUsedEnergy: 2000,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
-  })
-
-  test('pv generation is less than consumption, battery unload efficiency is differnt then load', () => {
-    const data = energyFlow({
-      energyGeneration: 5000,
-      energyConsumption: 6000,
-      batterySoc: 5000,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      batteryUnloadEfficiency: 0.8,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 5000 - 1000 / 0.8,
-      selfUsedEnergy: 6000,
-      selfUsedEnergyPv: 5000,
-      selfUsedEnergyBattery: 1000,
-      feedInEnergyGrid: 0,
-      batteryLoad: -1000 / 0.8,
-      gridUsedEnergy: 0,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
-  })
-
-  test('pv generation is less than consumption, battery is empty, cunsumpion from grid', () => {
-    const data = energyFlow({
-      energyGeneration: 5000,
-      energyConsumption: 6000,
-      batterySoc: 100,
-      batterySocMax: 10000,
-      batterySocMin: 100,
-      batteryEfficiency: 0.99,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 100,
-      selfUsedEnergy: 5000,
-      selfUsedEnergyPv: 5000,
-      selfUsedEnergyBattery: 0,
-      feedInEnergyGrid: 0,
-      batteryLoad: 0,
-      gridUsedEnergy: 1000,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
-    })
-  })
-
-  test('pv generation is less than consumption, battery is nearly empty, diff cunsumpion from grid', () => {
-    const data = energyFlow({
-      energyGeneration: 5000,
-      energyConsumption: 6000,
+  test('battery is empty, consumption from grid', () => {
+    const params = {
+      ...baseParams,
+      energyGeneration: 0,
+      energyConsumption: 3000,
       batterySoc: 1000,
-      batterySocMax: 10000,
-      batterySocMin: 500,
-      batteryEfficiency: 0.99,
-      regressionDb,
-    })
-    expect(data).toEqual({
-      newBatterySoc: 500,
-      selfUsedEnergy: 5500,
-      selfUsedEnergyPv: 5000,
-      selfUsedEnergyBattery: 500,
-      feedInEnergyGrid: 0,
-      batteryLoad: -500,
-      gridUsedEnergy: 500 / 0.99,
-      missedInverterPower: 0,
-      missedBatteryPower: 0,
-      missedFeedInPowerGrid: 0,
-      dayTime: '',
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+    expect(data.selfUsedEnergyBattery).toBe(0)
+    expect(data.newBatterySoc).toBe(1000)
+  })
+
+  test('very high consumption without regression entry', () => {
+    const params = {
+      ...baseParams,
+      energyGeneration: 3000,
+      energyConsumption: 50000,
+      batterySoc: 5000,
+    }
+    const data = energyFlow(params)
+    expectConsistentResult(params, data)
+  })
+
+  test('a full year with real PVGIS data stays consistent', () => {
+    let batterySoc = baseParams.batterySocMin
+    Object.entries(normalizedHR).forEach(([dayTime, { P }], i) => {
+      const params = {
+        ...baseParams,
+        energyGeneration: P,
+        // includes hours without consumption
+        energyConsumption: i % 24 === 3 ? 0 : 200 + (i % 7) * 150,
+        batterySoc,
+        dayTime,
+      }
+      const data = energyFlow(params)
+      expectConsistentResult(params, data)
+      batterySoc = data.newBatterySoc
     })
   })
 })

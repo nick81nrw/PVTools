@@ -5,6 +5,9 @@ services:
     build:
       context: backend
       dockerfile: Dockerfile
+    environment:
+      # Optional: contact address sent to Nominatim (OSM geocoding usage policy)
+      - NOMINATIM_EMAIL=
   frontend:
     build:
       context: pvtools

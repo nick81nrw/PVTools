@@ -259,6 +259,14 @@
               >Erweiterte Einstellungen</b-button
             >
           </b-button-group>
+          <b-alert
+            class="mt-3"
+            variant="danger"
+            :show="Boolean(errorMessage)"
+            dismissible
+            @dismissed="errorMessage = null"
+            >{{ errorMessage }}</b-alert
+          >
 
           <b-collapse id="extensionsCollapse">
             <b-form-group label="Speichergrößen:">
@@ -726,6 +734,7 @@ export default {
       },
       timeNeeded: 0,
       isCalculating: false,
+      errorMessage: null,
       needFetch: true,
       mergedPower: [],
       roofInput: {
@@ -743,14 +752,10 @@ export default {
       adressData: JSON.parse(localStorage.getItem('storedAddress')) || {},
       costSavingsWithoutBattery: 0,
       screenHeight: 0,
-      years: [
-        { value: 2020, text: '2020' },
-        { value: 2019, text: '2019' },
-        { value: 2018, text: '2018' },
-        { value: 2017, text: '2017' },
-        { value: 2016, text: '2016' },
-        { value: 2015, text: '2015' },
-      ],
+      // PVGIS 5.3 (PVGIS-SARAH3) provides hourly data from 2005 to 2023
+      years: Array.from({ length: 2023 - 2005 + 1 }, (_, i) => 2023 - i).map(
+        (year) => ({ value: year, text: String(year) }),
+      ),
     }
   },
   computed: {
@@ -776,40 +781,54 @@ export default {
       let now = performance.now()
 
       this.isCalculating = true
+      this.errorMessage = null
 
       if (this.needFetch) {
         this.roofsData = []
 
-        const generationData = await Promise.all(
-          this.input.roofs.map((roof) => {
-            return this.$axios
-              .post('/relay', {
-                url: this.buildQueryString({
-                  aspect: roof.aspect,
-                  angle: roof.angle,
-                  lat: this.adressData.lat,
-                  lon: this.adressData.lon,
-                  peakpower: roof.peakpower / 1000,
-                  loss: this.input.systemloss,
-                  startyear: this.input.year,
-                  endyear: this.input.year,
-                }),
-                method: 'GET',
-                body: {},
-              })
-              .then((response) => response.data)
-              .then((data) => {
-                const normData = normalizeHourlyRadiation(data.outputs.hourly)
-                const generationYear =
-                  Object.values(normData).reduce(
-                    (prev, curr) => prev + curr.P,
-                    0,
-                  ) / 1000
-                this.roofsData.push({ ...roof, generationYear })
-                return normData
-              })
-          }),
-        )
+        let generationData
+        try {
+          generationData = await Promise.all(
+            this.input.roofs.map((roof) => {
+              return this.$axios
+                .post('/relay', {
+                  url: this.buildQueryString({
+                    aspect: roof.aspect,
+                    angle: roof.angle,
+                    lat: this.adressData.lat,
+                    lon: this.adressData.lon,
+                    peakpower: roof.peakpower / 1000,
+                    loss: this.input.systemloss,
+                    startyear: this.input.year,
+                    endyear: this.input.year,
+                  }),
+                  method: 'GET',
+                  body: {},
+                })
+                .then((response) => response.data)
+                .then((data) => {
+                  const normData = normalizeHourlyRadiation(data.outputs.hourly)
+                  const generationYear =
+                    Object.values(normData).reduce(
+                      (prev, curr) => prev + curr.P,
+                      0,
+                    ) / 1000
+                  this.roofsData.push({ ...roof, generationYear })
+                  return normData
+                })
+            }),
+          )
+        } catch (error) {
+          console.error(error)
+          const upstreamMessage = error.response?.data?.message
+          this.errorMessage =
+            'Die PV-Erzeugungsdaten konnten nicht von PVGIS abgerufen werden' +
+            (upstreamMessage
+              ? ': ' + upstreamMessage
+              : '. Bitte versuche es später erneut.')
+          this.isCalculating = false
+          return
+        }
 
         this.mergedPower = mergePowerGeneration(generationData)
         this.needFetch = false
@@ -1037,7 +1056,6 @@ export default {
           })
           .sort((a, b) => a.month - b.month)
 
-        console.log(energyFlowData)
         return {
           size,
           energyFlow: energyFlowData,
@@ -1067,16 +1085,24 @@ export default {
       this.displayData = BatterySizeResults
     },
     async getCoordinatesByAddress() {
-      const emailString = process.env.nominatimEmail ? '&email='+process.env.nominatimEmail : ''
-      let osmReturn = (
-        await this.$axios.post('/relay', {
-          url:
-            'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1'+emailString+'&q=' +
-            encodeURIComponent(this.inputAddressSearchString),
-          method: 'GET',
-          body: {},
-        })
-      ).data
+      this.errorMessage = null
+      let osmReturn
+      try {
+        osmReturn = (
+          await this.$axios.post('/relay', {
+            url:
+              'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' +
+              encodeURIComponent(this.inputAddressSearchString),
+            method: 'GET',
+            body: {},
+          })
+        ).data
+      } catch (error) {
+        console.error(error)
+        this.errorMessage =
+          'Die Adresssuche ist fehlgeschlagen. Bitte versuche es später erneut.'
+        return
+      }
 
       if (osmReturn.length == 0) {
         this.adressData = 'no_address'
@@ -1099,7 +1125,7 @@ export default {
       const angle = params.angle
       const aspect = params.aspect
 
-      let string = `https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?pvcalculation=1&outputformat=json&loss=${loss}&lat=${lat}&lon=${lon}&startyear=${startyear}&endyear=${endyear}&peakpower=${peakpower}&angle=${angle}&aspect=${aspect}`
+      let string = `https://re.jrc.ec.europa.eu/api/v5_3/seriescalc?pvcalculation=1&outputformat=json&loss=${loss}&lat=${lat}&lon=${lon}&startyear=${startyear}&endyear=${endyear}&peakpower=${peakpower}&angle=${angle}&aspect=${aspect}`
 
       return string
     },
@@ -1139,7 +1165,7 @@ export default {
       const data = createTemplateCsv(this.input.year)
       this.downloadCsv({ data, filename })
     },
-    downloadCsv({ data, filename, type = 'text/plan' }) {
+    downloadCsv({ data, filename, type = 'text/csv' }) {
       const file = new File([data], filename, { type })
       const blobUrl = URL.createObjectURL(file)
       const link = document.createElement('a')
@@ -1202,7 +1228,6 @@ export default {
     inputAddressSearchString() {
       this.needFetch = true
     },
-    deep: true,
   },
   mounted() {
     this.screenHeight = window.screen.height

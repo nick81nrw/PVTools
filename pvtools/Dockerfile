@@ -1,4 +1,4 @@
-FROM node:21.4.0-alpine3.19 AS builder
+FROM node:22-alpine AS builder
 ARG APP_URL="localhost:8082"
 ARG GOOGLE_ANALYTICS_ID
 ARG NODE_ENV="development"
@@ -10,6 +10,6 @@ COPY . .
 RUN npm install && \
     npm run generate
 
-FROM nginxinc/nginx-unprivileged:stable-alpine3.18
+FROM nginxinc/nginx-unprivileged:stable-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 EXPOSE 8080

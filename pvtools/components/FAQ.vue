@@ -91,7 +91,7 @@ export default {
         {
           realm: 'Erweitert',
           title: 'Vergleichsjahr',
-          text: 'Für die PV Erzegung stehen bei PVGis mehrere Jahre zur Verfügung. 2020 ist das aktuellste Jahr. In dem Rechner wird immer nur ein Jahr berechnet, wenn man genauer rechnen möchte, solltest du die Ergebnisse von mehreren Jahren vergleichen.',
+          text: 'Für die PV Erzegung stehen bei PVGis mehrere Jahre zur Verfügung. Aktuell sind die Jahre 2005 bis 2023 verfügbar. In dem Rechner wird immer nur ein Jahr berechnet, wenn man genauer rechnen möchte, solltest du die Ergebnisse von mehreren Jahren vergleichen.',
         },
         {
           realm: 'Erweitert',
