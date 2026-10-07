@@ -53,6 +53,7 @@ const energyFlow = ({
   batteryUnloadEfficiency,
   maxPowerGenerationInverter,
   maxPowerGenerationBattery,
+  maxPowerLoadBattery,
   maxPowerFeedIn,
   dayTime,
   regressionDb,
@@ -91,6 +92,7 @@ const energyFlow = ({
     staticPowerGeneration: energyGeneration,
     maxPowerStaticInverter: maxPowerGenerationInverter,
     maxPowerDynamicInverter: maxPowerGenerationBattery,
+    maxPowerLoadBattery,
     batterySoc,
     maxPowerFeedIn,
     batterySocMin,
@@ -451,10 +453,14 @@ const regressionCalc = ({
   batterySoc = 0,
   batteryUnloadEfficiency = 1,
   batteryLoadEfficiency = 1,
-  batterySocMin,
+  batterySocMin = 0,
   batterySocMax,
+  maxPowerLoadBattery = 0,
   maxPowerFeedIn = 9999999,
 }) => {
+  const maxBatteryLoad =
+    maxPowerLoadBattery > 0 ? maxPowerLoadBattery : Infinity
+
   let freePowerDynamicGeneration = 0
   if (maxPowerDynamicInverter > 0)
     freePowerDynamicGeneration = maxPowerDynamicInverter
@@ -462,14 +468,36 @@ const regressionCalc = ({
     freePowerDynamicGeneration = maxPowerStaticInverter - staticPowerGeneration
   else freePowerDynamicGeneration = 99999999
 
+  if (!(energyConsumption > 0)) {
+    // no consumption in this hour: all generation is stored or fed in
+    const newBatterySocBase =
+      batterySoc + staticPowerGeneration * batteryLoadEfficiency
+    const newBatterySoc = Math.max(
+      Math.min(newBatterySocBase, batterySocMax, batterySoc + maxBatteryLoad),
+      batterySoc,
+    )
+    const feedInEnergyGridBase = newBatterySocBase - newBatterySoc
+    const feedInEnergyGrid = Math.min(feedInEnergyGridBase, maxPowerFeedIn)
+    const lossesLoadBattery =
+      (newBatterySoc - batterySoc) * (1 - batteryLoadEfficiency)
+    return {
+      selfUsedEnergy: 0,
+      selfUsedEnergyPV: 0,
+      selfUsedEnergyBattery: 0,
+      gridUsedEnergy: 0,
+      feedInEnergyGrid,
+      missedFeedInPowerGrid: feedInEnergyGridBase - feedInEnergyGrid,
+      lossesUnloadBattery: 0,
+      lossesLoadBattery,
+      lossesPvGeneration: 0,
+      losses: lossesLoadBattery,
+      newBatterySoc,
+    }
+  }
+
   if (staticPowerGeneration == 0) staticPowerGeneration = 1
 
   const multiplicator = Math.min(energyConsumption, staticPowerGeneration)
-  if (multiplicator == 0)
-    return {
-      selfUsedEnergy: 0,
-      gridUsedEnergy: energyConsumption,
-    }
 
   const staticInverterEfficiency = calcInverterEfficiency({
     maxPowerGenerationInverter: maxPowerStaticInverter,
@@ -532,13 +560,16 @@ const regressionCalc = ({
   )
 
   const selfUsedEnergyPV = usedEnergyPv
+  // the battery must not be discharged below its minimum state of charge
+  const usableBatteryEnergy = Math.max(batterySoc - batterySocMin, 0)
   const selfUsedEnergyBattery =
-    Math.min(usedEnergyBattery, batterySoc) * batteryUnloadEfficiency
+    Math.min(usedEnergyBattery, usableBatteryEnergy) * batteryUnloadEfficiency
   const lossesPvGeneration = usedEnergyPvBase - selfUsedEnergyPV
   const overflowPv =
     staticPowerGeneration - selfUsedEnergyPV - lossesPvGeneration
   const lossesUnloadBattery =
-    Math.min(usedEnergyBattery, batterySoc) * (1 - batteryUnloadEfficiency)
+    Math.min(usedEnergyBattery, usableBatteryEnergy) *
+    (1 - batteryUnloadEfficiency)
   const batterySoCAfterUnload =
     batterySoc - selfUsedEnergyBattery - lossesUnloadBattery //sdfsds
   const newBatterySocBase =
@@ -546,7 +577,14 @@ const regressionCalc = ({
     batterySoc -
     lossesUnloadBattery -
     selfUsedEnergyBattery
-  const newBatterySoc = Math.min(newBatterySocBase, batterySocMax)
+  const newBatterySoc = Math.max(
+    Math.min(
+      newBatterySocBase,
+      batterySocMax,
+      batterySoCAfterUnload + maxBatteryLoad,
+    ),
+    batterySoCAfterUnload,
+  )
   const lossesLoadBatteryBase = Math.max(
     newBatterySoc - batterySoCAfterUnload,
     0,
@@ -559,17 +597,6 @@ const regressionCalc = ({
   const missedFeedInPowerGrid = feedInEnergyGridBase - feedInEnergyGrid
   const gridUsedEnergy = energyConsumption - selfUsedEnergy
   const losses = lossesLoadBattery + lossesUnloadBattery + lossesPvGeneration
-
-  if (regressionBigConsumption)
-    console.log({
-      selfUsedEnergy,
-      selfUsedEnergyPV,
-      gridUsedEnergy,
-      selfUsedEnergyBattery,
-      feedInEnergyGrid,
-      energyConsumption,
-      regressionBigConsumption,
-    })
 
   return {
     selfUsedEnergy,

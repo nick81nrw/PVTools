@@ -6,9 +6,9 @@ PV Auslegungsrechner für mit Support für
 - Mehrere Dachflächen
 
 ## API-Foundation:
-https://re.jrc.ec.europa.eu/api/v5_2/
+https://re.jrc.ec.europa.eu/api/v5_3/
 
-https://re.jrc.ec.europa.eu/api/v5_2/SHScalc?lat=45&lon=8&outputformat=json&peakpower=10&batterysize=50&consumptionday=200&cutoff=40
+https://re.jrc.ec.europa.eu/api/v5_3/SHScalc?lat=45&lon=8&outputformat=json&peakpower=10&batterysize=50&consumptionday=200&cutoff=40
 
 Dokumentation:
 

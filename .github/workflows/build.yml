@@ -1,6 +1,6 @@
 name: Node.js CI
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build_backend:
@@ -29,10 +29,9 @@ jobs:
       - name: Install dependencies
         working-directory: pvtools
         run: npm ci
-      # TODO: tests need to be fixed first
-      # - name: Run tests
-      #   working-directory: pvtools
-      #   run: npm run test-all
+      - name: Run tests
+        working-directory: pvtools
+        run: npm run test-all
       - name: Generate static frontend
         working-directory: pvtools
         run: npm run generate
