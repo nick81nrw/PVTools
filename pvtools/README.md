@@ -1,6 +1,6 @@
 # pvtools
 
-Frontend des PV-Auslegungsrechners, gebaut mit [Vue 3](https://vuejs.org), [Vite](https://vite.dev) und [bootstrap-vue-next](https://bootstrap-vue-next.github.io/bootstrap-vue-next/).
+Frontend des PV-Auslegungsrechners, gebaut mit [Vue 3](https://vuejs.org), [Vite](https://vite.dev), [Tailwind CSS](https://tailwindcss.com) und [Chart.js](https://www.chartjs.org). Die Simulation läuft in einem Web Worker, damit die Oberfläche bedienbar bleibt.
 
 ## Requirements
 
@@ -48,11 +48,17 @@ $ docker run --publish 8080:8080 pvtools-frontend:latest
 
 ## Structure
 
-| Path          | Content                                                              |
-| ------------- | -------------------------------------------------------------------- |
-| `main.js`     | App entry (router, icons, Google Analytics)                          |
-| `router.js`   | Routes `/`, `/impress`, `/consumptionProfiles`                       |
-| `pages/`      | Page components                                                      |
-| `components/` | Charts and FAQ                                                       |
-| `functions/`  | Calculation logic (energy flow, load profiles, CSV import) and tests |
-| `public/`     | Static files, served as is                                           |
+| Path                    | Content                                                                   |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `main.js`, `style.css`  | App entry, Tailwind theme (light/dark colors, fonts)                      |
+| `router.js`             | Routes `/`, `/impress`, `/consumptionProfiles`                            |
+| `pages/`                | Pages                                                                     |
+| `components/inputs/`    | Input steps (location, roofs, consumption, costs, expert settings)        |
+| `components/results/`   | Recommendation, KPIs, charts, table and details                           |
+| `components/ui/`        | Small building blocks (cards, number fields, compass)                     |
+| `composables/`          | Shared state (`useCalculator`) and dark mode (`useTheme`)                 |
+| `lib/`                  | Backend/PVGIS requests, number formatting, chart theme, downloads         |
+| `data/faq.js`           | FAQ and news                                                              |
+| `functions/`            | Calculation logic (energy flow, simulation, load profiles, CSV) and tests |
+| `functions/*.worker.js` | Web Worker running the simulation                                         |
+| `public/`               | Static files, served as is                                                |

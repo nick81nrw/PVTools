@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Semantic colors, switched between light and dark mode */
+:root {
+  --canvas: #f5f7f6;
+  --surface: #ffffff;
+  --surface-2: #eef2f0;
+  --line: #dde4e0;
+  --ink: #0e1512;
+  --muted: #5b6b63;
+  --brand: #23933a;
+  --brand-soft: #e3f5e7;
+  --accent: #0a7fc2;
+  --grid-dot: rgb(14 21 18 / 0.06);
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #0a0e0c;
+  --surface: #111714;
+  --surface-2: #17201b;
+  --line: #24302a;
+  --ink: #e4ece7;
+  --muted: #8a9a91;
+  --brand: #4ade6b;
+  --brand-soft: #143520;
+  --accent: #38b6f5;
+  --grid-dot: rgb(228 236 231 / 0.05);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+}
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display:
+    'Space Grotesk Variable', 'Inter Variable', ui-sans-serif, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* energy colors, identical in both modes */
+  --color-pv: #f5a524;
+  --color-battery: #3ccf62;
+  --color-grid: #ef5b5b;
+  --color-feedin: #3a9fe0;
+  --color-loss: #8a94a6;
+}
+
+@layer base {
+  html {
+    background: var(--canvas);
+  }
+
+  body {
+    @apply bg-canvas font-sans text-ink antialiased;
+    background-image: radial-gradient(var(--grid-dot) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@utility card {
+  @apply rounded-xl border border-line bg-surface shadow-sm;
+}
+
+@utility label-mono {
+  @apply font-mono text-[11px] tracking-wider text-muted uppercase;
+}
+
+@utility input {
+  @apply w-full rounded-lg border border-line bg-surface-2 px-3 py-2 font-mono text-sm text-ink tabular-nums transition outline-none placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/25;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-brand text-white hover:brightness-110 dark:text-[#06210f];
+}
+
+@utility btn-ghost {
+  @apply btn border border-line bg-surface text-ink hover:bg-surface-2;
+}
+
+@utility num {
+  @apply font-mono tabular-nums;
+}
+
+.cursor-blink {
+  animation: blink 1.1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}

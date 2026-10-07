@@ -2,8 +2,7 @@ import { copyFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import Components from 'unplugin-vue-components/vite'
-import { BootstrapVueNextResolver } from 'bootstrap-vue-next/resolvers'
+import tailwindcss from '@tailwindcss/vite'
 
 // Routes that get their own index.html, so they can be opened directly
 // on any static web server (like the former `nuxt generate` output).
@@ -24,16 +23,7 @@ const staticRoutes = () => ({
 })
 
 export default defineConfig(({ command }) => ({
-  plugins: [
-    vue(),
-    // auto-import the bootstrap-vue-next components and directives (b-*, v-b-*)
-    Components({
-      dirs: [],
-      dts: false,
-      resolvers: [BootstrapVueNextResolver()],
-    }),
-    staticRoutes(),
-  ],
+  plugins: [vue(), tailwindcss(), staticRoutes()],
   resolve: {
     alias: { '@': import.meta.dirname },
   },
