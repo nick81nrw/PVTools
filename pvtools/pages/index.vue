@@ -55,7 +55,7 @@
                   v-model="inputAddressSearchString"
                   placeholder="z.B. 50667 Köln"
                   v-b-tooltip.hover
-                  title="Beim verlassen des Feldes wird der Standort gesucht"
+                  title="Mit „Suche nach Adresse“ wird der Standort gesucht"
                 />
               </b-input-group>
               <b-button variant="info" @click="getCoordinatesByAddress"
@@ -77,8 +77,8 @@
               variant="danger"
               :model-value="true"
             >
-              Die eingegebende Adresse konnte nicht gefunden werden. Bitte
-              versuchen Sie es erneut.
+              Die eingegebene Adresse konnte nicht gefunden werden. Bitte
+              versuche es mit mehr Angaben erneut.
             </b-alert>
             <b-form-group
               :disabled="useImportData"
@@ -145,7 +145,7 @@
           <b-form @submit.stop.prevent="addRoof">
             <b-card class="bg-light">
               <b-form-group label="Ausrichtung:">
-                <b-input-group append="° Grad Azimuth">
+                <b-input-group append="° Azimut">
                   <b-form-input
                     v-model.number="roofInput.aspect"
                     type="number"
@@ -158,7 +158,7 @@
                 </b-input-group>
               </b-form-group>
               <b-form-group label="Neigung:">
-                <b-input-group append="° Grad">
+                <b-input-group append="°">
                   <b-form-input
                     v-model.number="roofInput.angle"
                     type="number"
@@ -166,7 +166,7 @@
                     max="90"
                     required
                     v-b-tooltip.hover
-                    title="0 = waargerecht, 90 = senkrecht"
+                    title="0 = waagerecht, 90 = senkrecht"
                   />
                 </b-input-group>
               </b-form-group>
@@ -179,7 +179,7 @@
                     step="1"
                     required
                     v-b-tooltip.hover
-                    title='Bei 10kWp muss "10000" eingetragen werden'
+                    title='Bei 10 kWp muss "10000" eingetragen werden'
                   />
                 </b-input-group>
               </b-form-group>
@@ -227,7 +227,7 @@
               "
               :title="
                 (!adressData.lat && !adressData.lon) || input.roofs.length == 0
-                  ? 'Füge eine Adresse und mindestens eine PV Ausrichtung hinzu'
+                  ? 'Füge eine Adresse und mindestens eine PV-Ausrichtung hinzu'
                   : ''
               "
             >
@@ -268,16 +268,17 @@
                 :options="years"
               ></b-form-select>
             </b-form-group>
-            <b-form-group label="Import individueller stündlicher Verbauch:">
+            <b-form-group label="Import individueller stündlicher Verbrauch:">
               <b-button size="sm" @click="downloadCsvTemplate">{{
-                'Vorlage herunterladen für das o.g. Vergleichsjahr ' +
-                input.year
+                'Vorlage herunterladen für das Vergleichsjahr ' + input.year
               }}</b-button>
               <b-form-file
                 v-model="csvFile"
                 :state="Boolean(csvFile)"
-                placeholder="Lade deinen Verbrauch für das Jahr XXX hoch"
-                drop-placeholder="Drop file here..."
+                :placeholder="
+                  'Lade deinen Verbrauch für das Jahr ' + input.year + ' hoch'
+                "
+                drop-placeholder="Datei hier ablegen …"
                 accept=".csv"
                 plain
               ></b-form-file>
@@ -294,13 +295,13 @@
                 size="sm"
                 :disabled="useImportData"
                 @click="uploadCsvData"
-                >Aktiviere CSV Datei</b-button
+                >CSV-Datei aktivieren</b-button
               >
               <b-button
                 size="sm"
                 :disabled="!useImportData"
                 @click="deleteCsvFile"
-                >Deaktiviere Datei</b-button
+                >CSV-Datei deaktivieren</b-button
               >
             </b-form-group>
             <b-form-group label="Systemverluste PV:">
@@ -323,7 +324,7 @@
                 />
               </b-input-group>
             </b-form-group>
-            <b-form-group label="Ladeeffizenz Speicher (Laden / Entladen):">
+            <b-form-group label="Ladeeffizienz Speicher (Laden / Entladen):">
               <b-input-group append="%">
                 <b-form-input
                   v-model.number="input.batteryLoadEfficiency"
@@ -340,7 +341,7 @@
               </b-input-group>
             </b-form-group>
             <b-form-group
-              label="Maximalleistung Wechelrichter (0 = keine Prüfung):"
+              label="Maximalleistung Wechselrichter (0 = keine Prüfung):"
             >
               <b-input-group append="W">
                 <b-form-input
@@ -369,7 +370,7 @@
               </b-input-group>
             </b-form-group>
             <b-form-group
-              label="Maximale Netzeinspeisung z.B. für 70% Regel (0 = keine Prüfung):"
+              label="Maximale Netzeinspeisung, z.B. für die 70-%-Regel (0 = keine Prüfung):"
             >
               <b-input-group append="W">
                 <b-form-input
@@ -470,7 +471,7 @@
                 :fields="[
                   {
                     key: 'generationYear',
-                    label: 'PV Erzeugung',
+                    label: 'PV-Erzeugung',
                     formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
                   },
                   {
@@ -495,7 +496,7 @@
                   },
                   {
                     key: 'missedInverterPower',
-                    label: 'Verluste PV-Leistung > Wechelrichter Leistung',
+                    label: 'Verluste PV-Leistung > Wechselrichter-Leistung',
                     formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
                   },
                   {
@@ -580,7 +581,7 @@
                     data: row.item.monthlyData.map(
                       (i) => i.gridUsedEnergy / 1000,
                     ),
-                    label: 'Netzverbrauch',
+                    label: 'Netzbezug',
                     backgroundColor: 'red',
                     stack: 'Stack 0',
                   },
@@ -707,7 +708,7 @@ export default {
         batteryLoadEfficiency: 99,
         batteryUnloadEfficiency: 99,
         batterySocMinPercent: 10,
-        year: 2015,
+        year: 2020,
         maxPowerGenerationInverter: 5000,
         maxPowerGenerationBattery: 0,
         maxPowerLoadBattery: 0,

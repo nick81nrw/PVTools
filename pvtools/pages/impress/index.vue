@@ -283,11 +283,10 @@
           gesetzlich nicht gefordert ist. Eine Einwilligung ist insbesondere
           nicht notwendig, wenn das Speichern und das Auslesen der
           Informationen, also auch von Cookies, unbedingt erforderlich sind, um
-          dem den Nutzern einen von ihnen ausdrücklich gewünschten
-          Telemediendienst (also unser Onlineangebot) zur Verfügung zu stellen.
-          Die widerrufliche Einwilligung wird gegenüber den Nutzern deutlich
-          kommuniziert und enthält die Informationen zu der jeweiligen
-          Cookie-Nutzung.
+          den Nutzern einen von ihnen ausdrücklich gewünschten Telemediendienst
+          (also unser Onlineangebot) zur Verfügung zu stellen. Die widerrufliche
+          Einwilligung wird gegenüber den Nutzern deutlich kommuniziert und
+          enthält die Informationen zu der jeweiligen Cookie-Nutzung.
         </p>
         <p>
           <strong>Hinweise zu datenschutzrechtlichen Rechtsgrundlagen: </strong
