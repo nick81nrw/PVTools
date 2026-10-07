@@ -638,7 +638,7 @@ const calcInverterEfficiency = ({ maxPowerGenerationInverter, power }) => {
   return inverterEfficiency[getCorrectEfficiencyKey]
 }
 
-module.exports = {
+export {
   energyFlow,
   calculateConsumption,
   normalizeHourlyRadiation,

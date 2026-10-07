@@ -2,26 +2,27 @@
   <div>
     <b-button v-b-toggle.collapseFaq>FAQs und News</b-button>
     <b-collapse id="collapseFaq">
-      <b-card v-for="realm in getRealms()" v-bind:key="realm">
+      <b-card v-for="realm in getRealms()" :key="realm">
         <h3>{{ realm }}</h3>
-        <!-- <b-card v-for="(faq,i) in getFaqs(realm)" v-bind:key="i"> -->
-        <b-card-header
-          header-tag="header"
-          class="p-1"
+        <div
+          class="card-header p-1"
           role="tab"
           v-for="(faq, i) in getFaqs(realm)"
-          v-bind:key="i"
+          :key="i"
         >
-          <b-button block v-b-toggle="realm + i" variant="info">{{
-            faq.title
-          }}</b-button>
-          <b-collapse :id="realm + i" accordion="my-accordion" role="tabpanel">
-            <b-card-body>
-              <b-card-text><span v-html="faq.text"></span></b-card-text>
-            </b-card-body>
+          <b-button
+            class="w-100"
+            variant="info"
+            :aria-expanded="openFaq === realm + i"
+            @click="openFaq = openFaq === realm + i ? null : realm + i"
+            >{{ faq.title }}</b-button
+          >
+          <b-collapse :model-value="openFaq === realm + i" role="tabpanel">
+            <div class="card-body">
+              <p class="card-text"><span v-html="faq.text"></span></p>
+            </div>
           </b-collapse>
-        </b-card-header>
-        <!-- </b-card> -->
+        </div>
       </b-card>
     </b-collapse>
   </div>
@@ -32,6 +33,7 @@ export default {
   name: 'FAQ',
   data() {
     return {
+      openFaq: null,
       faqs: [
         {
           realm: 'Neuigkeiten',
@@ -141,9 +143,6 @@ export default {
     },
     getFaqs(realm) {
       return this.faqs.filter((faq) => faq.realm == realm)
-    },
-    toggleCollapses(id) {
-      this.$root.$emit('bv::toggle::collapse', id)
     },
   },
 }

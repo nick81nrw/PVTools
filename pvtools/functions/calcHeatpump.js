@@ -146,8 +146,4 @@ const calcHeatEfficiencyMap = ({
 
 const calcDayHeat = ({ tempArr, yearlyHeatConsumption }) => {}
 
-module.exports = {
-  calcHeatingTempMap,
-  calcHeatEfficiencyMap,
-  calcDayHeat,
-}
+export { calcHeatingTempMap, calcHeatEfficiencyMap, calcDayHeat }

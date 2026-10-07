@@ -1,11 +1,11 @@
 <template>
   <b-container>
     <b-img
-      src="consumptionProfiles.png"
+      src="/consumptionProfiles.png"
       fluid-grow
       alt="Fluid-grow image"
     ></b-img>
-    <NuxtLink to="/">Home</NuxtLink>
+    <RouterLink to="/">Home</RouterLink>
   </b-container>
 </template>
 <style>

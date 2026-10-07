@@ -8,7 +8,7 @@
  * @return {Object}                         {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
  */
 
-module.exports = ({
+export default ({
   year,
   consumptionYear,
   profile,

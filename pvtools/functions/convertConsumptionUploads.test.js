@@ -1,15 +1,17 @@
-const fs = require('fs')
-const {
+import fs from 'fs'
+import {
   convertConsumptionCSV,
   createTemplateCsv,
-} = require('./convertConsumptionUploads')
+} from './convertConsumptionUploads.js'
 
-const csvData = fs.readFileSync(__dirname + '/ImportTest.csv', 'utf8')
+const csvData = fs.readFileSync(
+  new URL('./ImportTest.csv', import.meta.url),
+  'utf8',
+)
 
 describe('read csv file', () => {
   test('result has entries', () => {
     const result = convertConsumptionCSV(csvData, 2023)
-    console.log(result)
     expect(typeof result == 'object').toBe(true)
   })
   test('createCsv', () => {

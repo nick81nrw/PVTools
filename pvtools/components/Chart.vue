@@ -1,16 +1,9 @@
 <template>
-  <LineChartGenerator
-    :chart-options="chartOptions"
-    :chart-data="chartData"
-    :chart-id="chartId"
-    :dataset-id-key="datasetIdKey"
-    :plugins="plugins"
-    :css-classes="cssClasses"
-  />
+  <Line :id="chartId" :data="chartData" :options="chartOptions" />
 </template>
 
 <script>
-import { Line as LineChartGenerator } from 'vue-chartjs/legacy'
+import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
@@ -34,51 +27,23 @@ ChartJS.register(
 
 export default {
   name: 'Chart',
-  components: { LineChartGenerator },
+  components: { Line },
   props: {
     chartId: {
       type: String,
       default: 'line-chart',
     },
-    datasetIdKey: {
-      type: String,
-      default: 'label',
-    },
-    width: {
-      type: Number,
-      default: 400,
-    },
-    height: {
-      type: Number,
-      default: 100,
-    },
-    cssClasses: {
-      default: '',
-      type: String,
-    } /*
-    styles: {
-      type: Object,
-      default: () => {}
-    },*/,
-    plugins: {
-      type: Object,
-      default: () => {},
-    },
     labels: {
       type: Array,
-      default: [],
+      default: () => [],
     },
     datasets: {
       type: Array,
-      default: [],
+      default: () => [],
     },
   },
   data() {
     return {
-      /*chartData: {
-        labels: [ 'January', 'February', 'March' ],
-        datasets: [ { data: [40, 20, 12] } ]
-      },*/
       chartOptions: {
         responsive: true,
         maintainAspectRatio: false,
@@ -123,5 +88,3 @@ export default {
   },
 }
 </script>
-
-<style scoped></style>

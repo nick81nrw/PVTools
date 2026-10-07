@@ -1,17 +1,16 @@
-const axios = require('axios')
-const {
+import {
   energyFlow,
   normalizeHourlyRadiation,
   mergePowerGeneration,
   generateDayTimeValues,
   calculateConsumption,
-} = require('./energyFlow')
-const { SLPH0, PROFILEBASE, factorFunction } = require('./SLP')
+} from './energyFlow.js'
+import { SLPH0, PROFILEBASE, factorFunction } from './SLP.js'
 
 const string1url =
-  'https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=10&loss=12&angle=25&aspect=0'
+  'https://re.jrc.ec.europa.eu/api/v5_3/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=10&loss=12&angle=25&aspect=0'
 const string2url =
-  'https://re.jrc.ec.europa.eu/api/v5_2/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=5&loss=12&angle=35&aspect=-90'
+  'https://re.jrc.ec.europa.eu/api/v5_3/seriescalc?lat=45&lon=8&outputformat=json&startyear=2020&endyear=2020&pvcalculation=1&peakpower=5&loss=12&angle=35&aspect=-90'
 
 describe.skip('intertation', () => {
   let results1,
@@ -23,9 +22,8 @@ describe.skip('intertation', () => {
     powerGenAndConsumption
 
   beforeAll(async () => {
-    jest.setTimeout(10000)
-    results1 = await axios.get(string1url).then((res) => res.data)
-    results2 = await axios.get(string2url).then((res) => res.data)
+    results1 = await fetch(string1url).then((res) => res.json())
+    results2 = await fetch(string2url).then((res) => res.json())
     normResult1 = normalizeHourlyRadiation(results1.outputs.hourly)
     normResult2 = normalizeHourlyRadiation(results2.outputs.hourly)
     mergedPower = mergePowerGeneration([normResult1, normResult2])
@@ -42,7 +40,7 @@ describe.skip('intertation', () => {
       powerGeneration: mergedPower,
       year: 2020,
     })
-  })
+  }, 30000)
 
   test('get data from PVGis seariescalc', async () => {
     expect(results1.outputs.hourly.length).toBe(8784) //leap year

@@ -14,8 +14,8 @@ services:
       dockerfile: Dockerfile
       args:
         - APP_URL=http://localhost:8888
-        - NODE_ENV=production
-        - GOOGLE_ANALYTICS_ID=UA-xxxxxx
+        # Google Analytics 4 measurement ID (G-...), leave empty to disable
+        - GOOGLE_ANALYTICS_ID=
   proxy:
     image: nginx:alpine
     volumes:
