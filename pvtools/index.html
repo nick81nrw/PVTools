@@ -3,12 +3,26 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="" />
+    <meta
+      name="description"
+      content="Berechne die passende Größe deines Batteriespeichers mit einer stündlichen Simulation auf Basis von PVGIS-Daten."
+    />
     <meta name="format-detection" content="telephone=no" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <title>
-      PVTool @AkkuDoktor - Berechne die Größe deines Speichers selbst
-    </title>
+    <meta name="theme-color" content="#0a0e0c" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="alternate icon" type="image/x-icon" href="/favicon.ico" />
+    <title>PVTools @Akkudoktor – Speicherrechner für PV-Anlagen</title>
+    <script>
+      // apply the theme before the first paint to avoid flashing
+      try {
+        const theme = localStorage.getItem('pvtools-theme')
+        const dark =
+          theme === 'dark' ||
+          (theme !== 'light' &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', dark)
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

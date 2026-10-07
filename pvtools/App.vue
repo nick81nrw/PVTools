@@ -1,12 +1,10 @@
 <template>
-  <BApp>
-    <RouterView />
-  </BApp>
+  <AppHeader />
+  <RouterView />
+  <AppFooter />
 </template>
 
-<style>
-/* Bootstrap 5 dropped the spacing of form groups, keep the previous layout */
-.b-form-group {
-  margin-bottom: 1rem;
-}
-</style>
+<script setup>
+import AppFooter from './components/layout/AppFooter.vue'
+import AppHeader from './components/layout/AppHeader.vue'
+</script>

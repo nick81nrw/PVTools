@@ -1,16 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import IndexPage from './pages/index.vue'
+import HomePage from './pages/HomePage.vue'
 
 export default createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', component: IndexPage },
-    { path: '/impress', component: () => import('./pages/impress/index.vue') },
+    { path: '/', component: HomePage },
+    { path: '/impress', component: () => import('./pages/ImpressPage.vue') },
     {
       path: '/consumptionProfiles',
-      component: () => import('./pages/consumptionProfiles/index.vue'),
+      component: () => import('./pages/ConsumptionProfilesPage.vue'),
     },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
+  scrollBehavior: (to) =>
+    to.hash ? { el: to.hash, behavior: 'smooth' } : { top: 0 },
 })
