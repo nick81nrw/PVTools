@@ -45,6 +45,22 @@
       </li>
     </ul>
 
+    <p
+      v-if="input.roofs.length"
+      class="-mt-2 mb-4 flex items-center gap-2 font-mono text-xs text-muted"
+    >
+      <Zap class="h-3.5 w-3.5 text-pv" />
+      Wechselrichter:
+      <span class="text-ink">{{ inverterLabel }}</span>
+      <button
+        type="button"
+        class="ml-auto text-brand hover:underline"
+        @click="showInverterSettings"
+      >
+        ändern
+      </button>
+    </p>
+
     <form
       class="rounded-lg border border-dashed border-line p-3"
       @submit.prevent="addRoof"
@@ -109,8 +125,8 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import { computed, reactive, ref } from 'vue'
+import { Pencil, Plus, Trash2, Zap } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
 import { azimuthName, num } from '../../lib/format.js'
@@ -118,7 +134,21 @@ import CompassBadge from '../ui/CompassBadge.vue'
 import NumberField from '../ui/NumberField.vue'
 import StepCard from '../ui/StepCard.vue'
 
-const { input, totalPeakPower } = useCalculator()
+const { input, totalPeakPower, limits } = useCalculator()
+
+const showInverterSettings = () => {
+  document.getElementById('expert-settings').open = true
+  document
+    .getElementById('inverter-settings')
+    .scrollIntoView({ behavior: 'smooth', block: 'center' })
+}
+
+const inverterLabel = computed(() =>
+  limits.value.inverterPower > 0
+    ? `${num(limits.value.inverterPower / 1000, 1)} kW` +
+      (input.inverterMode === 'auto' ? ' (wie PV-Leistung)' : '')
+    : 'ohne Begrenzung',
+)
 
 const presets = [
   { label: 'O', aspect: -90 },

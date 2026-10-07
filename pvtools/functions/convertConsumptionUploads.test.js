@@ -1,19 +1,6 @@
-import fs from 'fs'
-import {
-  convertConsumptionCSV,
-  createTemplateCsv,
-} from './convertConsumptionUploads.js'
+import { createTemplateCsv } from './convertConsumptionUploads.js'
 
-const csvData = fs.readFileSync(
-  new URL('./ImportTest.csv', import.meta.url),
-  'utf8',
-)
-
-describe('read csv file', () => {
-  test('result has entries', () => {
-    const result = convertConsumptionCSV(csvData, 2023)
-    expect(typeof result == 'object').toBe(true)
-  })
+describe('csv template', () => {
   test('createCsv', () => {
     const csv = createTemplateCsv(2023)
     // Linecount for 2023: 1 headline + 24h*356d data lines

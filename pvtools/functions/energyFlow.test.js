@@ -60,6 +60,22 @@ const expectConsistentResult = (params, data) => {
   expect(data.selfUsedEnergy).toBeLessThanOrEqual(
     params.energyConsumption + 1e-9,
   )
+  // generation is used, stored, fed in, curtailed or lost
+  expect(
+    data.missedInverterPower +
+      data.selfUsedEnergyPV +
+      data.lossesPvGeneration +
+      data.batteryCharge +
+      data.feedInEnergyGrid +
+      data.missedFeedInPowerGrid,
+  ).toBeCloseTo(params.energyGeneration, 6)
+  // battery: charged minus losses minus discharged equals the change of the SoC
+  expect(
+    params.batterySoc +
+      data.batteryCharge -
+      data.lossesLoadBattery -
+      data.batteryDischarge,
+  ).toBeCloseTo(data.newBatterySoc, 6)
   expect(data.newBatterySoc).toBeLessThanOrEqual(params.batterySocMax + 1e-9)
   if (params.batterySoc >= params.batterySocMin) {
     expect(data.newBatterySoc).toBeGreaterThanOrEqual(
@@ -93,8 +109,9 @@ describe('energyFlow', () => {
     }
     const data = energyFlow(params)
     expectConsistentResult(params, data)
-    expect(data.newBatterySoc).toBe(8000)
-    expect(data.feedInEnergyGrid).toBeCloseTo(5000 * 0.99 - 3000, 6)
+    expect(data.newBatterySoc).toBeCloseTo(8000, 6)
+    // charging 3000 Wh into the battery needs 3000 / 0.99 Wh
+    expect(data.feedInEnergyGrid).toBeCloseTo(5000 - 3000 / 0.99, 6)
     expect(data.selfUsedEnergy).toBe(0)
     expect(data.gridUsedEnergy).toBe(0)
   })
@@ -122,8 +139,9 @@ describe('energyFlow', () => {
     }
     const data = energyFlow(params)
     expectConsistentResult(params, data)
-    expect(data.newBatterySoc).toBe(7000)
-    expect(data.feedInEnergyGrid).toBeCloseTo(5000 * 0.99 - 2000, 6)
+    // 2000 Wh charging power, 99 % of it is stored
+    expect(data.newBatterySoc).toBeCloseTo(5000 + 2000 * 0.99, 6)
+    expect(data.feedInEnergyGrid).toBeCloseTo(3000, 6)
   })
 
   test('max battery load power limits the charging with consumption', () => {
@@ -136,7 +154,7 @@ describe('energyFlow', () => {
     }
     const data = energyFlow(params)
     expectConsistentResult(params, data)
-    expect(data.newBatterySoc).toBeLessThanOrEqual(5500 + 1e-9)
+    expect(data.newBatterySoc).toBeLessThanOrEqual(5000 + 500 * 0.99 + 1e-9)
     expect(data.feedInEnergyGrid).toBeGreaterThan(0)
   })
 
@@ -178,7 +196,8 @@ describe('energyFlow', () => {
     const data = energyFlow(params)
     expectConsistentResult(params, data)
     expect(data.feedInEnergyGrid).toBe(3000)
-    expect(data.missedFeedInPowerGrid).toBeCloseTo(5000 * 0.99 - 3000, 6)
+    // fed in directly, without battery losses
+    expect(data.missedFeedInPowerGrid).toBeCloseTo(2000, 6)
   })
 
   test('pv generation is less than consumption, battery is discharging', () => {

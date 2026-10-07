@@ -1,7 +1,11 @@
 import { computed, reactive, ref, shallowRef, watch } from 'vue'
 
 import { fetchGeneration, geocode, PVGIS_LAST_YEAR } from '../lib/api.js'
-import { convertConsumptionCSV } from '../functions/convertConsumptionUploads.js'
+import {
+  analyzeConsumptionCsv,
+  buildConsumption,
+} from '../functions/consumptionImport.js'
+import { resolveLimits } from '../functions/simulation.js'
 
 // the storage keys and shapes are kept from the previous version, so saved
 // inputs survive the update
@@ -25,10 +29,15 @@ export const DEFAULT_INPUT = {
   batteryUnloadEfficiency: 99,
   batterySocMinPercent: 10,
   year: 2020,
+  // 'auto' = installed PV power, 'manual' = maxPowerGenerationInverter, 'none'
+  inverterMode: 'auto',
   maxPowerGenerationInverter: 5000,
   maxPowerGenerationBattery: 0,
   maxPowerLoadBattery: 0,
+  // 'none' | 'watt' (maxPowerFeedIn) | 'percent' (of the PV power) | 'zero'
+  feedInMode: 'none',
   maxPowerFeedIn: 0,
+  feedInPercent: 60,
   amortizationYears: 20,
   linearDegrationModules: 0.5,
   linearConsumptionChange: 0.5, // negative = less need
@@ -63,8 +72,29 @@ const validAddress = (address) =>
     ? address
     : null
 
+/**
+ * Inputs saved by older versions have no limit modes. 5000 W was a hidden
+ * default for the inverter power, so it becomes "automatic"; 0 W meant
+ * "no limit" for both values.
+ */
+const migrateInput = (stored) => {
+  const migrated = { ...stored }
+  if (stored.maxPowerGenerationInverter !== undefined && !stored.inverterMode) {
+    const power = Number(stored.maxPowerGenerationInverter) || 0
+    migrated.inverterMode =
+      power === 5000 ? 'auto' : power > 0 ? 'manual' : 'none'
+  }
+  if (stored.maxPowerFeedIn !== undefined && !stored.feedInMode) {
+    migrated.feedInMode = Number(stored.maxPowerFeedIn) > 0 ? 'watt' : 'none'
+  }
+  return migrated
+}
+
 // --- state (module level, shared by all components) ---
-const input = reactive({ ...DEFAULT_INPUT, ...load(KEYS.input, {}) })
+const input = reactive({
+  ...DEFAULT_INPUT,
+  ...migrateInput(load(KEYS.input, {})),
+})
 const batterySizes = ref(load(KEYS.sizes, DEFAULT_SIZES))
 const address = ref(validAddress(load(KEYS.address, null)))
 const addressQuery = ref(
@@ -78,7 +108,8 @@ const addressQuery = ref(
 )
 
 const consumptionMode = ref('profile') // 'profile' | 'csv'
-const importedConsumption = shallowRef(null) // { data, year, fileName }
+const csvImport = shallowRef(null) // { fileName, analysis }
+const fillMethod = ref('interpolate')
 
 const status = ref('idle') // 'idle' | 'geocoding' | 'fetching' | 'simulating'
 const error = ref(null)
@@ -98,12 +129,18 @@ const totalPeakPower = computed(() =>
   input.roofs.reduce((sum, roof) => sum + Number(roof.peakpower || 0), 0),
 )
 
-const csvYearMismatch = computed(
-  () =>
-    consumptionMode.value === 'csv' &&
-    importedConsumption.value &&
-    importedConsumption.value.year !== input.year,
-)
+/** hourly consumption from the CSV file, mapped onto the weather year */
+const importedConsumption = computed(() => {
+  const analysis = csvImport.value?.analysis
+  if (!analysis || analysis.errors.length) return null
+  return {
+    fileName: csvImport.value.fileName,
+    year: analysis.year,
+    data: buildConsumption(analysis, input.year, fillMethod.value),
+  }
+})
+
+const limits = computed(() => resolveLimits(input))
 
 const missing = computed(() => {
   const list = []
@@ -115,8 +152,7 @@ const missing = computed(() => {
 })
 
 const canCalculate = computed(
-  () =>
-    !missing.value.length && !csvYearMismatch.value && status.value === 'idle',
+  () => !missing.value.length && status.value === 'idle',
 )
 
 const signature = () =>
@@ -125,7 +161,8 @@ const signature = () =>
     batterySizes.value,
     address.value,
     consumptionMode.value,
-    importedConsumption.value?.fileName,
+    csvImport.value?.fileName,
+    fillMethod.value,
   ])
 
 // signature() reads all inputs, so this updates whenever one of them changes
@@ -133,16 +170,16 @@ const isStale = computed(
   () => Boolean(results.value) && signature() !== lastSignature,
 )
 
-/** battery size with the shortest payback time of the whole system */
+/**
+ * battery size with the shortest payback time of the whole system,
+ * null if no variant pays back
+ */
 const recommendedSize = computed(() => {
   if (!results.value) return null
-  return results.value.sizes.reduce((best, item) =>
-    Number.isFinite(item.amortization) &&
-    item.amortization > 0 &&
-    item.amortization < best.amortization
-      ? item
-      : best,
-  ).size
+  const best = results.value.sizes
+    .filter((item) => Number.isFinite(item.amortization))
+    .sort((a, b) => a.amortization - b.amortization)[0]
+  return best ? best.size : null
 })
 
 const selected = computed(() =>
@@ -175,16 +212,13 @@ async function searchAddress() {
 }
 
 async function importCsv(file) {
-  const text = await file.text()
-  try {
-    const data = convertConsumptionCSV(text, input.year)
-    importedConsumption.value = { data, year: input.year, fileName: file.name }
-    consumptionMode.value = 'csv'
-    return null
-  } catch (e) {
-    importedConsumption.value = null
-    return e.message
-  }
+  const analysis = analyzeConsumptionCsv(await file.text())
+  csvImport.value = { fileName: file.name, analysis }
+  consumptionMode.value = 'csv'
+}
+
+function discardCsv() {
+  csvImport.value = null
 }
 
 const runWorker = (payload) =>
@@ -249,7 +283,12 @@ async function calculate() {
       },
     })
     lastSignature = calcSignature
-    selectedSize.value = recommendedSize.value
+    selectedSize.value = recommendedSize.value ?? sizes[0].size
+    if (sizes.some((item) => !item.balance.ok)) {
+      console.error(sizes.map((item) => item.balance))
+      error.value =
+        'Die Energiebilanz der Simulation geht nicht auf. Die Ergebnisse sind vermutlich fehlerhaft – bitte melde das mit deinen Eingaben auf GitHub.'
+    }
   } catch (e) {
     console.error(e)
     const upstream = e.response?.data?.message
@@ -278,7 +317,10 @@ export function useCalculator() {
     addressQuery,
     addressNotFound,
     consumptionMode,
+    csvImport,
+    fillMethod,
     importedConsumption,
+    limits,
     status,
     error,
     results,
@@ -287,13 +329,13 @@ export function useCalculator() {
     baseline,
     recommendedSize,
     totalPeakPower,
-    csvYearMismatch,
     missing,
     canCalculate,
     isStale,
     lastYear: PVGIS_LAST_YEAR,
     searchAddress,
     importCsv,
+    discardCsv,
     calculate,
     reset,
   }

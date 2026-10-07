@@ -1,5 +1,5 @@
 <template>
-  <details class="card group">
+  <details id="expert-settings" class="card group">
     <summary
       class="flex cursor-pointer list-none items-center gap-3 p-4 select-none sm:px-5"
     >
@@ -83,22 +83,6 @@
           :max="100"
         />
         <NumberField
-          v-model="input.maxPowerGenerationInverter"
-          label="Max. Leistung WR"
-          unit="W"
-          :min="0"
-          :step="100"
-          hint="Begrenzt die PV-Leistung und bestimmt den Wirkungsgrad des Wechselrichters. 0 = keine Begrenzung"
-        />
-        <NumberField
-          v-model="input.maxPowerFeedIn"
-          label="Max. Einspeisung"
-          unit="W"
-          :min="0"
-          :step="100"
-          hint="z.B. für die 70-%-Regel. 0 = keine Begrenzung"
-        />
-        <NumberField
           v-model="input.maxPowerLoadBattery"
           label="Max. Ladeleistung"
           unit="W"
@@ -116,6 +100,97 @@
         />
       </div>
 
+      <div id="inverter-settings" class="scroll-mt-24">
+        <div
+          class="mb-2 flex items-center gap-1 text-xs font-medium text-muted"
+        >
+          Wechselrichter (AC-Leistung)
+          <span
+            class="cursor-help"
+            title="Begrenzt die PV-Leistung und bestimmt den Wirkungsgrad des Wechselrichters bei Teillast"
+            ><Info class="h-3.5 w-3.5"
+          /></span>
+        </div>
+        <SegmentedControl
+          v-model="input.inverterMode"
+          :options="[
+            { value: 'auto', label: 'wie PV' },
+            { value: 'manual', label: 'eigener Wert' },
+            { value: 'none', label: 'keine Grenze' },
+          ]"
+        />
+        <NumberField
+          v-if="input.inverterMode === 'manual'"
+          v-model="input.maxPowerGenerationInverter"
+          class="mt-2"
+          label="Maximale AC-Leistung"
+          unit="W"
+          :min="100"
+          :step="100"
+        />
+        <p v-else class="mt-2 font-mono text-xs text-muted">
+          {{
+            input.inverterMode === 'auto'
+              ? `= installierte PV-Leistung (${num(limits.inverterPower)} W)`
+              : 'keine Begrenzung, fester Wirkungsgrad'
+          }}
+        </p>
+      </div>
+
+      <div>
+        <div
+          class="mb-2 flex items-center gap-1 text-xs font-medium text-muted"
+        >
+          Einspeisebegrenzung
+          <span
+            class="cursor-help"
+            title="Nicht eingespeiste Energie wird als Abregelung in den Details angezeigt"
+            ><Info class="h-3.5 w-3.5"
+          /></span>
+        </div>
+        <SegmentedControl
+          v-model="input.feedInMode"
+          :options="[
+            { value: 'none', label: 'keine' },
+            { value: 'watt', label: 'Watt' },
+            { value: 'percent', label: '% PV' },
+            { value: 'zero', label: 'Null' },
+          ]"
+        />
+        <NumberField
+          v-if="input.feedInMode === 'watt'"
+          v-model="input.maxPowerFeedIn"
+          class="mt-2"
+          label="Maximale Einspeisung"
+          unit="W"
+          :min="0"
+          :step="100"
+          hint="z.B. 800 W für ein Balkonkraftwerk"
+        />
+        <NumberField
+          v-else-if="input.feedInMode === 'percent'"
+          v-model="input.feedInPercent"
+          class="mt-2"
+          label="Anteil der PV-Leistung"
+          unit="%"
+          :min="0"
+          :max="100"
+          hint="z.B. 60 % (Solarspitzengesetz) oder 70 %"
+        />
+        <p
+          v-if="input.feedInMode === 'percent'"
+          class="mt-2 font-mono text-xs text-muted"
+        >
+          = {{ num(limits.feedInLimit) }} W
+        </p>
+        <p
+          v-else-if="input.feedInMode === 'zero'"
+          class="mt-2 font-mono text-xs text-muted"
+        >
+          Nulleinspeisung: Überschuss wird nur gespeichert oder abgeregelt
+        </p>
+      </div>
+
       <button
         type="button"
         class="btn-ghost w-full text-grid"
@@ -130,13 +205,21 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { ChevronDown, Plus, RotateCcw, Settings2, X } from 'lucide-vue-next'
+import {
+  ChevronDown,
+  Info,
+  Plus,
+  RotateCcw,
+  Settings2,
+  X,
+} from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
-import { batteryLabel } from '../../lib/format.js'
+import { batteryLabel, num } from '../../lib/format.js'
 import NumberField from '../ui/NumberField.vue'
+import SegmentedControl from '../ui/SegmentedControl.vue'
 
-const { input, batterySizes, reset } = useCalculator()
+const { input, batterySizes, limits, reset } = useCalculator()
 
 const newSize = ref(null)
 const validNewSize = computed(

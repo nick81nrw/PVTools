@@ -83,12 +83,12 @@ export default [
   {
     realm: 'Erweitert',
     title: 'Maximalleistung Wechselrichter und Speicher',
-    text: 'Wenn du mehr PV-Leistung hast, als der Wechselrichter nutzen kann, kannst du damit die max. Leistung festlegen. Die Ergebnisse werden in den Details angezeigt. Für den Speicher kannst du die maximale Lade- und Entladeleistung getrennt festlegen. NEU 11/23: Dieser Wert wird genutzt, um einen Wirkungsgrad zu ermitteln, deshalb ist er standardmäßig auf 5000 W gesetzt.',
+    text: 'Die AC-Leistung des Wechselrichters entspricht standardmäßig der installierten PV-Leistung und wird bei den Dachflächen angezeigt. Wenn dein Wechselrichter kleiner ist, trag in den Experten-Einstellungen einen eigenen Wert ein; was darüber liegt, wird abgeregelt und in den Details angezeigt. Der Wert bestimmt außerdem den Wirkungsgrad des Wechselrichters bei Teillast. Für den Speicher kannst du die maximale Lade- und Entladeleistung getrennt festlegen.',
   },
   {
     realm: 'Erweitert',
-    title: 'Maximale Netzeinspeisung',
-    text: 'Diese Einstellung kann für die 70%-Regel in Deutschland genutzt werden. Die Ergebnisse werden in den Details angezeigt.',
+    title: 'Einspeisebegrenzung und Nulleinspeisung',
+    text: 'Die Einspeisung kann auf eine feste Leistung (z.B. 800 W), auf einen Anteil der PV-Leistung (z.B. 60 %) oder auf null begrenzt werden. Bei Nulleinspeisung wird Überschuss nur im Speicher genutzt, der Rest wird abgeregelt. Die abgeregelte Energie wird in den Details angezeigt.',
   },
   {
     realm: 'Details',
@@ -98,7 +98,7 @@ export default [
   {
     realm: 'Erweitert',
     title: 'Eigenen Stromverbrauch nutzen',
-    text: "Ihr könnt euch im Schritt 'Stromverbrauch' unter 'Eigene Messwerte' eine CSV-Vorlage herunterladen und eure stündlichen Verbräuche in Wattstunden in Spalte B einpflegen. Die Spalte A muss so bleiben. Das Jahr der Vorlage entspricht dem gewählten Wetterjahr, Standard ist 2020. Wenn ihr keine Daten aus dem Jahr habt, ist das nicht schlimm. Das Jahr betrifft nur die Sonneneinstrahlung. Ihr könnt also auch eure Verbrauchsdaten von z.B. 2022 eingeben und gegen das Jahr 2020 rechnen lassen.",
+    text: "Ihr könnt euch im Schritt 'Stromverbrauch' unter 'Eigene Messwerte' eine CSV-Vorlage herunterladen und eure stündlichen Verbräuche in Wattstunden in Spalte B einpflegen (Dezimalkomma oder -punkt). Die Werte können aus einem beliebigen Jahr stammen, z.B. 2025: Sie werden nach Monat, Tag und Stunde auf das gewählte Wetterjahr übertragen. Nach dem Hochladen seht ihr eine Vorschau mit Zeitraum, Jahresverbrauch und fehlenden Werten. Fehlende Stunden könnt ihr interpolieren, mit 0 auffüllen oder mit dem vorherigen Wert füllen; ungültige oder negative Werte werden als Fehler gemeldet.",
   },
   {
     realm: 'Fehlerbehebung',

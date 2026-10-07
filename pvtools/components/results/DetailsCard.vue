@@ -9,7 +9,7 @@
           class="flex justify-between gap-4 py-1.5"
         >
           <dt class="text-muted" :title="row.hint">{{ row.label }}</dt>
-          <dd class="num">{{ kwh(row.value, 1) }}</dd>
+          <dd class="num">{{ row.text ?? kwh(row.value, 1) }}</dd>
         </div>
       </dl>
     </div>
@@ -73,14 +73,20 @@ const losses = computed(() => [
     hint: 'PV-Leistung oberhalb der maximalen Wechselrichterleistung',
   },
   {
-    label: 'Einspeisebegrenzung',
+    label: 'Abregelung Einspeisegrenze',
     value: props.item.missedFeedInPowerGrid,
-    hint: 'Nicht eingespeiste Energie durch die maximale Einspeiseleistung',
+    hint: 'Nicht eingespeiste Energie durch die Einspeisebegrenzung',
   },
   {
     label: 'Speicherverluste',
     value: props.item.missedBatteryPower,
     hint: 'Lade- und Entladeverluste des Speichers',
+  },
+  {
+    label: 'Speicher geladen / entladen',
+    value: null,
+    text: `${num(props.item.batteryCharge, 0)} / ${num(props.item.batteryDischarge, 0)} kWh`,
+    hint: 'Energie, die in den Speicher geflossen ist bzw. entnommen wurde',
   },
   {
     label: 'Netzbezug',

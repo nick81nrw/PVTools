@@ -79,7 +79,11 @@ const chartData = computed(() => ({
     },
     {
       label: 'Amortisation Anlage',
-      data: props.sizes.map((s) => s.amortization),
+      data: props.sizes.map((s) =>
+        Number.isFinite(s.amortization) && s.amortization > 0
+          ? s.amortization
+          : null,
+      ),
       yAxisID: 'years',
       ...pointStyle(ENERGY_COLORS.grid),
       borderDash: [5, 4],
