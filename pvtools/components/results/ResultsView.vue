@@ -39,18 +39,28 @@
         </div>
         <div class="min-w-0 flex-1">
           <div class="label-mono">empfehlung</div>
-          <div class="font-display text-xl font-semibold">
-            <template v-if="recommendedItem.size > 1">
-              {{ batteryLabel(recommendedItem.size) }} Speicher
-            </template>
-            <template v-else>Kein Speicher</template>
-          </div>
-          <p class="text-sm text-muted">
-            Kürzeste Amortisation der Gesamtanlage:
-            <span class="num text-ink">{{
-              years(recommendedItem.amortization)
-            }}</span>
-          </p>
+          <template v-if="recommendedItem">
+            <div class="font-display text-xl font-semibold">
+              <template v-if="recommendedItem.size > 1">
+                {{ batteryLabel(recommendedItem.size) }} Speicher
+              </template>
+              <template v-else>Kein Speicher</template>
+            </div>
+            <p class="text-sm text-muted">
+              Kürzeste Amortisation der Gesamtanlage:
+              <span class="num text-ink">{{
+                years(recommendedItem.amortization)
+              }}</span>
+            </p>
+          </template>
+          <template v-else>
+            <div class="font-display text-xl font-semibold">
+              Keine Variante rechnet sich
+            </div>
+            <p class="text-sm text-muted">
+              Bei diesen Preisen amortisiert sich keine der Varianten.
+            </p>
+          </template>
         </div>
       </div>
 

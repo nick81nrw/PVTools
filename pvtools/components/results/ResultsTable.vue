@@ -60,6 +60,10 @@ defineProps({
 })
 defineEmits(['select'])
 
+// compact: "nie" instead of "nicht amortisierbar"
+const payback = (value) =>
+  Number.isFinite(value) && value > 0 ? years(value) : 'nie'
+
 const columns = [
   { key: 'size', label: 'Speicher' },
   { key: 'selfSufficiencyRate', label: 'Autarkie', format: (v) => pct(v) },
@@ -73,11 +77,11 @@ const columns = [
     format: (v) => eur(v),
     batteryOnly: true,
   },
-  { key: 'amortization', label: 'Amort. Anlage', format: (v) => years(v) },
+  { key: 'amortization', label: 'Amort. Anlage', format: (v) => payback(v) },
   {
     key: 'batteryAmortization',
     label: 'Amort. Speicher',
-    format: (v) => years(v),
+    format: (v) => payback(v),
     batteryOnly: true,
   },
 ]

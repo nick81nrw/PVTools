@@ -11,6 +11,84 @@ import { energyFlow } from './energyFlow.js'
  * @param {Object} params.regressionDb consumption regression database
  * @return {Array<Object>} one result per battery size, the first one without battery (size 1)
  */
+/** installed PV power of all roofs in Wp */
+export const totalPeakPower = (input) =>
+  (input.roofs || []).reduce(
+    (sum, roof) => sum + Number(roof.peakpower || 0),
+    0,
+  )
+
+/**
+ * Effective power limits in W (= Wh per hour).
+ * inverterPower 0 means no limit, feedInLimit Infinity means no limit.
+ * Inputs saved before the modes existed only have the plain values.
+ */
+export const resolveLimits = (input) => {
+  const inverterMode =
+    input.inverterMode ??
+    (input.maxPowerGenerationInverter > 0 ? 'manual' : 'none')
+  const inverterPower =
+    inverterMode === 'auto'
+      ? totalPeakPower(input)
+      : inverterMode === 'manual'
+        ? Math.max(input.maxPowerGenerationInverter || 0, 0)
+        : 0
+
+  const feedInMode =
+    input.feedInMode ?? (input.maxPowerFeedIn > 0 ? 'watt' : 'none')
+  const feedInLimit = {
+    none: Infinity,
+    zero: 0,
+    watt: Math.max(input.maxPowerFeedIn || 0, 0),
+    percent:
+      (totalPeakPower(input) * Math.max(input.feedInPercent || 0, 0)) / 100,
+  }[feedInMode]
+
+  return { inverterPower, feedInLimit: feedInLimit ?? Infinity }
+}
+
+/** payback time in years, Infinity if the investment never pays back */
+export const paybackYears = (costs, yearlySavings) =>
+  yearlySavings > 0 && Number.isFinite(costs) ? costs / yearlySavings : Infinity
+
+const sumOf = (rows, key) => rows.reduce((sum, row) => sum + row[key], 0)
+
+/**
+ * Checks that no energy gets lost or created over the year (in Wh):
+ * generation = used + stored + fed in + curtailed + losses,
+ * battery start + charged - losses - discharged = battery end,
+ * consumption = self used + grid.
+ */
+export const checkEnergyBalance = (rows, startSoc) => {
+  const generation = sumOf(rows, 'powerProduction')
+  const consumption = sumOf(rows, 'energyConsumption')
+  const pv =
+    generation -
+    sumOf(rows, 'missedInverterPower') -
+    sumOf(rows, 'selfUsedEnergyPV') -
+    sumOf(rows, 'lossesPvGeneration') -
+    sumOf(rows, 'batteryCharge') -
+    sumOf(rows, 'feedInEnergyGrid') -
+    sumOf(rows, 'missedFeedInPowerGrid')
+  const endSoc = rows.length ? rows[rows.length - 1].newBatterySoc : startSoc
+  const battery =
+    startSoc +
+    sumOf(rows, 'batteryCharge') -
+    sumOf(rows, 'lossesLoadBattery') -
+    sumOf(rows, 'batteryDischarge') -
+    endSoc
+  const usage =
+    consumption - sumOf(rows, 'selfUsedEnergy') - sumOf(rows, 'gridUsedEnergy')
+  const tolerance = 1 + 1e-9 * (generation + consumption)
+  const deviations = { pv, battery, usage }
+  return {
+    ok: Object.values(deviations).every(
+      (value) => Number.isFinite(value) && Math.abs(value) <= tolerance,
+    ),
+    deviations,
+  }
+}
+
 export const simulateBatterySizes = ({
   powerGenAndConsumption,
   input,
@@ -18,6 +96,7 @@ export const simulateBatterySizes = ({
   regressionDb,
 }) => {
   let costSavingWithoutBattery
+  const { inverterPower, feedInLimit } = resolveLimits(input)
 
   const batterySizesWithNoBattery = [1, ...batterySizes]
 
@@ -27,6 +106,7 @@ export const simulateBatterySizes = ({
       size == 1
         ? minSocWithoutBattery
         : (size * input.batterySocMinPercent) / 100
+    const startSoc = newSoc
 
     let energyFlowData = powerGenAndConsumption.map((genConsumption) => {
       const energyFlowObj = {
@@ -43,12 +123,8 @@ export const simulateBatterySizes = ({
         dayTime: genConsumption.dayTime,
         regressionDb,
       }
-      if (
-        input.maxPowerGenerationInverter &&
-        input.maxPowerGenerationInverter > 0
-      )
-        energyFlowObj.maxPowerGenerationInverter =
-          input.maxPowerGenerationInverter
+      if (inverterPower > 0)
+        energyFlowObj.maxPowerGenerationInverter = inverterPower
       if (
         input.maxPowerGenerationBattery &&
         input.maxPowerGenerationBattery > 0
@@ -57,8 +133,7 @@ export const simulateBatterySizes = ({
           input.maxPowerGenerationBattery
       if (input.maxPowerLoadBattery && input.maxPowerLoadBattery > 0)
         energyFlowObj.maxPowerLoadBattery = input.maxPowerLoadBattery
-      if (input.maxPowerFeedIn && input.maxPowerFeedIn > 0)
-        energyFlowObj.maxPowerFeedIn = input.maxPowerFeedIn
+      if (feedInLimit < Infinity) energyFlowObj.maxPowerFeedIn = feedInLimit
 
       const hourFlow = energyFlow(energyFlowObj)
       newSoc = hourFlow.newBatterySoc
@@ -105,16 +180,20 @@ export const simulateBatterySizes = ({
       selfUsedEnergy * input.consumptionCosts +
       fedInPower * input.feedInCompensation
     if (size == 1) costSavingWithoutBattery = costSavings
-    const amortization =
-      (input.installationCostsWithoutBattery +
-        input.batteryCostsPerKwh * (size / 1000)) /
-      costSavings
+    const amortization = paybackYears(
+      input.installationCostsWithoutBattery +
+        input.batteryCostsPerKwh * (size / 1000),
+      costSavings,
+    )
     const costSavingsBattery =
       size == 1 ? 0 : costSavings - costSavingWithoutBattery
     const batteryAmortization =
       size == 1
         ? 0
-        : (input.batteryCostsPerKwh * (size / 1000)) / costSavingsBattery
+        : paybackYears(
+            input.batteryCostsPerKwh * (size / 1000),
+            costSavingsBattery,
+          )
 
     const monthlyDataObj = energyFlowData.reduce((prev, curr) => {
       const month = parseInt(curr.dayTime.slice(4, 6))
@@ -196,6 +275,9 @@ export const simulateBatterySizes = ({
 
     return {
       size,
+      balance: checkEnergyBalance(energyFlowData, startSoc),
+      batteryCharge: sumOf(energyFlowData, 'batteryCharge') / 1000,
+      batteryDischarge: sumOf(energyFlowData, 'batteryDischarge') / 1000,
       energyFlow: energyFlowData,
       generationYear,
       consumptionYear,

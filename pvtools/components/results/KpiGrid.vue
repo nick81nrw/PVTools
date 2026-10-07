@@ -5,7 +5,10 @@
         <component :is="kpi.icon" class="h-3.5 w-3.5" :class="kpi.color" />
         {{ kpi.label }}
       </div>
-      <div class="num mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+      <div
+        class="num mt-2 font-semibold tracking-tight"
+        :class="kpi.value.length > 12 ? 'text-lg' : 'text-2xl sm:text-3xl'"
+      >
         {{ kpi.value }}
       </div>
       <div class="num mt-1 text-xs text-muted">{{ kpi.sub }}</div>
