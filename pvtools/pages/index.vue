@@ -39,13 +39,15 @@
     </b-row>
     <b-row>
       <b-col>
-        <b-button v-b-toggle.inputCollapse>Daten eingeben</b-button>
+        <b-button @click="inputVisible = !inputVisible"
+          >Daten eingeben</b-button
+        >
       </b-col>
     </b-row>
 
     <b-row cols="1" cols-md="2">
       <b-col>
-        <b-collapse id="inputCollapse" visible>
+        <b-collapse v-model="inputVisible">
           <b-form>
             <b-form-group label="Adresse:">
               <b-input-group append="Straße, PLZ Stadt">
@@ -56,11 +58,9 @@
                   title="Beim verlassen des Feldes wird der Standort gesucht"
                 />
               </b-input-group>
-              <b-input-group-append>
-                <b-button variant="info" @click="getCoordinatesByAddress"
-                  >Suche nach Adresse</b-button
-                >
-              </b-input-group-append>
+              <b-button variant="info" @click="getCoordinatesByAddress"
+                >Suche nach Adresse</b-button
+              >
             </b-form-group>
 
             <b-form-group
@@ -75,30 +75,30 @@
             <b-alert
               v-else-if="adressData == 'no_address'"
               variant="danger"
-              show
+              :model-value="true"
             >
               Die eingegebende Adresse konnte nicht gefunden werden. Bitte
               versuchen Sie es erneut.
             </b-alert>
             <b-form-group
-              :disabled="this.useImportData"
+              :disabled="useImportData"
               label="Jährlicher Stromverbrauch:"
             >
               <b-input-group append="kWh">
-                <b-input
+                <b-form-input
                   v-model.number="input.yearlyConsumption"
                   min="0"
                   type="number"
                   step="1"
                 />
-                <b-alert variant="danger" :show="this.useImportData"
+                <b-alert variant="danger" :model-value="useImportData"
                   >Es wird ein individueller Verbrauch genutzt</b-alert
                 >
               </b-input-group>
             </b-form-group>
             <b-form-group label="Stromkosten:">
               <b-input-group append="€ / kWh">
-                <b-input
+                <b-form-input
                   v-model.number="input.consumptionCosts"
                   type="number"
                   min="0"
@@ -108,7 +108,7 @@
             </b-form-group>
             <b-form-group label="Einspeisevergütung:">
               <b-input-group append="€ / kWh">
-                <b-input
+                <b-form-input
                   v-model.number="input.feedInCompensation"
                   min="0"
                   type="number"
@@ -118,7 +118,7 @@
             </b-form-group>
             <b-form-group label="Installationskosten ohne Akku:">
               <b-input-group append="€">
-                <b-input
+                <b-form-input
                   v-model.number="input.installationCostsWithoutBattery"
                   min="0"
                   type="number"
@@ -128,7 +128,7 @@
             </b-form-group>
             <b-form-group label="Speicherkosten pro kWh:">
               <b-input-group append="€">
-                <b-input
+                <b-form-input
                   v-model.number="input.batteryCostsPerKwh"
                   min="0"
                   type="number"
@@ -141,9 +141,9 @@
       </b-col>
 
       <b-col>
-        <b-collapse id="inputCollapse" visible>
-          <b-form @submit="addRoof" @submit.stop.prevent>
-            <b-card bg-variant="light">
+        <b-collapse v-model="inputVisible">
+          <b-form @submit.stop.prevent="addRoof">
+            <b-card class="bg-light">
               <b-form-group label="Ausrichtung:">
                 <b-input-group append="° Grad Azimuth">
                   <b-form-input
@@ -172,7 +172,7 @@
               </b-form-group>
               <b-form-group label="Installierte Leistung">
                 <b-input-group append="Wp">
-                  <b-input
+                  <b-form-input
                     v-model.number="roofInput.peakpower"
                     min="1"
                     type="number"
@@ -196,29 +196,11 @@
               v-for="roof in input.roofs"
               :key="roof.aspect + roof.angle + roof.peakpower"
             >
-              <b-list-group-item
-                button
-                :v-b-toggle="'roof' + roof.aspect + roof.angle + roof.peakpower"
-              >
+              <b-list-group-item>
                 Ausrichtung {{ roof.aspect }}° - Neigung: {{ roof.angle }}° -
                 {{ roof.peakpower }} Wp
                 <b-button-group>
-                  <b-button
-                    variant="primary"
-                    @click="
-                      roofInput.aspect = roof.aspect
-                      roofInput.angle = roof.angle
-                      roofInput.peakpower = roof.peakpower
-                      input.roofs = input.roofs.filter(
-                        (roofEntry) =>
-                          !(
-                            roof.aspect == roofEntry.aspect &&
-                            roof.angle == roofEntry.angle &&
-                            roof.peakpower == roofEntry.peakpower
-                          ),
-                      )
-                    "
-                  >
+                  <b-button variant="primary" @click="editRoof(roof)">
                     <font-awesome-icon icon="pen" />
                   </b-button>
                   <b-button variant="danger" @click="removeRoof(roof)">
@@ -239,7 +221,7 @@
           <b-button-group class="mt-3">
             <b-button
               variant="primary"
-              @click="generateData"
+              @click="calculate"
               :disabled="
                 (!adressData.lat && !adressData.lon) || input.roofs.length == 0
               "
@@ -248,7 +230,6 @@
                   ? 'Füge eine Adresse und mindestens eine PV Ausrichtung hinzu'
                   : ''
               "
-              v-b-toggle.inputCollapse
             >
               Berechnen
             </b-button>
@@ -262,9 +243,9 @@
           <b-alert
             class="mt-3"
             variant="danger"
-            :show="Boolean(errorMessage)"
+            :model-value="Boolean(errorMessage)"
             dismissible
-            @dismissed="errorMessage = null"
+            @update:model-value="(show) => !show && (errorMessage = null)"
             >{{ errorMessage }}</b-alert
           >
 
@@ -290,7 +271,7 @@
             <b-form-group label="Import individueller stündlicher Verbauch:">
               <b-button size="sm" @click="downloadCsvTemplate">{{
                 'Vorlage herunterladen für das o.g. Vergleichsjahr ' +
-                this.input.year
+                input.year
               }}</b-button>
               <b-form-file
                 v-model="csvFile"
@@ -301,21 +282,23 @@
                 plain
               ></b-form-file>
               <b-alert
-                show
-                :show="!!this.importCsvErrorMessage"
+                :model-value="!!importCsvErrorMessage"
                 dismissible
                 variant="danger"
-                >{{ this.importCsvErrorMessage }}</b-alert
+                @update:model-value="
+                  (show) => !show && (importCsvErrorMessage = null)
+                "
+                >{{ importCsvErrorMessage }}</b-alert
               >
               <b-button
                 size="sm"
-                :disabled="this.useImportData"
+                :disabled="useImportData"
                 @click="uploadCsvData"
                 >Aktiviere CSV Datei</b-button
               >
               <b-button
                 size="sm"
-                :disabled="!this.useImportData"
+                :disabled="!useImportData"
                 @click="deleteCsvFile"
                 >Deaktiviere Datei</b-button
               >
@@ -464,172 +447,175 @@
         responsive="sm"
       >
         <template #cell(show_details)="row">
-          <b-button size="sm" @click="row.toggleDetails">
+          <b-button size="sm" class="text-nowrap" @click="row.toggleExpansion">
             Details
             <font-awesome-icon
-              v-if="row.detailsShowing"
-              icon="fa-square-caret-up"
+              v-if="row.expansionShowing"
+              icon="square-caret-up"
             />
             <font-awesome-icon
-              v-if="!row.detailsShowing"
-              icon="fa-square-caret-down"
+              v-if="!row.expansionShowing"
+              icon="square-caret-down"
             />
             <!-- {{ row.detailsShowing ? 'Hide' : 'Show'}} Details -->
           </b-button>
         </template>
-        <template #row-details="row">
-          <b-card>
-            <b-table
-              striped
-              hover
-              :items="[row.item]"
-              :fields="[
-                {
-                  key: 'generationYear',
-                  label: 'PV Erzeugung',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-                {
-                  key: 'consumptionYear',
-                  label: 'Stromverbrauch',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-                {
-                  key: 'gridUsedEnergy',
-                  label: 'Netzbezug',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-                {
-                  key: 'missedFeedInPowerGrid',
-                  label: 'Fehlende Netzeinspeisung',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-                {
-                  key: 'lossesPvGeneration',
-                  label: 'Verluste Wirkungsgrad Wechselrichter',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-                {
-                  key: 'missedInverterPower',
-                  label: 'Verluste PV-Leistung > Wechelrichter Leistung',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-                {
-                  key: 'missedBatteryPower',
-                  label: 'Verluste Speicher',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-              ]"
-              small
-              responsive="sm"
-            />
-            <h4>Einzelne Erträge der Ausrichtungen</h4>
-            <b-table
-              striped
-              hover
-              :items="roofsData"
-              :fields="[
-                {
-                  key: 'aspect',
-                  label: 'Ausrichtung',
-                  formatter: (val) => val.toFixed(1) + '°',
-                },
-                {
-                  key: 'angle',
-                  label: 'Neigung',
-                  formatter: (val) => val.toFixed(1) + '°',
-                },
-                {
-                  key: 'peakpower',
-                  label: 'Leistung',
-                  formatter: (val) => (val / 1000).toFixed(1) + ' kWp',
-                },
-                {
-                  key: 'generationYear',
-                  label: 'PV-Ertrag',
-                  formatter: (val) => val.toFixed(1) + ' kWh',
-                },
-              ]"
-              small
-              responsive="sm"
-            />
-          </b-card>
-          <b-button
-            @click="
-              downloadDataCsv({
-                array: row.item.energyFlow,
-                filename: 'daten_' + row.item.size + '.csv',
-              })
-            "
-            >Daten herunterladen</b-button
-          >
-          <b-card>
-            <h4>Monatsverlauf</h4>
-            <BarChart
-              :datasets="[
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => (i.feedInEnergyGrid * -1) / 1000,
-                  ),
-                  label: 'Einspeisung',
-                  backgroundColor: 'orange',
-                  stack: 'Stack 0',
-                },
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => i.selfUsedEnergyPV / 1000,
-                  ),
-                  label: 'Selbstverbrauch PV',
-                  backgroundColor: 'green',
-                  stack: 'Stack 0',
-                },
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => i.selfUsedEnergyBattery / 1000,
-                  ),
-                  label: 'Selbstverbrauch Speicher',
-                  backgroundColor: 'blue',
-                  stack: 'Stack 0',
-                },
-                {
-                  data: row.item.monthlyData.map(
-                    (i) => i.gridUsedEnergy / 1000,
-                  ),
-                  label: 'Netzverbrauch',
-                  backgroundColor: 'red',
-                  stack: 'Stack 0',
-                },
-                // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsedEnergyBattery+i.selfUsedEnergyPV)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
-              ]"
-              :labels="[
-                'Jan',
-                'Feb',
-                'Mar',
-                'Apr',
-                'Mai',
-                'Jun',
-                'Jul',
-                'Aug',
-                'Sep',
-                'Okt',
-                'Nov',
-                'Dez',
-              ]"
-            />
-          </b-card>
+        <template #row-expansion="row">
+          <div class="row-details">
+            <b-card>
+              <b-table
+                striped
+                hover
+                :items="[row.item]"
+                :fields="[
+                  {
+                    key: 'generationYear',
+                    label: 'PV Erzeugung',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                  {
+                    key: 'consumptionYear',
+                    label: 'Stromverbrauch',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                  {
+                    key: 'gridUsedEnergy',
+                    label: 'Netzbezug',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                  {
+                    key: 'missedFeedInPowerGrid',
+                    label: 'Fehlende Netzeinspeisung',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                  {
+                    key: 'lossesPvGeneration',
+                    label: 'Verluste Wirkungsgrad Wechselrichter',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                  {
+                    key: 'missedInverterPower',
+                    label: 'Verluste PV-Leistung > Wechelrichter Leistung',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                  {
+                    key: 'missedBatteryPower',
+                    label: 'Verluste Speicher',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                ]"
+                small
+                responsive="sm"
+              />
+              <h4>Einzelne Erträge der Ausrichtungen</h4>
+              <b-table
+                striped
+                hover
+                :items="roofsData"
+                :fields="[
+                  {
+                    key: 'aspect',
+                    label: 'Ausrichtung',
+                    formatter: ({ value: val }) => val.toFixed(1) + '°',
+                  },
+                  {
+                    key: 'angle',
+                    label: 'Neigung',
+                    formatter: ({ value: val }) => val.toFixed(1) + '°',
+                  },
+                  {
+                    key: 'peakpower',
+                    label: 'Leistung',
+                    formatter: ({ value: val }) =>
+                      (val / 1000).toFixed(1) + ' kWp',
+                  },
+                  {
+                    key: 'generationYear',
+                    label: 'PV-Ertrag',
+                    formatter: ({ value: val }) => val.toFixed(1) + ' kWh',
+                  },
+                ]"
+                small
+                responsive="sm"
+              />
+            </b-card>
+            <b-button
+              @click="
+                downloadDataCsv({
+                  array: row.item.energyFlow,
+                  filename: 'daten_' + row.item.size + '.csv',
+                })
+              "
+              >Daten herunterladen</b-button
+            >
+            <b-card>
+              <h4>Monatsverlauf</h4>
+              <BarChart
+                :datasets="[
+                  {
+                    data: row.item.monthlyData.map(
+                      (i) => (i.feedInEnergyGrid * -1) / 1000,
+                    ),
+                    label: 'Einspeisung',
+                    backgroundColor: 'orange',
+                    stack: 'Stack 0',
+                  },
+                  {
+                    data: row.item.monthlyData.map(
+                      (i) => i.selfUsedEnergyPV / 1000,
+                    ),
+                    label: 'Selbstverbrauch PV',
+                    backgroundColor: 'green',
+                    stack: 'Stack 0',
+                  },
+                  {
+                    data: row.item.monthlyData.map(
+                      (i) => i.selfUsedEnergyBattery / 1000,
+                    ),
+                    label: 'Selbstverbrauch Speicher',
+                    backgroundColor: 'blue',
+                    stack: 'Stack 0',
+                  },
+                  {
+                    data: row.item.monthlyData.map(
+                      (i) => i.gridUsedEnergy / 1000,
+                    ),
+                    label: 'Netzverbrauch',
+                    backgroundColor: 'red',
+                    stack: 'Stack 0',
+                  },
+                  // {data: row.item.monthlyData.map(i=>(i.gridUsedEnergy+i.selfUsedEnergyBattery+i.selfUsedEnergyPV)/1000),label:'Gesamtverbrauch', backgroundColor: 'black', stack: 'Stack 2'},
+                ]"
+                :labels="[
+                  'Jan',
+                  'Feb',
+                  'Mar',
+                  'Apr',
+                  'Mai',
+                  'Jun',
+                  'Jul',
+                  'Aug',
+                  'Sep',
+                  'Okt',
+                  'Nov',
+                  'Dez',
+                ]"
+              />
+            </b-card>
+          </div>
         </template>
       </b-table>
     </b-overlay>
     <FAQ />
-    <NuxtLink to="/impress">Impressum / Datenschutz</NuxtLink>
+    <RouterLink to="/impress">Impressum / Datenschutz</RouterLink>
   </b-container>
 </template>
 
 <script>
-import Chart from '../components/Chart'
-import BarChart from '../components/BarChart'
-import FAQ from '../components/FAQ'
-// import axios from "axios";
+import { markRaw } from 'vue'
+import Chart from '../components/Chart.vue'
+import BarChart from '../components/BarChart.vue'
+import FAQ from '../components/FAQ.vue'
 import {
   calculateConsumption,
   generateDayTimeValues,
@@ -637,13 +623,13 @@ import {
   normalizeHourlyRadiation,
   energyFlow,
   regressionCalc,
-} from '@/functions/energyFlow'
-import { factorFunction, PROFILEBASE, SLPH0 } from '@/functions/SLP'
+} from '@/functions/energyFlow.js'
+import { factorFunction, PROFILEBASE, SLPH0 } from '@/functions/SLP.js'
 import {
   convertConsumptionCSV,
   createTemplateCsv,
   createDataCsv,
-} from '@/functions/convertConsumptionUploads'
+} from '@/functions/convertConsumptionUploads.js'
 import regressionDb from '@/functions/regression.json'
 
 export default {
@@ -661,47 +647,47 @@ export default {
         {
           key: 'size',
           label: 'Speichergröße',
-          formatter: (val) => (val / 1000).toFixed(1) + ' kWh',
+          formatter: ({ value: val }) => (val / 1000).toFixed(1) + ' kWh',
         },
         {
           key: 'selfUsedEnergy',
           label: 'Selbstgenutzter Strom / Jahr',
-          formatter: (val) => val.toFixed(2) + ' kWh',
+          formatter: ({ value: val }) => val.toFixed(2) + ' kWh',
         },
         {
           key: 'fedInPower',
           label: 'Eingespeister Strom / Jahr',
-          formatter: (val) => val.toFixed(2) + ' kWh',
+          formatter: ({ value: val }) => val.toFixed(2) + ' kWh',
         },
         {
           key: 'selfUseRate',
           label: 'Eigenverbrauchsquote',
-          formatter: (val) => val.toFixed(2) + ' %',
+          formatter: ({ value: val }) => val.toFixed(2) + ' %',
         },
         {
           key: 'selfSufficiencyRate',
           label: 'Autarkiegrad',
-          formatter: (val) => val.toFixed(2) + ' %',
+          formatter: ({ value: val }) => val.toFixed(2) + ' %',
         },
         {
           key: 'costSavingsBattery',
           label: 'Ersparnis / Jahr durch Akku',
-          formatter: (val) => val.toFixed(2) + ' €',
+          formatter: ({ value: val }) => val.toFixed(2) + ' €',
         },
         {
           key: 'batteryAmortization',
           label: 'Amortisation nur Speicher',
-          formatter: (val) => val.toFixed(2) + ' Jahre',
+          formatter: ({ value: val }) => val.toFixed(2) + ' Jahre',
         },
         {
           key: 'costSavings',
           label: 'Ersparnis / Jahr Anlage',
-          formatter: (val) => val.toFixed(2) + ' €',
+          formatter: ({ value: val }) => val.toFixed(2) + ' €',
         },
         {
           key: 'amortization',
           label: 'Amortisation Anlage',
-          formatter: (val) => val.toFixed(2) + ' Jahre',
+          formatter: ({ value: val }) => val.toFixed(2) + ' Jahre',
         },
         { key: 'show_details', label: 'Weitere Details' },
       ],
@@ -735,6 +721,8 @@ export default {
       timeNeeded: 0,
       isCalculating: false,
       errorMessage: null,
+      inputVisible: true,
+      csvFile: null,
       needFetch: true,
       mergedPower: [],
       roofInput: {
@@ -790,32 +778,27 @@ export default {
         try {
           generationData = await Promise.all(
             this.input.roofs.map((roof) => {
-              return this.$axios
-                .post('/relay', {
-                  url: this.buildQueryString({
-                    aspect: roof.aspect,
-                    angle: roof.angle,
-                    lat: this.adressData.lat,
-                    lon: this.adressData.lon,
-                    peakpower: roof.peakpower / 1000,
-                    loss: this.input.systemloss,
-                    startyear: this.input.year,
-                    endyear: this.input.year,
-                  }),
-                  method: 'GET',
-                  body: {},
-                })
-                .then((response) => response.data)
-                .then((data) => {
-                  const normData = normalizeHourlyRadiation(data.outputs.hourly)
-                  const generationYear =
-                    Object.values(normData).reduce(
-                      (prev, curr) => prev + curr.P,
-                      0,
-                    ) / 1000
-                  this.roofsData.push({ ...roof, generationYear })
-                  return normData
-                })
+              return this.relayRequest(
+                this.buildQueryString({
+                  aspect: roof.aspect,
+                  angle: roof.angle,
+                  lat: this.adressData.lat,
+                  lon: this.adressData.lon,
+                  peakpower: roof.peakpower / 1000,
+                  loss: this.input.systemloss,
+                  startyear: this.input.year,
+                  endyear: this.input.year,
+                }),
+              ).then((data) => {
+                const normData = normalizeHourlyRadiation(data.outputs.hourly)
+                const generationYear =
+                  Object.values(normData).reduce(
+                    (prev, curr) => prev + curr.P,
+                    0,
+                  ) / 1000
+                this.roofsData.push({ ...roof, generationYear })
+                return normData
+              })
             }),
           )
         } catch (error) {
@@ -830,7 +813,7 @@ export default {
           return
         }
 
-        this.mergedPower = mergePowerGeneration(generationData)
+        this.mergedPower = markRaw(mergePowerGeneration(generationData))
         this.needFetch = false
       }
       const consumption = this.useImportData
@@ -1058,7 +1041,7 @@ export default {
 
         return {
           size,
-          energyFlow: energyFlowData,
+          energyFlow: markRaw(energyFlowData),
           generationYear,
           consumptionYear,
           selfUsedEnergy,
@@ -1088,15 +1071,10 @@ export default {
       this.errorMessage = null
       let osmReturn
       try {
-        osmReturn = (
-          await this.$axios.post('/relay', {
-            url:
-              'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' +
-              encodeURIComponent(this.inputAddressSearchString),
-            method: 'GET',
-            body: {},
-          })
-        ).data
+        osmReturn = await this.relayRequest(
+          'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=' +
+            encodeURIComponent(this.inputAddressSearchString),
+        )
       } catch (error) {
         console.error(error)
         this.errorMessage =
@@ -1111,6 +1089,23 @@ export default {
         this.adressData = osmReturn[0]
         this.inputAddressSearchString = this.adressData.display_name
       }
+    },
+    async relayRequest(url) {
+      // the backend relays the request to PVGIS/Nominatim (CORS and privacy)
+      const response = await fetch(__API_BASE_URL__ + '/relay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, method: 'GET', body: {} }),
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) {
+        const error = new Error(
+          `Request failed with status code ${response.status}`,
+        )
+        error.response = { status: response.status, data }
+        throw error
+      }
+      return data
     },
     buildQueryString(params) {
       //API BaseURL with Base Params
@@ -1135,6 +1130,14 @@ export default {
     },
     tagValidator(tag) {
       return !isNaN(tag) && tag <= 2000000 && tag >= 200
+    },
+    calculate() {
+      this.inputVisible = false
+      this.generateData()
+    },
+    editRoof(roof) {
+      this.roofInput = { ...roof }
+      this.removeRoof(roof)
     },
     removeRoof(roof) {
       this.input.roofs = this.input.roofs.filter(
@@ -1211,10 +1214,13 @@ export default {
     },
   },
   watch: {
-    inputBatterySizes(newValue) {
-      this.batterySizes = newValue
-        .map((val) => Number(val))
-        .sort((a, b) => a - b)
+    inputBatterySizes: {
+      handler(newValue) {
+        this.batterySizes = newValue
+          .map((val) => Number(val))
+          .sort((a, b) => a - b)
+      },
+      deep: true,
     },
     'input.systemloss'() {
       this.needFetch = true
@@ -1222,8 +1228,11 @@ export default {
     'input.year'() {
       this.needFetch = true
     },
-    'input.roofs'() {
-      this.needFetch = true
+    'input.roofs': {
+      handler() {
+        this.needFetch = true
+      },
+      deep: true,
     },
     inputAddressSearchString() {
       this.needFetch = true
@@ -1265,13 +1274,14 @@ td {
 
 #chartContainer {
   max-width: 100vw;
+  height: 400px;
   max-height: 50vh;
 }
 
 .paypal {
   margin-top: 10px;
 }
-.b-table-details canvas {
+.row-details canvas {
   max-width: 100%;
   max-height: 40vh;
 }

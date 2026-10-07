@@ -1,4 +1,4 @@
-const { calcHeatingTempMap, calcHeatEfficiencyMap } = require('./calcHeatpump')
+import { calcHeatingTempMap, calcHeatEfficiencyMap } from './calcHeatpump.js'
 
 describe('calculate heating temperature', () => {
   test('test failure input parameters', () => {

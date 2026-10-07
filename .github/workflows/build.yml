@@ -32,6 +32,6 @@ jobs:
       - name: Run tests
         working-directory: pvtools
         run: npm run test-all
-      - name: Generate static frontend
+      - name: Build static frontend
         working-directory: pvtools
-        run: npm run generate
+        run: npm run build

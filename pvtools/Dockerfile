@@ -1,14 +1,13 @@
 FROM node:22-alpine AS builder
-ARG APP_URL="localhost:8082"
+ARG APP_URL=""
 ARG GOOGLE_ANALYTICS_ID
-ARG NODE_ENV="development"
 ENV APP_URL=${APP_URL}
 ENV GOOGLE_ANALYTICS_ID=${GOOGLE_ANALYTICS_ID}
-ENV NODE_ENV=${NODE_ENV}
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
 COPY . .
-RUN npm install && \
-    npm run generate
+RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:stable-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html

@@ -1,5 +1,5 @@
-const { SLPH0, PROFILEBASE, factorFunction } = require('./SLP')
-const calcProfile = require('./calcProfile')
+import { SLPH0, PROFILEBASE, factorFunction } from './SLP.js'
+import calcProfile from './calcProfile.js'
 
 describe('test SPL functions', () => {
   const results = calcProfile({

@@ -1,19 +1,9 @@
 <template>
-  <Bar
-    :chart-options="chartOptions"
-    :chart-data="chartData"
-    :chart-id="chartId"
-    :dataset-id-key="datasetIdKey"
-    :plugins="plugins"
-    :css-classes="cssClasses"
-    :styles="styles"
-    :width="width"
-    :height="height"
-  />
+  <Bar :id="chartId" :data="chartData" :options="chartOptions" />
 </template>
 
 <script>
-import { Bar } from 'vue-chartjs/legacy'
+import { Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   Title,
@@ -34,61 +24,17 @@ export default {
       type: String,
       default: 'bar-chart',
     },
-    datasetIdKey: {
-      type: String,
-      default: 'label',
-    },
-    //   chartData: {
-    //     type: Object,
-    //     required: true
-    // //   },
-    //   chartOptions: {
-    //     type: Object,
-    //     default: () => {}
-    //   },
-    width: {
-      type: Number,
-      default: 400,
-    },
-    height: {
-      type: Number,
-      default: 400,
-    },
-    cssClasses: {
-      default: '',
-      type: String,
-    },
-    styles: {
-      type: Object,
-      default: () => {},
-    },
-    plugins: {
-      type: Object,
-      default: () => {},
-    },
     labels: {
       type: Array,
-      default: [],
+      default: () => [],
     },
     datasets: {
       type: Array,
-      default: [],
-    },
-  },
-  computed: {
-    chartData() {
-      return {
-        labels: this.labels,
-        datasets: this.datasets,
-      }
+      default: () => [],
     },
   },
   data() {
     return {
-      // chartData: {
-      //   labels: [ 'January', 'February', 'March' ],
-      //   datasets: [ { data: [40, 20, 12] } ]
-      // },
       chartOptions: {
         responsive: true,
         scales: {
@@ -101,6 +47,14 @@ export default {
         },
       },
     }
+  },
+  computed: {
+    chartData() {
+      return {
+        labels: this.labels,
+        datasets: this.datasets,
+      }
+    },
   },
 }
 </script>

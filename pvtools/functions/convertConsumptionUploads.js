@@ -1,6 +1,6 @@
-const Papa = require('papaparse')
+import Papa from 'papaparse'
 
-const { generateDayTimeOrder } = require('./energyFlow')
+import { generateDayTimeOrder } from './energyFlow.js'
 
 // {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}
 const convertConsumptionCSV = (csvData, year) => {
@@ -78,8 +78,4 @@ const createDataCsv = (array) => {
   return csv
 }
 
-module.exports = {
-  convertConsumptionCSV,
-  createTemplateCsv,
-  createDataCsv,
-}
+export { convertConsumptionCSV, createTemplateCsv, createDataCsv }

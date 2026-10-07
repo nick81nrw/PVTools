@@ -445,8 +445,6 @@ const factorFunction = (day, val) => {
   )
 }
 
-module.exports = {
-  PROFILEBASE: 1000,
-  SLPH0,
-  factorFunction,
-}
+export const PROFILEBASE = 1000
+
+export { SLPH0, factorFunction }

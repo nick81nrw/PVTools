@@ -53,7 +53,7 @@
         </p>
       </b-col>
     </b-row>
-    <NuxtLink to="/">Home</NuxtLink>
+    <RouterLink to="/">Home</RouterLink>
     <b-row>
       <b-col>
         <h1>Datenschutzerklärung</h1>
@@ -753,7 +753,7 @@
         </ul>
       </b-col>
     </b-row>
-    <NuxtLink to="/">Home</NuxtLink>
+    <RouterLink to="/">Home</RouterLink>
   </b-container>
 </template>
 <style>
