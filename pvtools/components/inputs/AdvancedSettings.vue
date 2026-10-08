@@ -100,6 +100,28 @@
         />
       </div>
 
+      <div>
+        <label class="block">
+          <span
+            class="mb-1 flex items-center gap-1 text-xs font-medium text-muted"
+          >
+            Rechenmodell
+          </span>
+          <select v-model="input.hourModel" class="input font-sans">
+            <option
+              v-for="model in HOUR_MODELS"
+              :key="model.id"
+              :value="model.id"
+            >
+              {{ model.label }}
+            </option>
+          </select>
+        </label>
+        <p class="mt-1.5 text-xs text-muted">
+          {{ getHourModel(input.hourModel).description }}
+        </p>
+      </div>
+
       <div id="inverter-settings" class="scroll-mt-24">
         <div
           class="mb-2 flex items-center gap-1 text-xs font-medium text-muted"
@@ -215,6 +237,7 @@ import {
 } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
+import { getHourModel, HOUR_MODELS } from '../../functions/hourModels/index.js'
 import { batteryLabel, num } from '../../lib/format.js'
 import NumberField from '../ui/NumberField.vue'
 import SegmentedControl from '../ui/SegmentedControl.vue'

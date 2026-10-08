@@ -3,7 +3,7 @@ export default [
   {
     realm: 'Neuigkeiten',
     title: 'Genauere Berechnung für größere Anlagen (10/26)',
-    text: "Innerhalb einer Stunde schwankt der Verbrauch: Wasserkocher oder Herd erzeugen kurze Lastspitzen. Bisher konnte die PV diese Spitzen nur bis zum Stundenmittel des Verbrauchs decken, selbst wenn viel mehr Sonne da war. Dadurch wurde der Eigenverbrauch ohne Speicher zu niedrig und der Nutzen eines Speichers zu hoch berechnet, je nach Anlage um etwa 15 bis 25 %. Jetzt deckt die PV die Spitzen bis zu ihrer tatsächlichen Leistung. Deine Ergebnisse können sich deshalb ändern: mehr Autarkie ohne Speicher, etwas weniger Zusatznutzen durch den Speicher. Wie genau gerechnet wird, steht in der Datei 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
+    text: "Innerhalb einer Stunde schwankt der Verbrauch: Wasserkocher oder Herd erzeugen kurze Lastspitzen. Bisher konnte die PV diese Spitzen nur bis zum Stundenmittel des Verbrauchs decken, selbst wenn viel mehr Sonne da war. Dadurch wurde der Eigenverbrauch ohne Speicher zu niedrig und der Nutzen eines Speichers zu hoch berechnet, je nach Anlage um etwa 15 bis 25 %. Jetzt deckt die PV die Spitzen bis zu ihrer tatsächlichen Leistung. Deine Ergebnisse können sich deshalb ändern: mehr Autarkie ohne Speicher, etwas weniger Zusatznutzen durch den Speicher. Zum Vergleich kannst du in den Experten-Einstellungen weiterhin das bisherige Rechenmodell „Klassisch“ wählen. Wie genau gerechnet wird, steht in der Datei 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
   },
   {
     realm: 'Neuigkeiten',
@@ -74,6 +74,11 @@ export default [
     realm: 'Erweitert',
     title: 'Wetterjahr',
     text: 'Für die PV-Erzeugung stehen bei PVGIS mehrere Jahre zur Verfügung, aktuell die Jahre 2005 bis 2023. Der Rechner berechnet immer nur ein Jahr. Wenn du genauer rechnen möchtest, solltest du die Ergebnisse mehrerer Jahre vergleichen.',
+  },
+  {
+    realm: 'Erweitert',
+    title: 'Rechenmodell',
+    text: "Das Rechenmodell legt fest, wie jede Stunde zwischen PV, Speicher und Netz aufgeteilt wird. Standard ist die 'Lastverteilung': Sie berücksichtigt kurze Lastspitzen innerhalb der Stunde und wurde gegen gemessene Minuten-Lastprofile geprüft. Das Modell 'Klassisch' ist die bisherige Berechnung und bleibt zum Vergleich mit älteren Ergebnissen wählbar; es unterschätzt den Eigenverbrauch ohne Speicher und überschätzt den Nutzen eines Speichers. Hinweis: Mit dem Standardlastprofil H0 fällt die Autarkie bei beiden Modellen etwas zu hoch aus, mit eigenen Messwerten (CSV) ist die Berechnung am genauesten.",
   },
   {
     realm: 'Erweitert',

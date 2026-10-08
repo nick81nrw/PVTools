@@ -187,3 +187,19 @@ describe('payback', () => {
     expect(paybackYears(1000, 100)).toBe(10)
   })
 })
+
+describe('legacy hour model', () => {
+  test('key figures stay unchanged', () => {
+    const legacy = simulateBatterySizes({
+      powerGenAndConsumption,
+      input: { ...input, hourModel: 'legacyRegression' },
+      batterySizes: [2000, 6000, 12000],
+      regressionDb,
+    })
+    legacy.forEach((r) => expect(r.balance.ok).toBe(true))
+    const rounded = legacy.map((r) =>
+      Object.fromEntries(KEYS.map((k) => [k, Number(r[k].toFixed(4))])),
+    )
+    expect(rounded).toMatchSnapshot()
+  })
+})

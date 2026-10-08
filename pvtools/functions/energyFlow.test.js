@@ -1,11 +1,11 @@
 import {
-  calcHourWithLoadDistribution,
   energyFlow,
   calculateConsumption,
   normalizeHourlyRadiation,
   mergePowerGeneration,
   shiftUtcToGermanTime,
 } from './energyFlow.js'
+import { calcHourWithLoadDistribution } from './hourModels/loadDistribution.js'
 
 import seriescalc from './seriescalc.json'
 import seriescalc2 from './seriescalc2.json'
