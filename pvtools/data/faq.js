@@ -2,6 +2,11 @@
 export default [
   {
     realm: 'Neuigkeiten',
+    title: 'Lohnt sich ein größerer Speicher? (10/26)',
+    text: "Bisher hat PVTools die Amortisation eines Speichers immer gegenüber 'ohne Speicher' gerechnet. Dadurch sah auch ein sehr großer Speicher oft gut aus, obwohl die letzten kWh kaum noch etwas bringen. Jetzt wird jede Speicherstufe einzeln bewertet: Was kostet die Erweiterung von z. B. 5 auf 7,5 kWh zusätzlich, wie viel Netzbezug spart sie noch, und macht sie sich innerhalb der Lebensdauer des Speichers bezahlt? Die Empfehlung erklärt das in ganzen Sätzen. Für den Speicherpreis gibt es jetzt Grundkosten und einen Preis je kWh, oder du trägst direkt deine Angebote ein.",
+  },
+  {
+    realm: 'Neuigkeiten',
     title: 'Genauere Berechnung für größere Anlagen (10/26)',
     text: "Innerhalb einer Stunde schwankt der Verbrauch: Wasserkocher oder Herd erzeugen kurze Lastspitzen. Bisher konnte die PV diese Spitzen nur bis zum Stundenmittel des Verbrauchs decken, selbst wenn viel mehr Sonne da war. Dadurch wurde der Eigenverbrauch ohne Speicher zu niedrig und der Nutzen eines Speichers zu hoch berechnet, je nach Anlage um etwa 15 bis 25 %. Jetzt deckt die PV die Spitzen bis zu ihrer tatsächlichen Leistung. Deine Ergebnisse können sich deshalb ändern: mehr Autarkie ohne Speicher, etwas weniger Zusatznutzen durch den Speicher. Außerdem verteilt das neue Modell den Jahresverbrauch realistischer: Das Standardlastprofil H0 ist der glatte Durchschnitt vieler Haushalte, ein echter Haushalt verbraucht unruhiger. Das kalibrierte Profil 'H0 kalibriert' bildet das nach, die Autarkie fällt dadurch einige Prozentpunkte niedriger und realistischer aus. Zum Vergleich kannst du in den Experten-Einstellungen weiterhin das bisherige Rechenmodell „Klassisch“ wählen. Wie genau gerechnet wird, steht in der Datei 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
   },
@@ -33,7 +38,7 @@ export default [
   {
     realm: 'Allgemeines',
     title: 'Wie wird die Empfehlung ermittelt',
-    text: 'Empfohlen wird die Speichergröße, bei der sich die gesamte Anlage (PV und Speicher) am schnellsten amortisiert. Ein größerer Speicher erhöht zwar die Autarkie, rechnet sich aber oft nicht mehr. In der Tabelle und im Diagramm kannst du jede Größe auswählen und vergleichen.',
+    text: "Ausgehend von 'ohne Speicher' wird geprüft, ob sich die nächste Speicherstufe lohnt: Die Mehrkosten der Erweiterung werden durch ihren zusätzlichen Nutzen im Jahr geteilt (weniger Netzbezug × Strompreis, abzüglich der entgangenen Einspeisevergütung). Macht sich die Erweiterung in höchstens zwei Dritteln der Lebensdauer des Speichers bezahlt (Standard: 10 von 15 Jahren), gilt sie als lohnend und es geht zur nächsten Stufe. Bis zur Lebensdauer ist sie ein Grenzfall, darüber lohnt sie sich nicht. Empfohlen wird der größte Speicher, bis zu dem sich jede Erweiterung lohnt. Die Tabelle 'Lohnt sich ein größerer Speicher?' zeigt die Bewertung jeder Stufe.",
   },
   {
     realm: 'Allgemeines',
@@ -53,7 +58,7 @@ export default [
   {
     realm: 'Eingabefelder',
     title: 'Stromverbrauch, Stromkosten und Einspeisevergütung',
-    text: 'Um eine einfache Berechnung der Amortisation machen zu können, werden diese Werte benötigt. Wenn du keine Einspeisevergütung bekommst, kannst du diese auf 0 € setzen.',
+    text: "Um eine einfache Berechnung der Amortisation machen zu können, werden diese Werte benötigt. Wenn du keine Einspeisevergütung bekommst, kannst du diese auf 0 € setzen. Der Speicherpreis ist mit Richtwerten vorbelegt (Grundkosten plus Preis je kWh). Wenn du Angebote hast, wähle 'Eigene Angebote' und trage Größe und Preis ein. Dann werden genau diese Speicher verglichen.",
   },
   {
     realm: 'Eingabefelder',

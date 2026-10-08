@@ -1,3 +1,4 @@
+import { batteryPrice } from './batteryEconomics.js'
 import { energyFlow } from './energyFlow.js'
 
 /**
@@ -181,20 +182,15 @@ export const simulateBatterySizes = ({
       selfUsedEnergy * input.consumptionCosts +
       fedInPower * input.feedInCompensation
     if (size == 1) costSavingWithoutBattery = costSavings
+    const price = batteryPrice(size, input)
     const amortization = paybackYears(
-      input.installationCostsWithoutBattery +
-        input.batteryCostsPerKwh * (size / 1000),
+      input.installationCostsWithoutBattery + price,
       costSavings,
     )
     const costSavingsBattery =
       size == 1 ? 0 : costSavings - costSavingWithoutBattery
     const batteryAmortization =
-      size == 1
-        ? 0
-        : paybackYears(
-            input.batteryCostsPerKwh * (size / 1000),
-            costSavingsBattery,
-          )
+      size == 1 ? 0 : paybackYears(price, costSavingsBattery)
 
     const monthlyDataObj = energyFlowData.reduce((prev, curr) => {
       const month = parseInt(curr.dayTime.slice(4, 6))
@@ -292,6 +288,7 @@ export const simulateBatterySizes = ({
       selfSufficiencyRate,
       selfUseRate,
       costSavings,
+      batteryPrice: price,
       amortization,
       costSavingsBattery,
       batteryAmortization,

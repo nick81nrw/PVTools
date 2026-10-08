@@ -42,34 +42,42 @@
           <Sparkles class="h-5 w-5 text-brand" />
         </div>
         <div class="min-w-0 flex-1">
-          <div class="label-mono">empfehlung</div>
-          <template v-if="recommendedItem">
-            <div class="font-display text-xl font-semibold">
-              <template v-if="recommendedItem.size > 1">
-                {{ batteryLabel(recommendedItem.size) }} Speicher
-              </template>
-              <template v-else>Kein Speicher</template>
+          <div class="label-mono">unsere empfehlung</div>
+          <div class="font-display text-xl font-semibold sm:text-2xl">
+            <template v-if="recommendedItem.size > 1">
+              {{ batteryLabel(recommendedItem.size) }} Speicher
+            </template>
+            <template v-else>Kein Speicher</template>
+          </div>
+          <ul class="mt-2 space-y-1.5 text-sm">
+            <li
+              v-for="(sentence, index) in results.economics.sentences"
+              :key="index"
+              class="flex gap-2"
+            >
+              <span
+                class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                :style="{ background: sentenceColor(index) }"
+              ></span>
+              <span>{{ sentence }}</span>
+            </li>
+          </ul>
+          <dl
+            v-if="recommendedItem.size > 1"
+            class="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3 sm:grid-cols-4"
+          >
+            <div v-for="stat in recommendationStats" :key="stat.label">
+              <dt class="label-mono">{{ stat.label }}</dt>
+              <dd class="num mt-0.5 text-sm font-semibold">
+                {{ stat.value }}
+              </dd>
             </div>
-            <p class="text-sm text-muted">
-              Kürzeste Amortisation der Gesamtanlage:
-              <span class="num text-ink">{{
-                years(recommendedItem.amortization)
-              }}</span>
-            </p>
-          </template>
-          <template v-else>
-            <div class="font-display text-xl font-semibold">
-              Keine Variante rechnet sich
-            </div>
-            <p class="text-sm text-muted">
-              Bei diesen Preisen amortisiert sich keine der Varianten.
-            </p>
-          </template>
+          </dl>
         </div>
       </div>
 
       <div class="mt-4">
-        <div class="label-mono mb-2">speichergröße wählen</div>
+        <div class="label-mono mb-2">andere größe ansehen</div>
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="item in results.sizes"
@@ -93,19 +101,14 @@
       </div>
     </div>
 
-    <KpiGrid v-if="selected" :item="selected" :baseline="baseline" />
+    <BatteryStepsCard
+      v-if="results.economics.steps.length"
+      :economics="results.economics"
+      :selected="selectedSize"
+      @select="selectedSize = $event"
+    />
 
-    <section class="card p-4 sm:p-5">
-      <SectionTitle
-        title="Kennzahlen je Speichergröße"
-        hint="Punkt anklicken zum Auswählen"
-      />
-      <SizeChart
-        :sizes="results.sizes"
-        :selected="selectedSize"
-        @select="selectedSize = $event"
-      />
-    </section>
+    <KpiGrid v-if="selected" :item="selected" :baseline="baseline" />
 
     <div v-if="selected" class="grid gap-4 xl:grid-cols-2">
       <section class="card p-4 sm:p-5">
@@ -130,23 +133,50 @@
       </section>
     </div>
 
-    <section class="card p-4 sm:p-5">
-      <SectionTitle
-        title="Alle Speichergrößen"
-        hint="Zeile anklicken zum Auswählen"
+    <button
+      type="button"
+      class="btn-ghost w-full"
+      :aria-expanded="showDetails"
+      @click="showDetails = !showDetails"
+    >
+      <ChevronDown
+        class="h-4 w-4 transition"
+        :class="showDetails ? 'rotate-180' : ''"
       />
-      <ResultsTable
-        :sizes="results.sizes"
-        :selected="selectedSize"
-        :recommended="recommendedSize"
-        @select="selectedSize = $event"
-      />
-    </section>
+      {{ showDetails ? 'Weniger anzeigen' : 'Alle Zahlen und Diagramme' }}
+    </button>
 
-    <section v-if="selected" class="card p-4 sm:p-5">
-      <SectionTitle title="Details" :note="batteryLabel(selected.size)" />
-      <DetailsCard :item="selected" :roofs="results.roofsData" />
-    </section>
+    <template v-if="showDetails">
+      <section class="card p-4 sm:p-5">
+        <SectionTitle
+          title="Kennzahlen je Speichergröße"
+          hint="Punkt anklicken zum Auswählen"
+        />
+        <SizeChart
+          :sizes="results.sizes"
+          :selected="selectedSize"
+          @select="selectedSize = $event"
+        />
+      </section>
+
+      <section class="card p-4 sm:p-5">
+        <SectionTitle
+          title="Alle Speichergrößen"
+          hint="Zeile anklicken zum Auswählen"
+        />
+        <ResultsTable
+          :sizes="results.sizes"
+          :selected="selectedSize"
+          :recommended="recommendedSize"
+          @select="selectedSize = $event"
+        />
+      </section>
+
+      <section v-if="selected" class="card p-4 sm:p-5">
+        <SectionTitle title="Details" :note="batteryLabel(selected.size)" />
+        <DetailsCard :item="selected" :roofs="results.roofsData" />
+      </section>
+    </template>
 
     <p class="font-mono text-[11px] text-muted">
       $ pvgis v5.3 · sarah3 · modell {{ results.meta.hourModel.id }} · profil
@@ -159,12 +189,14 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { RefreshCw, Sparkles } from 'lucide-vue-next'
+import { computed, ref } from 'vue'
+import { ChevronDown, RefreshCw, Sparkles } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
 import { DEFAULT_HOUR_MODEL } from '../../functions/hourModels/index.js'
-import { batteryLabel, kwh, num, years } from '../../lib/format.js'
+import { batteryLabel, eur, kwh, num, years } from '../../lib/format.js'
+import { RATINGS } from '../../lib/rating.js'
+import BatteryStepsCard from './BatteryStepsCard.vue'
 import SectionTitle from '../ui/SectionTitle.vue'
 import DetailsCard from './DetailsCard.vue'
 import EnergySplit from './EnergySplit.vue'
@@ -184,9 +216,37 @@ const {
   calculate,
 } = useCalculator()
 
+const showDetails = ref(false)
+
 const recommendedItem = computed(() =>
   results.value.sizes.find((item) => item.size === recommendedSize.value),
 )
+
+/** dot color of a sentence: the steps of the path, then the next step */
+const sentenceColor = (index) => {
+  const { path, next } = results.value.economics.recommendation
+  const step = index < path.length ? path[index] : next
+  return RATINGS[step?.rating ?? 'no'].color
+}
+
+const recommendationStats = computed(() => {
+  const item = recommendedItem.value
+  return [
+    { label: 'Speicherpreis', value: eur(item.batteryPrice) },
+    {
+      label: 'Ersparnis Speicher',
+      value: `${eur(item.costSavingsBattery)}/Jahr`,
+    },
+    {
+      label: 'Amortisation Speicher',
+      value: years(item.batteryAmortization),
+    },
+    {
+      label: 'Autarkie',
+      value: `${num(item.selfSufficiencyRate, 0)} % statt ${num(baseline.value.selfSufficiencyRate, 0)} %`,
+    },
+  ]
+})
 
 const stats = computed(() => [
   { label: 'PV-Erzeugung', value: kwh(selected.value.generationYear) },

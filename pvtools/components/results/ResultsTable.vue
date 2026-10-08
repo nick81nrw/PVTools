@@ -66,6 +66,12 @@ const payback = (value) =>
 
 const columns = [
   { key: 'size', label: 'Speicher' },
+  {
+    key: 'batteryPrice',
+    label: 'Preis',
+    format: (v) => eur(v),
+    batteryOnly: true,
+  },
   { key: 'selfSufficiencyRate', label: 'Autarkie', format: (v) => pct(v) },
   { key: 'selfUseRate', label: 'Eigenverbr.', format: (v) => pct(v) },
   { key: 'selfUsedEnergy', label: 'Selbst genutzt', format: (v) => kwh(v) },

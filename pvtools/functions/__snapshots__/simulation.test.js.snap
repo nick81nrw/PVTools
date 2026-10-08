@@ -3,7 +3,7 @@
 exports[`legacy hour model > key figures stay unchanged 1`] = `
 [
   {
-    "amortization": 9.5063,
+    "amortization": 9.5059,
     "batteryAmortization": 0,
     "consumptionYear": 5001.6086,
     "costSavings": 1051.9827,
@@ -64,7 +64,7 @@ exports[`legacy hour model > key figures stay unchanged 1`] = `
 exports[`simulateBatterySizes > key figures stay unchanged 1`] = `
 [
   {
-    "amortization": 8.5341,
+    "amortization": 8.5337,
     "batteryAmortization": 0,
     "consumptionYear": 5001.6086,
     "costSavings": 1171.8313,
