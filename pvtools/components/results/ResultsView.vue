@@ -149,7 +149,8 @@
     </section>
 
     <p class="font-mono text-[11px] text-muted">
-      $ pvgis v5.3 · sarah3 · modell {{ results.meta.hourModel.id }} ·
+      $ pvgis v5.3 · sarah3 · modell {{ results.meta.hourModel.id }} · profil
+      {{ results.meta.consumptionProfile?.id ?? 'csv' }} ·
       {{ num(results.meta.hours) }} h simuliert ·
       {{ results.sizes.length }} speichergrößen ·
       {{ num(results.meta.duration / 1000, 1) }} s

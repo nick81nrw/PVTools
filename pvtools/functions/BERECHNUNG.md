@@ -7,36 +7,41 @@ lang ist, entspricht 1 W genau 1 Wh.
 
 ## Ablauf
 
-| Schritt                                                                                             | Funktion                                                                                      | Datei                                           |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| PV-Erzeugung je Dachfläche von PVGIS abrufen, von UTC in Ortszeit umrechnen und stündlich summieren | `fetchGeneration`, `normalizeHourlyRadiation`, `shiftUtcToGermanTime`, `mergePowerGeneration` | `lib/api.js`, `energyFlow.js`                   |
-| Verbrauch je Stunde aus Jahresverbrauch und Lastprofil H0 oder aus der CSV-Datei                    | `calculateConsumption`, `buildConsumption`                                                    | `energyFlow.js`, `consumptionImport.js`         |
-| Erzeugung und Verbrauch zu Stundenwerten zusammenführen                                             | `generateDayTimeValues`                                                                       | `energyFlow.js`                                 |
-| Wechselrichter- und Einspeisegrenzen bestimmen                                                      | `resolveLimits`                                                                               | `simulation.js`                                 |
-| Jede Stunde mit dem gewählten Rechenmodell berechnen, Ladezustand an die nächste Stunde weitergeben | `simulateBatterySizes` → `energyFlow` → `getHourModel(id).calculate`                          | `simulation.js`, `energyFlow.js`, `hourModels/` |
-| Jahressummen, Monatswerte, Wirtschaftlichkeit, Energiebilanz-Prüfung                                | `simulateBatterySizes`, `checkEnergyBalance`                                                  | `simulation.js`                                 |
+| Schritt                                                                                             | Funktion                                                                                      | Datei                                            |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| PV-Erzeugung je Dachfläche von PVGIS abrufen, von UTC in Ortszeit umrechnen und stündlich summieren | `fetchGeneration`, `normalizeHourlyRadiation`, `shiftUtcToGermanTime`, `mergePowerGeneration` | `lib/api.js`, `energyFlow.js`                    |
+| Verbrauch je Stunde aus Jahresverbrauch und dem Lastprofil des Rechenmodells oder aus der CSV-Datei | `getConsumptionProfile(id).build`, `buildConsumption`                                         | `consumptionProfiles.js`, `consumptionImport.js` |
+| Erzeugung und Verbrauch zu Stundenwerten zusammenführen                                             | `generateDayTimeValues`                                                                       | `energyFlow.js`                                  |
+| Wechselrichter- und Einspeisegrenzen bestimmen                                                      | `resolveLimits`                                                                               | `simulation.js`                                  |
+| Jede Stunde mit dem gewählten Rechenmodell berechnen, Ladezustand an die nächste Stunde weitergeben | `simulateBatterySizes` → `energyFlow` → `getHourModel(id).calculate`                          | `simulation.js`, `energyFlow.js`, `hourModels/`  |
+| Jahressummen, Monatswerte, Wirtschaftlichkeit, Energiebilanz-Prüfung                                | `simulateBatterySizes`, `checkEnergyBalance`                                                  | `simulation.js`                                  |
 
 ## Rechenmodelle
 
 Wie eine einzelne Stunde zwischen PV, Speicher und Netz aufgeteilt wird,
 bestimmt das **Rechenmodell**. Es ist in den Experten-Einstellungen wählbar.
 
-| Modell                                       | Datei                            |                                   |
-| -------------------------------------------- | -------------------------------- | --------------------------------- |
-| `loadDistribution` – Lastverteilung          | `hourModels/loadDistribution.js` | Standard, siehe unten             |
-| `legacyRegression` – Klassisch (bis 10/2026) | `hourModels/legacyRegression.js` | frühere Berechnung, zum Vergleich |
+| Modell                                       | Datei                            | Lastprofil    |                                   |
+| -------------------------------------------- | -------------------------------- | ------------- | --------------------------------- |
+| `loadDistribution` – Lastverteilung          | `hourModels/loadDistribution.js` | H0 kalibriert | Standard, siehe unten             |
+| `legacyRegression` – Klassisch (bis 10/2026) | `hourModels/legacyRegression.js` | H0 (BDEW)     | frühere Berechnung, zum Vergleich |
 
 Alle Modelle haben dieselbe Schnittstelle (Parameter, Ergebnis und die
 Energiebilanz je Stunde sind in `hourModels/index.js` beschrieben). Gemeinsame
 Hilfsfunktionen (Speicher laden, Wechselrichter-Wirkungsgrad, Ersatzverteilung)
 liegen in `hourModels/shared.js`.
 
+Jedes Modell nennt in `consumptionProfile` das Lastprofil, mit dem es
+abgestimmt ist (siehe [Lastprofile](#lastprofile)). Es wird nur im Modus
+„Jahresverbrauch“ verwendet; eigene Messwerte (CSV) gehen unverändert in die
+Rechnung ein. So liefert „Klassisch“ weiterhin genau die früheren Ergebnisse.
+
 ### Ein weiteres Modell hinzufügen
 
 1. Neue Datei in `hourModels/` mit einer Funktion, die die Schnittstelle aus
    `hourModels/index.js` erfüllt.
-2. In `HOUR_MODELS` (`hourModels/index.js`) mit `id`, `label`, `description`
-   und `calculate` eintragen.
+2. In `HOUR_MODELS` (`hourModels/index.js`) mit `id`, `label`, `description`,
+   `calculate` und `consumptionProfile` eintragen.
 3. Fertig: Die Auswahl in der Oberfläche und die Tests in
    `hourModels/hourModels.test.js` (Grenzfälle, ein ganzes Jahr mit
    Energiebilanz) laufen automatisch auch für das neue Modell.
@@ -112,6 +117,44 @@ Das klassische Modell (`regressionCalc`, die Berechnung bis 10/2026)
 - zählt die Wechselrichterverluste als fehlenden Verbrauch (aus Netz oder
   Speicher gedeckt) statt als zusätzlichen PV-Bedarf.
 
+## Lastprofile
+
+Im Modus „Jahresverbrauch“ verteilt ein Lastprofil den Jahresverbrauch auf die
+Stunden des Jahres (`consumptionProfiles.js`). Weitere Profile lassen sich wie
+die Rechenmodelle über `CONSUMPTION_PROFILES` ergänzen.
+
+| Profil        | `id`           | genutzt von    |
+| ------------- | -------------- | -------------- |
+| H0 (BDEW)     | `h0`           | Klassisch      |
+| H0 kalibriert | `h0Calibrated` | Lastverteilung |
+
+### H0 (BDEW)
+
+Das Standardlastprofil H0 mit Dynamisierung (`SLP.js`, `factorFunction`). Es
+ist der Durchschnitt sehr vieler Haushalte und deshalb sehr glatt: Mittags
+läuft immer etwas, es gibt keine Tage, an denen niemand zu Hause ist. Dadurch
+passt der Verbrauch besser zur PV-Erzeugung als bei einem echten Haushalt, die
+Autarkie fällt um 5–6 Prozentpunkte zu hoch aus (siehe Abgleich unten).
+
+### H0 kalibriert: `addVariability`
+
+H0 mit einer festen, reproduzierbaren Schwankung von Stunde zu Stunde:
+
+1. Eine korrelierte Zufallsreihe `x` (AR(1)-Prozess) über alle Stunden des
+   Jahres: `x = ρ · x_vorher + √(1 − ρ²) · z`, `z` standardnormalverteilt.
+   Mit `ρ = 0,75` dauern ruhige und lebhafte Phasen einige Stunden, wie bei
+   einem echten Haushalt.
+2. Jede Stunde wird mit `exp(σ · x)` multipliziert, `σ = 1,0`.
+3. Die Stunden jedes Tages werden so skaliert, dass der Tag seinen Verbrauch
+   aus H0 behält. Jahresverbrauch, Jahreszeiten, Wochentage und Feiertage
+   bleiben also wie bei H0, nur die Verteilung innerhalb des Tages schwankt.
+
+Die Zufallszahlen kommen aus einem festen Startwert (`seed = 1`,
+Generator mulberry32), dieselbe Eingabe ergibt immer dasselbe Ergebnis. `σ`
+und `ρ` (`H0_VARIABILITY`) wurden so gewählt, dass das Modell
+„Lastverteilung“ die Minuten-Referenz unten trifft. Die Schwankung gleicht
+dabei auch aus, dass H0 um die Mittagszeit einen etwas zu hohen Anteil hat.
+
 ## Abgleich mit gemessenen Lastprofilen
 
 Beide Modelle wurden gegen gemessene Lastprofile von Einfamilienhäusern
@@ -127,11 +170,19 @@ PV 2,4 kWp und Speicher 1 kWh je MWh Jahresverbrauch (entspricht 12 kWp und
 | **Referenz: Minutenwerte**                       | **37,5 %**             | **66,2 %**   | **28,7 pp**    |
 | Lastverteilung, echte Stundenwerte des Haushalts | 37,0 %                 | 65,8 %       | 28,8 pp        |
 | Klassisch, echte Stundenwerte des Haushalts      | 30,8 %                 | 65,2 %       | 34,5 pp        |
+| Lastverteilung, Lastprofil H0 kalibriert         | 37,9 %                 | 66,4 %       | 28,5 pp        |
 | Lastverteilung, Lastprofil H0                    | 43,1 %                 | 72,2 %       | 29,0 pp        |
 | Klassisch, Lastprofil H0                         | 35,7 %                 | 71,5 %       | 35,8 pp        |
 
 Bei 1 kWp je MWh: Referenz 29,9 % / 53,0 % / 23,1 pp, Lastverteilung mit
-echten Stundenwerten 29,3 % / 52,7 % / 23,5 pp.
+echten Stundenwerten 29,3 % / 52,7 % / 23,5 pp, mit H0 kalibriert
+29,9 % / 53,1 % / 23,2 pp.
+
+Die Parameter von „H0 kalibriert“ wurden an einer Hälfte der Haushalte
+bestimmt, die Tabelle zeigt die andere Hälfte. Über sechs Kombinationen
+(1 / 2,4 / 4 kWp je MWh, ohne und mit 1–2 kWh je MWh Speicher) liegt die
+Abweichung zur Referenz bei höchstens 0,7 Prozentpunkten. Mit einem anderen
+Startwert der Zufallsreihe schwankt das Ergebnis um etwa ±0,5 Prozentpunkte.
 
 Ergebnis:
 
@@ -139,10 +190,11 @@ Ergebnis:
   „Lastverteilung“ die Minuten-Referenz auf etwa 0,5 Prozentpunkte genau,
   auch beim Speichergewinn.
 - Das klassische Modell überschätzt den Speichergewinn um rund 25 %.
-- Mit dem Standardlastprofil H0 liegt die Autarkie bei beiden Modellen um
+- Mit dem reinen Standardlastprofil H0 liegt die Autarkie um
   5–6 Prozentpunkte zu hoch (mit und ohne Speicher), weil H0 der glatte
-  Durchschnitt vieler Haushalte ist. Der Speichergewinn stimmt beim Modell
-  „Lastverteilung“ trotzdem.
+  Durchschnitt vieler Haushalte ist. Das Modell „Lastverteilung“ nutzt deshalb
+  „H0 kalibriert“ und liegt damit weniger als 1 Prozentpunkt neben der
+  Referenz.
 - Echte Haushalte streuen stark: Bei gleicher Anlage reicht die Autarkie ohne
   Speicher von 25,6 % bis 46,9 % (Median 37,5 %).
 
@@ -167,5 +219,9 @@ Geht eine davon nicht auf, zeigt die Oberfläche eine Warnung.
   dokumentiert; der Abgleich oben zeigt aber, dass sie gut passen. Sie enden
   bei etwa 5 kW; Wärmepumpe und E-Auto sollten später als eigene Verbraucher
   gerechnet werden.
-- Das Lastprofil H0 überschätzt die Autarkie um 5–6 Prozentpunkte (siehe
-  oben). Mit eigenen Messwerten (CSV) entfällt dieser Fehler.
+- „H0 kalibriert“ trifft den Durchschnitt der Haushalte, nicht den
+  einzelnen Haushalt: Je nach Lebensgewohnheiten liegt die Autarkie eines
+  echten Haushalts rund 10 Prozentpunkte darüber oder darunter. Eigene
+  Messwerte (CSV) sind am genauesten.
+- „Klassisch“ nutzt weiterhin das reine H0 und überschätzt damit die
+  Autarkie um 5–6 Prozentpunkte (siehe oben).
