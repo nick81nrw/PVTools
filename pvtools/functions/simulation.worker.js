@@ -1,5 +1,6 @@
-import { calculateConsumption, generateDayTimeValues } from './energyFlow.js'
-import { factorFunction, PROFILEBASE, SLPH0 } from './SLP.js'
+import { getConsumptionProfile } from './consumptionProfiles.js'
+import { generateDayTimeValues } from './energyFlow.js'
+import { getHourModel } from './hourModels/index.js'
 import { simulateBatterySizes } from './simulation.js'
 import regressionDb from './regression.json'
 
@@ -9,12 +10,11 @@ self.onmessage = ({ data }) => {
     const { mergedPower, importedConsumption, input, batterySizes } = data
     const consumption =
       importedConsumption ||
-      calculateConsumption({
+      getConsumptionProfile(
+        getHourModel(input.hourModel).consumptionProfile,
+      ).build({
         year: input.year,
         consumptionYear: input.yearlyConsumption,
-        profile: SLPH0,
-        profileBase: PROFILEBASE,
-        factorFunction,
       })
     const powerGenAndConsumption = generateDayTimeValues({
       consumption,
