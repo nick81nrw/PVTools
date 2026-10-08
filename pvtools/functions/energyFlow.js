@@ -337,6 +337,54 @@ const normalizeHourlyRadiation = (hourlyRadiationArray) => {
   return normRadiation
 }
 
+/** last Sunday of a month (0 = January) at 01:00 UTC, when the clock changes */
+const lastSundayUtc = (year, month) => {
+  const last = new Date(Date.UTC(year, month + 1, 0, 1))
+  return last.getTime() - last.getUTCDay() * 86400000
+}
+
+/**
+ * PVGIS returns the hours in UTC, but the load profiles and imported
+ * consumption values use German local time (CET, CEST from the last Sunday in
+ * March to the last Sunday in October). Without shifting, the PV curve would
+ * be 1 hour (winter) or 2 hours (summer) too early compared to the load.
+ *
+ * The local hour that is skipped in spring and the hour of New Year's night
+ * that comes from the previous UTC year get 0 Wh (both are at night); in
+ * autumn the doubled night hour is summed.
+ *
+ * @param {Object} hourly normalized PVGIS values {"20200101:00": {P, temperature}, ...} in UTC
+ * @param {number} year the simulated year
+ * @return {Object} the same values keyed by German local time
+ */
+const shiftUtcToGermanTime = (hourly, year) => {
+  const summerStart = lastSundayUtc(year, 2)
+  const summerEnd = lastSundayUtc(year, 9)
+  const pad = (value) => String(value).padStart(2, '0')
+  const local = {}
+  for (const [key, value] of Object.entries(hourly)) {
+    const utc = Date.UTC(
+      +key.slice(0, 4),
+      +key.slice(4, 6) - 1,
+      +key.slice(6, 8),
+      +key.slice(9, 11),
+    )
+    const offset = utc >= summerStart && utc < summerEnd ? 2 : 1
+    const date = new Date(utc + offset * 3600000)
+    if (date.getUTCFullYear() !== year) continue
+    const localKey = `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}:${pad(date.getUTCHours())}`
+    if (local[localKey])
+      local[localKey] = { ...local[localKey], P: local[localKey].P + value.P }
+    else local[localKey] = { ...value }
+  }
+  let previous = null
+  for (const key of generateDayTimeOrder(year)) {
+    if (!local[key]) local[key] = { P: 0, temperature: previous?.temperature }
+    previous = local[key]
+  }
+  return local
+}
+
 /**
  * merge powerGeneration to one summerized object
  * @param  {Array[Object]} powerGenerationArray An Array with power generation e.g. two: [ {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}, {...} ]
@@ -860,6 +908,7 @@ export {
   calculateConsumption,
   normalizeHourlyRadiation,
   mergePowerGeneration,
+  shiftUtcToGermanTime,
   generateDayTimeValues,
   generateDayTimeOrder,
   calcHourWithLoadDistribution,

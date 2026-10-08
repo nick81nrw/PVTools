@@ -4,6 +4,7 @@ import {
   calculateConsumption,
   normalizeHourlyRadiation,
   mergePowerGeneration,
+  shiftUtcToGermanTime,
 } from './energyFlow.js'
 
 import seriescalc from './seriescalc.json'
@@ -479,5 +480,29 @@ describe('calcHourWithLoadDistribution', () => {
       batterySocMax: 10000,
     })
     expect(unlimited.batteryDischarge).toBeCloseTo(1500, 6)
+  })
+})
+
+describe('shiftUtcToGermanTime', () => {
+  const local = shiftUtcToGermanTime(normalizedHR, 2020)
+  const total = (values) => Object.values(values).reduce((s, v) => s + v.P, 0)
+
+  test('keeps every hour of the year and the energy', () => {
+    expect(Object.keys(local)).toHaveLength(8784)
+    expect(total(local)).toBeCloseTo(total(normalizedHR), 6)
+  })
+
+  test('shifts by 1 hour in winter and 2 hours in summer', () => {
+    expect(local['20200115:13'].P).toBe(normalizedHR['20200115:12'].P)
+    expect(local['20200615:13'].P).toBe(normalizedHR['20200615:11'].P)
+  })
+
+  test('handles the clock changes', () => {
+    // 29.03.2020: 02:00 local does not exist, 25.10.2020: 02:00 twice
+    expect(local['20200329:02'].P).toBe(0)
+    expect(local['20200329:03'].P).toBe(normalizedHR['20200329:01'].P)
+    expect(local['20201025:02'].P).toBe(
+      normalizedHR['20201025:00'].P + normalizedHR['20201025:01'].P,
+    )
   })
 })

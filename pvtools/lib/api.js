@@ -1,6 +1,7 @@
 import {
   mergePowerGeneration,
   normalizeHourlyRadiation,
+  shiftUtcToGermanTime,
 } from '../functions/energyFlow.js'
 
 // PVGIS 5.3 (PVGIS-SARAH3) provides hourly data from 2005 to 2023
@@ -89,7 +90,11 @@ export async function fetchGeneration({ roofs, lat, lon, loss, year }) {
           peakpower: roof.peakpower / 1000,
         }),
       )
-      const hourly = normalizeHourlyRadiation(data.outputs.hourly)
+      // PVGIS uses UTC, the load profiles German local time
+      const hourly = shiftUtcToGermanTime(
+        normalizeHourlyRadiation(data.outputs.hourly),
+        year,
+      )
       const generationYear =
         Object.values(hourly).reduce((sum, { P }) => sum + P, 0) / 1000
       return { hourly, roof: { ...roof, generationYear } }
