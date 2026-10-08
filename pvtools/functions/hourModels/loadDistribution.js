@@ -65,6 +65,8 @@ import {
 export const calcHourWithLoadDistribution = ({
   regressionDb,
   energyConsumption,
+  flatConsumption = 0,
+  flatConsumptionNoBattery = 0,
   staticPowerGeneration = 0,
   maxPowerStaticInverter = 0,
   maxPowerDynamicInverter = 0,
@@ -80,8 +82,13 @@ export const calcHourWithLoadDistribution = ({
   const maxBatteryLoad =
     maxPowerLoadBattery > 0 ? maxPowerLoadBattery : Infinity
 
+  const household = Math.max(energyConsumption || 0, 0)
+  const flat = Math.max(flatConsumption || 0, 0)
+  const flatNoBattery = Math.max(flatConsumptionNoBattery || 0, 0)
+  const totalConsumption = household + flat + flatNoBattery
+
   // no consumption in this hour: all generation is stored or fed in
-  if (!(energyConsumption > 0)) {
+  if (!(totalConsumption > 0)) {
     const charged = chargeBattery({
       surplus: pv,
       batterySoc,
@@ -98,6 +105,8 @@ export const calcHourWithLoadDistribution = ({
       lossesUnloadBattery: 0,
       lossesPvGeneration: 0,
       batteryDischarge: 0,
+      flatSelfUsed: 0,
+      flatNoBatterySelfUsed: 0,
       ...charged,
       losses: charged.lossesLoadBattery,
     }
@@ -109,24 +118,8 @@ export const calcHourWithLoadDistribution = ({
   else if (maxPowerStaticInverter - pv > 0)
     maxDischargePower = maxPowerStaticInverter - pv
 
-  // 1. load levels of this hour, scaled to the hourly consumption
-  const regressionKey = Math.floor(energyConsumption / 50) * 50
-  const bigConsumption = regressionDb[regressionKey]
-    ? null
-    : createRegression({ energyConsumption })
-  const distribution = bigConsumption
-    ? bigConsumption.regression
-    : regressionDb[regressionKey]
-  // the middle of a step, e.g. 75 W for the step 50..100 W
-  const stepMiddle = bigConsumption
-    ? Math.floor(bigConsumption.resulution / 2)
-    : 25
-  const levels = Object.entries(distribution).map(([power, share]) => ({
-    share,
-    power: parseInt(power) + stepMiddle,
-  }))
-  const meanPower = levels.reduce((sum, l) => sum + l.share * l.power, 0)
-  const scale = energyConsumption / meanPower
+  // 1. load levels of the household in this hour, scaled to its consumption
+  const levels = householdLevels(regressionDb, household)
 
   // 2. + 3. PV covers every load level up to its AC power, the battery
   //         is asked for the rest (limited by its discharge power)
@@ -135,13 +128,28 @@ export const calcHourWithLoadDistribution = ({
     power: pv,
   })
   const pvAcPower = pv * inverterEfficiency
+  // Large consumers (flat loads) run evenly through the hour and sit on top
+  // of every household level. PV supplies the household first, then the
+  // flat load, then the flat load that must not use the battery.
   let selfUsedEnergyPV = 0
+  let flatFromPv = 0
+  let flatNoBatteryFromPv = 0
   let batteryDemand = 0
+  let flatBatteryDemand = 0
   for (const level of levels) {
-    const load = level.power * scale
-    const fromPv = Math.min(load, pvAcPower)
-    selfUsedEnergyPV += level.share * fromPv
-    batteryDemand += level.share * Math.min(load - fromPv, maxDischargePower)
+    const pvHousehold = Math.min(level.power, pvAcPower)
+    const pvFlat = Math.min(flat, pvAcPower - pvHousehold)
+    const pvFlatNoBattery = Math.min(
+      flatNoBattery,
+      pvAcPower - pvHousehold - pvFlat,
+    )
+    selfUsedEnergyPV += level.share * (pvHousehold + pvFlat + pvFlatNoBattery)
+    flatFromPv += level.share * pvFlat
+    flatNoBatteryFromPv += level.share * pvFlatNoBattery
+    const forHousehold = Math.min(level.power - pvHousehold, maxDischargePower)
+    const forFlat = Math.min(flat - pvFlat, maxDischargePower - forHousehold)
+    batteryDemand += level.share * (forHousehold + forFlat)
+    flatBatteryDemand += level.share * forFlat
   }
   const pvUsedDc = selfUsedEnergyPV / inverterEfficiency
   const lossesPvGeneration = pvUsedDc - selfUsedEnergyPV
@@ -170,7 +178,8 @@ export const calcHourWithLoadDistribution = ({
 
   // 5. the rest comes from the grid
   const selfUsedEnergy = selfUsedEnergyPV + selfUsedEnergyBattery
-  const gridUsedEnergy = energyConsumption - selfUsedEnergy
+  const gridUsedEnergy = Math.max(totalConsumption - selfUsedEnergy, 0)
+  const delivered = batteryDemand > 0 ? batteryDischarge / batteryDemand : 0
 
   return {
     selfUsedEnergy,
@@ -186,6 +195,40 @@ export const calcHourWithLoadDistribution = ({
     newBatterySoc,
     batteryCharge,
     batteryDischarge,
+    // part of the flat loads covered by PV (and battery)
+    flatSelfUsed:
+      flatFromPv + flatBatteryDemand * delivered * batteryUnloadEfficiency,
+    flatNoBatterySelfUsed: flatNoBatteryFromPv,
     staticInverterEfficiency: inverterEfficiency,
   }
+}
+
+/**
+ * Load levels {share, power} of the household for one hour, scaled so their
+ * mean is the hourly consumption. Without household consumption there is one
+ * level with 0 W (only flat loads).
+ */
+const householdLevels = (regressionDb, energyConsumption) => {
+  if (!(energyConsumption > 0)) return [{ share: 1, power: 0 }]
+  const regressionKey = Math.floor(energyConsumption / 50) * 50
+  const bigConsumption = regressionDb[regressionKey]
+    ? null
+    : createRegression({ energyConsumption })
+  const distribution = bigConsumption
+    ? bigConsumption.regression
+    : regressionDb[regressionKey]
+  // the middle of a step, e.g. 75 W for the step 50..100 W
+  const stepMiddle = bigConsumption
+    ? Math.floor(bigConsumption.resulution / 2)
+    : 25
+  const levels = Object.entries(distribution).map(([power, share]) => ({
+    share,
+    power: parseInt(power) + stepMiddle,
+  }))
+  const meanPower = levels.reduce((sum, l) => sum + l.share * l.power, 0)
+  const scale = energyConsumption / meanPower
+  return levels.map((level) => ({
+    share: level.share,
+    power: level.power * scale,
+  }))
 }

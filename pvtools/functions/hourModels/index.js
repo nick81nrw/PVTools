@@ -27,6 +27,13 @@
  *   batterySocMax           capacity
  *   batteryLoadEfficiency   charging efficiency (0..1)
  *   batteryUnloadEfficiency discharging efficiency (0..1)
+ *   flatConsumption         large consumers running evenly through the hour,
+ *                           may use the battery (e.g. heat pump)
+ *   flatConsumptionNoBattery the same, but never from the battery (e.g. car)
+ *
+ * Models with supportsFlatLoads get the flat loads separately and return
+ * flatSelfUsed / flatNoBatterySelfUsed. For all other models energyFlow adds
+ * them to energyConsumption and splits the self used energy by share.
  *
  * result (all values >= 0, the energy balance must hold, see checkEnergyBalance)
  *   selfUsedEnergyPV        consumption covered directly by PV (AC)
@@ -59,6 +66,8 @@ export const HOUR_MODELS = [
     description:
       'Standard. Der Verbrauch schwankt innerhalb der Stunde; PV deckt jede Lastspitze bis zu ihrer tatsächlichen Leistung. Lastprofil: H0 kalibriert. Gegen gemessene Minuten-Lastprofile geprüft.',
     calculate: calcHourWithLoadDistribution,
+    // handles flatConsumption / flatConsumptionNoBattery itself
+    supportsFlatLoads: true,
     consumptionProfile: 'h0Calibrated',
   },
   {

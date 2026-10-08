@@ -30,6 +30,7 @@
         <LocationStep />
         <RoofsStep />
         <ConsumptionStep />
+        <LoadsStep />
         <CostsStep />
         <AdvancedSettings />
 
@@ -103,6 +104,7 @@ import FaqSection from '../components/FaqSection.vue'
 import AdvancedSettings from '../components/inputs/AdvancedSettings.vue'
 import ConsumptionStep from '../components/inputs/ConsumptionStep.vue'
 import CostsStep from '../components/inputs/CostsStep.vue'
+import LoadsStep from '../components/inputs/LoadsStep.vue'
 import LocationStep from '../components/inputs/LocationStep.vue'
 import RoofsStep from '../components/inputs/RoofsStep.vue'
 import EmptyState from '../components/results/EmptyState.vue'

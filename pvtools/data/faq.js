@@ -2,6 +2,11 @@
 export default [
   {
     realm: 'Neuigkeiten',
+    title: 'Wärmepumpe und E-Auto (Beta, 10/26)',
+    text: "Im neuen Schritt 'Wärmepumpe & E-Auto' kannst du große Verbraucher zum Haushaltsstrom hinzufügen. Die Wärmepumpe wird nach der Außentemperatur an deinem Standort verteilt, das E-Auto nach deinem Ladeverhalten – auf Wunsch mit PV-Überschussladen. Die Ergebnisse zeigen, wie viel jeder Verbraucher aus PV und Speicher bekommt. Die Funktion ist neu und noch als Beta gekennzeichnet.",
+  },
+  {
+    realm: 'Neuigkeiten',
     title: 'Lohnt sich ein größerer Speicher? (10/26)',
     text: "Bisher hat PVTools die Amortisation eines Speichers immer gegenüber 'ohne Speicher' gerechnet. Dadurch sah auch ein sehr großer Speicher oft gut aus, obwohl die letzten kWh kaum noch etwas bringen. Jetzt wird jede Speicherstufe einzeln bewertet: Was kostet die Erweiterung von z. B. 5 auf 7,5 kWh zusätzlich, wie viel Netzbezug spart sie noch, und macht sie sich innerhalb der Lebensdauer des Speichers bezahlt? Die Empfehlung erklärt das in ganzen Sätzen. Für den Speicherpreis gibt es jetzt Grundkosten und einen Preis je kWh, oder du trägst direkt deine Angebote ein.",
   },
@@ -74,6 +79,11 @@ export default [
     realm: 'Eingabefelder',
     title: 'Berechnen, Zurücksetzen, Experten-Einstellungen',
     text: 'Mit Berechnen wird die Simulation ausgeführt. Der Button ist inaktiv, solange Standort oder Dachfläche fehlen. Deine Eingaben werden in deinem Browser gespeichert. Unter Experten-Einstellungen findest du vorbelegte Parameter, die du anpassen kannst, und den Knopf, um alle Eingaben zurückzusetzen.',
+  },
+  {
+    realm: 'Erweitert',
+    title: 'Wärmepumpe und E-Auto (Beta)',
+    text: "Beide werden getrennt vom Haushaltsstrom gerechnet und laufen innerhalb einer Stunde gleichmäßig. Wärmepumpe: Der Wärmebedarf ergibt sich aus Wohnfläche, Gebäudezustand und Personenzahl (oder du gibst den Stromverbrauch direkt an). Geheizt wird nach der Außentemperatur am Standort im gewählten Wetterjahr, mit einer Jahresarbeitszahl von 3,5. E-Auto: Aus Fahrleistung und Verbrauch ergibt sich der tägliche Ladebedarf. 'Sofort' lädt, sobald das Auto zu Hause ist, 'Mit PV-Überschuss' nur mit Solarstrom, der sonst eingespeist würde – reicht er nicht, wird aus dem Netz nachgeladen. Der Hausspeicher versorgt die Wärmepumpe, lädt aber nicht das Auto. Die Modelle sind vereinfacht und noch nicht an Messdaten geprüft. Details stehen in 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
   },
   {
     realm: 'Erweitert',

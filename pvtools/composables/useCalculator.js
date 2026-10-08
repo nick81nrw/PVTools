@@ -34,6 +34,23 @@ export const DEFAULT_INPUT = {
   // optional consumption per month in kWh (12 values, January first)
   monthlyConsumptionEnabled: false,
   monthlyConsumption: null,
+  // large consumers (beta), see functions/loads/
+  heatPumpEnabled: false,
+  heatPumpMode: 'building', // 'building' | 'consumption'
+  heatPumpConsumption: 4000,
+  heatPumpArea: 140,
+  heatPumpBuilding: 'renovated', // 'new' | 'renovated' | 'old'
+  heatPumpPersons: 3,
+  heatPumpJaz: 3.5,
+  heatPumpHeatingLimit: 15,
+  evEnabled: false,
+  evKmPerYear: 12000,
+  evConsumption: 18,
+  evHomeShare: 80,
+  evPower: 11000,
+  evBatteryKwh: 60,
+  evPresence: 'commuter', // 'commuter' | 'home'
+  evChargingMode: 'immediate', // 'immediate' | 'surplus'
   consumptionProfile: 0,
   consumptionCosts: 0.32,
   feedInCompensation: 0.086,
