@@ -108,7 +108,8 @@ const energyFlow = ({
   })
 
   return {
-    // batterySoc,
+    dayTime: dayTime ? dayTime : '',
+    batterySoc,
     newBatterySoc,
     energyConsumption,
     powerProduction,
@@ -127,7 +128,6 @@ const energyFlow = ({
     losses,
     batteryCharge,
     batteryDischarge,
-    dayTime: dayTime ? dayTime : '',
   }
 
   // if (energyGeneration > energyConsumption) {

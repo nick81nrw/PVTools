@@ -58,7 +58,7 @@ export default [
   {
     realm: 'Eingabefelder',
     title: 'Stromverbrauch, Stromkosten und Einspeisevergütung',
-    text: "Um eine einfache Berechnung der Amortisation machen zu können, werden diese Werte benötigt. Wenn du keine Einspeisevergütung bekommst, kannst du diese auf 0 € setzen. Der Speicherpreis ist mit Richtwerten vorbelegt (Grundkosten plus Preis je kWh). Wenn du Angebote hast, wähle 'Eigene Angebote' und trage Größe und Preis ein. Dann werden genau diese Speicher verglichen.",
+    text: "Um eine einfache Berechnung der Amortisation machen zu können, werden diese Werte benötigt. Wenn du keine Einspeisevergütung bekommst, kannst du diese auf 0 € setzen. Kennst du deinen Verbrauch je Monat (z. B. aus Zählerständen), kannst du unter dem Jahresverbrauch 'Verbrauch je Monat eingeben' wählen. Die Stunden jedes Monats werden dann auf deinen Monatswert skaliert. Der Speicherpreis ist mit Richtwerten vorbelegt (Grundkosten plus Preis je kWh). Wenn du Angebote hast, wähle 'Eigene Angebote' und trage Größe und Preis ein. Dann werden genau diese Speicher verglichen.",
   },
   {
     realm: 'Eingabefelder',
@@ -108,7 +108,7 @@ export default [
   {
     realm: 'Details',
     title: 'Daten herunterladen',
-    text: "Für jede Speichergröße könnt ihr unter 'Details' die berechneten Stundenwerte herunterladen. Achtung: Die Dezimalzahlen sind mit einem Punkt anstatt eines Kommas geschrieben. Dies müsst ihr beim Import berücksichtigen (oder mit einem Texteditor alle '.' in ',' ändern).",
+    text: "Für jede Speichergröße könnt ihr unter 'Details' die berechneten Stundenwerte herunterladen. Achtung: Die Dezimalzahlen sind mit einem Punkt anstatt eines Kommas geschrieben. Dies müsst ihr beim Import berücksichtigen (oder mit einem Texteditor alle '.' in ',' ändern). Alle Werte sind in Wh. 'batterySoc' ist der Ladezustand des Speichers zu Beginn der Stunde, 'newBatterySoc' am Ende.",
   },
   {
     realm: 'Erweitert',

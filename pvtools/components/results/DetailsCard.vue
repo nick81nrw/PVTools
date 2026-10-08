@@ -61,6 +61,25 @@ const props = defineProps({
   roofs: { type: Array, required: true },
 })
 
+const battery = computed(() =>
+  props.item.size > 1
+    ? [
+        {
+          label: 'Vollzyklen pro Jahr',
+          value: null,
+          text: num(props.item.fullCycles, 0),
+          hint: 'Entnommene Energie geteilt durch die Speichergröße',
+        },
+        {
+          label: 'Ladezustand min / max',
+          value: null,
+          text: `${num(props.item.socMinPercent, 0)} / ${num(props.item.socMaxPercent, 0)} %`,
+          hint: 'Niedrigster und höchster Ladezustand im Jahr',
+        },
+      ]
+    : [],
+)
+
 const losses = computed(() => [
   {
     label: 'Wirkungsgrad Wechselrichter',
@@ -88,6 +107,7 @@ const losses = computed(() => [
     text: `${num(props.item.batteryCharge, 0)} / ${num(props.item.batteryDischarge, 0)} kWh`,
     hint: 'Energie, die in den Speicher geflossen ist bzw. entnommen wurde',
   },
+  ...battery.value,
   {
     label: 'Netzbezug',
     value: props.item.gridUsedEnergy,

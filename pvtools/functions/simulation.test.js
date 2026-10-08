@@ -100,6 +100,38 @@ describe('simulateBatterySizes', () => {
   })
 })
 
+describe('battery usage', () => {
+  test('full cycles are the discharged energy divided by the capacity', () => {
+    results.slice(1).forEach((r) => {
+      expect(r.fullCycles).toBeCloseTo((r.batteryDischarge * 1000) / r.size, 9)
+      expect(r.fullCycles).toBeGreaterThan(0)
+    })
+    expect(results[0].fullCycles).toBe(0)
+  })
+
+  test('state of charge stays between the minimum and the capacity', () => {
+    results.slice(1).forEach((r) => {
+      expect(r.socMinPercent).toBeGreaterThanOrEqual(
+        input.batterySocMinPercent - 1e-9,
+      )
+      expect(r.socMaxPercent).toBeLessThanOrEqual(100 + 1e-9)
+      expect(r.socMaxPercent).toBeGreaterThan(r.socMinPercent)
+    })
+  })
+
+  test('every hour has the state of charge before and after', () => {
+    const rows = results[1].energyFlow
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i].batterySoc).toBe(rows[i - 1].newBatterySoc)
+    }
+    expect(Object.keys(rows[0]).slice(0, 3)).toEqual([
+      'dayTime',
+      'batterySoc',
+      'newBatterySoc',
+    ])
+  })
+})
+
 describe('energy balance', () => {
   test('holds for every battery size', () => {
     results.forEach((r) => {

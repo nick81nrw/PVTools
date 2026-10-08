@@ -96,6 +96,45 @@ export const addVariability = (
   return result
 }
 
+/** month (1–12) of an hour key 'YYYYMMDD:HH' */
+const monthOf = (key) => Number(key.slice(4, 6))
+
+/** consumption per month in the unit of P, index 0 = January */
+export const monthlySums = (consumption) => {
+  const sums = new Array(12).fill(0)
+  for (const [key, { P }] of Object.entries(consumption)) {
+    sums[monthOf(key) - 1] += P
+  }
+  return sums
+}
+
+/**
+ * Scales every month of a profile to the given monthly consumption, the
+ * shape within the month stays as it is.
+ *
+ * @param  {Object} consumption {'YYYYMMDD:HH': {P}}
+ * @param  {Array}  monthly     12 values in the unit of P, index 0 = January
+ * @return {Object}             new object in the same format
+ */
+export const scaleToMonths = (consumption, monthly) => {
+  const current = monthlySums(consumption)
+  const factors = current.map((sum, i) =>
+    sum > 0 ? Math.max(Number(monthly[i]) || 0, 0) / sum : 0,
+  )
+  const result = {}
+  for (const [key, value] of Object.entries(consumption)) {
+    result[key] = { ...value, P: value.P * factors[monthOf(key) - 1] }
+  }
+  return result
+}
+
+/** true if 12 monthly values (kWh) are given and they are not all 0 */
+export const validMonthly = (monthly) =>
+  Array.isArray(monthly) &&
+  monthly.length === 12 &&
+  monthly.every((value) => Number(value) >= 0) &&
+  monthly.some((value) => Number(value) > 0)
+
 export const CONSUMPTION_PROFILES = [
   {
     id: 'h0',

@@ -31,6 +31,9 @@ const KEYS = {
 export const DEFAULT_INPUT = {
   roofs: [],
   yearlyConsumption: 5000,
+  // optional consumption per month in kWh (12 values, January first)
+  monthlyConsumptionEnabled: false,
+  monthlyConsumption: null,
   consumptionProfile: 0,
   consumptionCosts: 0.32,
   feedInCompensation: 0.086,

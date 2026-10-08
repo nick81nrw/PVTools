@@ -270,8 +270,24 @@ export const simulateBatterySizes = ({
       })
       .sort((a, b) => a.month - b.month)
 
+    // battery usage: full cycles = discharged energy / capacity
+    const socValues = energyFlowData.map((row) => row.newBatterySoc)
+    const withBattery = size > 1
+    const batteryUsage = {
+      fullCycles: withBattery
+        ? sumOf(energyFlowData, 'batteryDischarge') / size
+        : 0,
+      socMinPercent: withBattery
+        ? (Math.min(startSoc, ...socValues) / size) * 100
+        : 0,
+      socMaxPercent: withBattery
+        ? (Math.max(startSoc, ...socValues) / size) * 100
+        : 0,
+    }
+
     return {
       size,
+      ...batteryUsage,
       balance: checkEnergyBalance(energyFlowData, startSoc),
       batteryCharge: sumOf(energyFlowData, 'batteryCharge') / 1000,
       batteryDischarge: sumOf(energyFlowData, 'batteryDischarge') / 1000,
