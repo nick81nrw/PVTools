@@ -209,6 +209,60 @@ Ergebnis:
 
 Geht eine davon nicht auf, zeigt die Oberfläche eine Warnung.
 
+## Wirtschaftlichkeit des Speichers: `batteryEconomics.js`
+
+### Speicherpreis
+
+`batteryPrice(size, input)` liefert den Preis eines Speichers:
+
+- **Richtwert** (`batteryPriceMode: 'perKwh'`): Grundkosten + Preis je kWh ×
+  Größe. Die Grundkosten fallen einmal an (z. B. Installation,
+  Batterie-Wechselrichter). Vorbelegt sind 1.000 € + 400 €/kWh.
+- **Eigene Angebote** (`'offers'`, hat Vorrang): Größe und Preis je Angebot.
+  Verglichen werden dann genau diese Größen. Für Größen dazwischen wird
+  linear interpoliert.
+
+### Grenznutzen jeder Speicherstufe
+
+Die Amortisation eines ganzen Speichers gegenüber „ohne Speicher“ kann gut
+aussehen, obwohl die letzten kWh kaum noch etwas bringen. `batterySteps`
+vergleicht deshalb jede Größe mit der nächstkleineren:
+
+```
+Mehrkosten        = Preis(größer) − Preis(kleiner)
+weniger Netzbezug = Netzbezug(kleiner) − Netzbezug(größer)
+Mehrnutzen/Jahr   = Ersparnis(größer) − Ersparnis(kleiner)
+                  = weniger Netzbezug × Strompreis
+                    − weniger Einspeisung × Einspeisevergütung
+Amortisation      = Mehrkosten / Mehrnutzen/Jahr  (∞ bei Mehrnutzen ≤ 0)
+```
+
+### Bewertung (`rate`)
+
+Maßstab ist die Lebensdauer des Speichers (Standard 15 Jahre, in den
+Experten-Einstellungen änderbar):
+
+| Bewertung | Amortisation                        |
+| --------- | ----------------------------------- |
+| Ja        | höchstens ⅔ der Lebensdauer (10 J.) |
+| Grenzfall | höchstens die Lebensdauer (15 J.)   |
+| Nein      | länger oder nie                     |
+
+### Empfehlung (`recommendBattery`)
+
+Ausgehend von „ohne Speicher“ wird zur kleinsten größeren Speichergröße
+gewechselt, deren Erweiterung mit „Ja“ bewertet ist. Das wiederholt sich, bis
+keine größere Stufe mehr lohnt. Eine Größe kann dabei übersprungen werden, wenn
+sich erst der größere Schritt lohnt (z. B. wegen hoher Grundkosten).
+`recommendationSentences` formuliert daraus die Empfehlung, z. B.:
+
+> Die ersten 5 kWh Speicher sparen 1.443 kWh Netzbezug im Jahr und
+> amortisieren sich nach 9 Jahren. Die Erweiterung von 5 auf 10 kWh bringt nur
+> noch 609 kWh und amortisiert sich nach 14,1 Jahren – ein Grenzfall.
+
+Nicht berücksichtigt sind Finanzierung, entgangene Zinsen, Alterung des
+Speichers und steigende Strompreise.
+
 ## Bekannte Vereinfachungen
 
 - Die PV-Leistung gilt innerhalb einer Stunde als konstant, wechselnde

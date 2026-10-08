@@ -18,7 +18,13 @@
         <div class="mb-2 text-xs font-medium text-muted">
           Zu vergleichende Speichergrößen
         </div>
-        <div class="flex flex-wrap gap-1.5">
+        <p
+          v-if="input.batteryPriceMode === 'offers'"
+          class="font-mono text-xs text-muted"
+        >
+          Es werden die Größen deiner Angebote verglichen (Kosten &amp; Tarife).
+        </p>
+        <div v-else class="flex flex-wrap gap-1.5">
           <span
             v-for="size in batterySizes"
             :key="size"
@@ -35,7 +41,11 @@
             </button>
           </span>
         </div>
-        <form class="mt-2 flex gap-2" @submit.prevent="addSize">
+        <form
+          v-if="input.batteryPriceMode !== 'offers'"
+          class="mt-2 flex gap-2"
+          @submit.prevent="addSize"
+        >
           <input
             v-model.number="newSize"
             class="input"
@@ -49,6 +59,22 @@
             <Plus class="h-4 w-4" />
           </button>
         </form>
+      </div>
+
+      <div>
+        <NumberField
+          v-model="input.batteryLifetime"
+          label="Lebensdauer Speicher"
+          unit="Jahre"
+          :min="1"
+          :max="40"
+          hint="Bestimmt, ab wann sich ein Speicher oder eine Erweiterung lohnt"
+        />
+        <p class="mt-1.5 text-xs text-muted">
+          Bewertung: lohnt sich bei Amortisation bis
+          {{ num(ratingLimits(input.batteryLifetime).yes, 1) }} Jahre, Grenzfall
+          bis {{ num(input.batteryLifetime) }} Jahre, sonst nicht.
+        </p>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
@@ -237,6 +263,7 @@ import {
 } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
+import { ratingLimits } from '../../functions/batteryEconomics.js'
 import { getHourModel, HOUR_MODELS } from '../../functions/hourModels/index.js'
 import { batteryLabel, num } from '../../lib/format.js'
 import NumberField from '../ui/NumberField.vue'

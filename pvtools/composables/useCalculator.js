@@ -5,6 +5,13 @@ import {
   analyzeConsumptionCsv,
   buildConsumption,
 } from '../functions/consumptionImport.js'
+import {
+  batterySteps,
+  DEFAULT_BATTERY_LIFETIME,
+  offerSizes,
+  recommendationSentences,
+  recommendBattery,
+} from '../functions/batteryEconomics.js'
 import { getConsumptionProfile } from '../functions/consumptionProfiles.js'
 import {
   DEFAULT_HOUR_MODEL,
@@ -28,7 +35,17 @@ export const DEFAULT_INPUT = {
   consumptionCosts: 0.32,
   feedInCompensation: 0.086,
   installationCostsWithoutBattery: 10000,
-  batteryCostsPerKwh: 500,
+  // battery price: 'perKwh' = base costs + price per kWh, 'offers' = own
+  // offers (batteryOffers), see functions/batteryEconomics.js
+  batteryPriceMode: 'perKwh',
+  batteryBaseCosts: 1000,
+  batteryCostsPerKwh: 400,
+  batteryOffers: [
+    { kwh: 5, price: 3000 },
+    { kwh: 10, price: 5000 },
+    { kwh: 15, price: 7000 },
+  ],
+  batteryLifetime: DEFAULT_BATTERY_LIFETIME,
   systemloss: 12,
   batteryLoadEfficiency: 99,
   batteryUnloadEfficiency: 99,
@@ -53,6 +70,11 @@ export const DEFAULT_INPUT = {
 }
 
 export const DEFAULT_SIZES = [
+  2500, 5000, 7500, 10000, 12500, 15000, 20000, 25000, 30000,
+]
+
+// default of older versions, replaced by the new default
+const OLD_DEFAULT_SIZES = [
   500, 1000, 2000, 4000, 6000, 8000, 12000, 16000, 20000, 25000, 30000,
 ]
 
@@ -94,6 +116,13 @@ const migrateInput = (stored) => {
   if (stored.maxPowerFeedIn !== undefined && !stored.feedInMode) {
     migrated.feedInMode = Number(stored.maxPowerFeedIn) > 0 ? 'watt' : 'none'
   }
+  // older versions had only a price per kWh, keep their results unchanged
+  if (
+    stored.batteryCostsPerKwh !== undefined &&
+    stored.batteryBaseCosts === undefined
+  ) {
+    migrated.batteryBaseCosts = 0
+  }
   return migrated
 }
 
@@ -102,7 +131,12 @@ const input = reactive({
   ...DEFAULT_INPUT,
   ...migrateInput(load(KEYS.input, {})),
 })
-const batterySizes = ref(load(KEYS.sizes, DEFAULT_SIZES))
+const storedSizes = load(KEYS.sizes, DEFAULT_SIZES)
+const batterySizes = ref(
+  JSON.stringify(storedSizes) === JSON.stringify(OLD_DEFAULT_SIZES)
+    ? DEFAULT_SIZES
+    : storedSizes,
+)
 const address = ref(validAddress(load(KEYS.address, null)))
 const addressQuery = ref(
   (() => {
@@ -149,6 +183,13 @@ const importedConsumption = computed(() => {
 
 const limits = computed(() => resolveLimits(input))
 
+/** sizes that are simulated: the offer sizes when own offers are used */
+const effectiveSizes = computed(() =>
+  input.batteryPriceMode === 'offers' && offerSizes(input).length
+    ? offerSizes(input)
+    : batterySizes.value,
+)
+
 const missing = computed(() => {
   const list = []
   if (!address.value) list.push('Standort')
@@ -177,17 +218,10 @@ const isStale = computed(
   () => Boolean(results.value) && signature() !== lastSignature,
 )
 
-/**
- * battery size with the shortest payback time of the whole system,
- * null if no variant pays back
- */
-const recommendedSize = computed(() => {
-  if (!results.value) return null
-  const best = results.value.sizes
-    .filter((item) => Number.isFinite(item.amortization))
-    .sort((a, b) => a.amortization - b.amortization)[0]
-  return best ? best.size : null
-})
+/** recommended battery size (1 = no battery), see recommendBattery */
+const recommendedSize = computed(
+  () => results.value?.economics.recommendation.size ?? null,
+)
 
 const selected = computed(() =>
   results.value?.sizes.find((item) => item.size === selectedSize.value),
@@ -275,8 +309,9 @@ async function calculate() {
       importedConsumption:
         consumptionMode.value === 'csv' ? importedConsumption.value.data : null,
       input: plainInput,
-      batterySizes: [...batterySizes.value],
+      batterySizes: [...effectiveSizes.value],
     })
+    const recommendation = recommendBattery(sizes, plainInput)
     results.value = Object.freeze({
       sizes,
       roofsData: generationCache.roofsData,
@@ -295,9 +330,19 @@ async function calculate() {
               ),
         duration: performance.now() - startedAt,
       },
+      economics: {
+        steps: batterySteps(sizes, plainInput),
+        recommendation,
+        sentences: recommendationSentences(recommendation),
+        lifetime: plainInput.batteryLifetime,
+        prices: {
+          electricity: plainInput.consumptionCosts,
+          feedIn: plainInput.feedInCompensation,
+        },
+      },
     })
     lastSignature = calcSignature
-    selectedSize.value = recommendedSize.value ?? sizes[0].size
+    selectedSize.value = recommendedSize.value
     if (sizes.some((item) => !item.balance.ok)) {
       console.error(sizes.map((item) => item.balance))
       error.value =
@@ -327,6 +372,7 @@ export function useCalculator() {
   return {
     input,
     batterySizes,
+    effectiveSizes,
     address,
     addressQuery,
     addressNotFound,
