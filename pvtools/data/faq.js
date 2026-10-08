@@ -3,7 +3,7 @@ export default [
   {
     realm: 'Neuigkeiten',
     title: 'Genauere Berechnung für größere Anlagen (10/26)',
-    text: "Innerhalb einer Stunde schwankt der Verbrauch: Wasserkocher oder Herd erzeugen kurze Lastspitzen. Bisher konnte die PV diese Spitzen nur bis zum Stundenmittel des Verbrauchs decken, selbst wenn viel mehr Sonne da war. Dadurch wurde der Eigenverbrauch ohne Speicher zu niedrig und der Nutzen eines Speichers zu hoch berechnet, je nach Anlage um etwa 15 bis 25 %. Jetzt deckt die PV die Spitzen bis zu ihrer tatsächlichen Leistung. Deine Ergebnisse können sich deshalb ändern: mehr Autarkie ohne Speicher, etwas weniger Zusatznutzen durch den Speicher. Zum Vergleich kannst du in den Experten-Einstellungen weiterhin das bisherige Rechenmodell „Klassisch“ wählen. Wie genau gerechnet wird, steht in der Datei 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
+    text: "Innerhalb einer Stunde schwankt der Verbrauch: Wasserkocher oder Herd erzeugen kurze Lastspitzen. Bisher konnte die PV diese Spitzen nur bis zum Stundenmittel des Verbrauchs decken, selbst wenn viel mehr Sonne da war. Dadurch wurde der Eigenverbrauch ohne Speicher zu niedrig und der Nutzen eines Speichers zu hoch berechnet, je nach Anlage um etwa 15 bis 25 %. Jetzt deckt die PV die Spitzen bis zu ihrer tatsächlichen Leistung. Deine Ergebnisse können sich deshalb ändern: mehr Autarkie ohne Speicher, etwas weniger Zusatznutzen durch den Speicher. Außerdem verteilt das neue Modell den Jahresverbrauch realistischer: Das Standardlastprofil H0 ist der glatte Durchschnitt vieler Haushalte, ein echter Haushalt verbraucht unruhiger. Das kalibrierte Profil 'H0 kalibriert' bildet das nach, die Autarkie fällt dadurch einige Prozentpunkte niedriger und realistischer aus. Zum Vergleich kannst du in den Experten-Einstellungen weiterhin das bisherige Rechenmodell „Klassisch“ wählen. Wie genau gerechnet wird, steht in der Datei 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
   },
   {
     realm: 'Neuigkeiten',
@@ -23,7 +23,7 @@ export default [
   {
     realm: 'Allgemeines',
     title: 'Woher kommen die Daten',
-    text: 'Die Berechnung basiert auf Daten von PVGIS, einem kostenlosen Tool der Europäischen Kommission zur Ermittlung von Strahlungsdaten. Dieses Tool stellt auch einige kostenlose Schnittstellen bereit, die wir nutzen. Zusätzlich wurde für den Stromverbrauch das Standardlastprofil H0 des BDEW verwendet und auf den eingetragenen Jahresstromverbrauch hochgerechnet.',
+    text: 'Die Berechnung basiert auf Daten von PVGIS, einem kostenlosen Tool der Europäischen Kommission zur Ermittlung von Strahlungsdaten. Dieses Tool stellt auch einige kostenlose Schnittstellen bereit, die wir nutzen. Der eingetragene Jahresstromverbrauch wird mit dem Standardlastprofil H0 des BDEW auf die Stunden des Jahres verteilt. Beim Standard-Rechenmodell kommen realistische Schwankungen von Stunde zu Stunde hinzu („H0 kalibriert“), weil ein einzelner Haushalt deutlich unruhiger verbraucht als der Durchschnitt im H0-Profil. Alternativ können eigene Messwerte hochgeladen werden.',
   },
   {
     realm: 'Allgemeines',
@@ -78,7 +78,7 @@ export default [
   {
     realm: 'Erweitert',
     title: 'Rechenmodell',
-    text: "Das Rechenmodell legt fest, wie jede Stunde zwischen PV, Speicher und Netz aufgeteilt wird. Standard ist die 'Lastverteilung': Sie berücksichtigt kurze Lastspitzen innerhalb der Stunde und wurde gegen gemessene Minuten-Lastprofile geprüft. Das Modell 'Klassisch' ist die bisherige Berechnung und bleibt zum Vergleich mit älteren Ergebnissen wählbar; es unterschätzt den Eigenverbrauch ohne Speicher und überschätzt den Nutzen eines Speichers. Hinweis: Mit dem Standardlastprofil H0 fällt die Autarkie bei beiden Modellen etwas zu hoch aus, mit eigenen Messwerten (CSV) ist die Berechnung am genauesten.",
+    text: "Das Rechenmodell legt fest, wie jede Stunde zwischen PV, Speicher und Netz aufgeteilt wird. Standard ist die 'Lastverteilung': Sie berücksichtigt kurze Lastspitzen innerhalb der Stunde und wurde gegen gemessene Minuten-Lastprofile geprüft. Das Modell 'Klassisch' ist die bisherige Berechnung und bleibt zum Vergleich mit älteren Ergebnissen wählbar; es unterschätzt den Eigenverbrauch ohne Speicher und überschätzt den Nutzen eines Speichers. Beim Jahresverbrauch nutzt 'Lastverteilung' das Profil 'H0 kalibriert', 'Klassisch' wie bisher das reine H0-Profil. Das reine H0 ist sehr glatt und lässt die Autarkie um 5–6 Prozentpunkte zu hoch ausfallen. Mit eigenen Messwerten (CSV) ist die Berechnung am genauesten.",
   },
   {
     realm: 'Erweitert',

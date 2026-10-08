@@ -5,6 +5,7 @@ import {
   analyzeConsumptionCsv,
   buildConsumption,
 } from '../functions/consumptionImport.js'
+import { getConsumptionProfile } from '../functions/consumptionProfiles.js'
 import {
   DEFAULT_HOUR_MODEL,
   getHourModel,
@@ -286,6 +287,12 @@ async function calculate() {
         consumption: sizes[0].consumptionYear,
         hours,
         hourModel: getHourModel(plainInput.hourModel),
+        consumptionProfile:
+          consumptionMode.value === 'csv'
+            ? null
+            : getConsumptionProfile(
+                getHourModel(plainInput.hourModel).consumptionProfile,
+              ),
         duration: performance.now() - startedAt,
       },
     })

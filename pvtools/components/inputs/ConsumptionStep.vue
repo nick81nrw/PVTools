@@ -2,7 +2,7 @@
   <StepCard
     step="03"
     title="Stromverbrauch"
-    subtitle="Standardlastprofil H0 oder deine stündlichen Messwerte"
+    subtitle="Lastprofil H0 oder deine stündlichen Messwerte"
   >
     <SegmentedControl
       v-model="consumptionMode"
@@ -19,7 +19,7 @@
         unit="kWh/a"
         :min="0"
         :step="100"
-        hint="Wird mit dem BDEW-Standardlastprofil H0 auf die Stunden des Jahres verteilt"
+        :hint="`Wird mit dem Lastprofil „${profileLabel}“ auf die Stunden des Jahres verteilt (abhängig vom Rechenmodell)`"
       />
     </div>
 
@@ -129,6 +129,8 @@ import { computed, ref } from 'vue'
 import { Check, Download, TriangleAlert, Upload } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
+import { getConsumptionProfile } from '../../functions/consumptionProfiles.js'
+import { getHourModel } from '../../functions/hourModels/index.js'
 import {
   FILL_METHODS,
   formatDatetime,
@@ -149,6 +151,12 @@ const {
   importCsv,
   discardCsv,
 } = useCalculator()
+
+const profileLabel = computed(
+  () =>
+    getConsumptionProfile(getHourModel(input.hourModel).consumptionProfile)
+      .label,
+)
 
 const dragging = ref(false)
 const analysis = computed(() => csvImport.value?.analysis)

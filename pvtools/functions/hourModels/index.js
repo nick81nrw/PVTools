@@ -7,6 +7,11 @@
  * the expert settings and the tests (hourModels.test.js) pick it up
  * automatically.
  *
+ * consumptionProfile names the profile (consumptionProfiles.js) used with the
+ * model when the consumption is given as a yearly value. Each model keeps the
+ * profile it is calibrated with; imported measured values (CSV) are used as
+ * they are.
+ *
  * Interface of calculate(params), all energies in Wh, powers in W:
  *
  * params
@@ -52,15 +57,17 @@ export const HOUR_MODELS = [
     id: 'loadDistribution',
     label: 'Lastverteilung',
     description:
-      'Standard. Der Verbrauch schwankt innerhalb der Stunde; PV deckt jede Lastspitze bis zu ihrer tatsächlichen Leistung. Gegen gemessene Minuten-Lastprofile geprüft.',
+      'Standard. Der Verbrauch schwankt innerhalb der Stunde; PV deckt jede Lastspitze bis zu ihrer tatsächlichen Leistung. Lastprofil: H0 kalibriert. Gegen gemessene Minuten-Lastprofile geprüft.',
     calculate: calcHourWithLoadDistribution,
+    consumptionProfile: 'h0Calibrated',
   },
   {
     id: 'legacyRegression',
     label: 'Klassisch (bis 10/2026)',
     description:
-      'Die bisherige Berechnung, zum Vergleich mit älteren Ergebnissen. Unterschätzt den Eigenverbrauch ohne Speicher und überschätzt den Nutzen eines Speichers.',
+      'Die bisherige Berechnung, zum Vergleich mit älteren Ergebnissen, mit dem Standardlastprofil H0. Unterschätzt den Eigenverbrauch ohne Speicher und überschätzt den Nutzen eines Speichers.',
     calculate: regressionCalc,
+    consumptionProfile: 'h0',
   },
 ]
 
