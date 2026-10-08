@@ -1,4 +1,5 @@
 import {
+  calcHourWithLoadDistribution,
   energyFlow,
   calculateConsumption,
   normalizeHourlyRadiation,
@@ -412,3 +413,71 @@ describe('merge powergeneration arrays', () => {
 //     })
 
 // })
+
+describe('calcHourWithLoadDistribution', () => {
+  const hour = (params) =>
+    calcHourWithLoadDistribution({
+      regressionDb,
+      batterySoc: 0,
+      batterySocMin: 0,
+      batterySocMax: 0,
+      ...params,
+    })
+
+  test('large PV covers the whole consumption (previously ~25 % from grid)', () => {
+    const data = hour({ energyConsumption: 500, staticPowerGeneration: 10000 })
+    expect(data.selfUsedEnergyPV).toBeCloseTo(500, 6)
+    expect(data.gridUsedEnergy).toBeCloseTo(0, 6)
+  })
+
+  test('also for consumption above the regression database', () => {
+    const data = hour({ energyConsumption: 8000, staticPowerGeneration: 60000 })
+    expect(data.selfUsedEnergyPV).toBeCloseTo(8000, 6)
+  })
+
+  test('PV below the smallest load level is used completely', () => {
+    const data = hour({ energyConsumption: 1500, staticPowerGeneration: 50 })
+    // a tiny share of the hour has a load below 50 W
+    expect(data.selfUsedEnergyPV + data.lossesPvGeneration).toBeCloseTo(50, 1)
+    expect(data.feedInEnergyGrid).toBeLessThan(0.05)
+  })
+
+  test('load peaks above the PV power come from the grid', () => {
+    const data = hour({ energyConsumption: 500, staticPowerGeneration: 500 })
+    expect(data.gridUsedEnergy).toBeGreaterThan(0)
+    expect(data.feedInEnergyGrid).toBeGreaterThan(0)
+  })
+
+  test('more PV never reduces the self consumption', () => {
+    for (const energyConsumption of [100, 500, 1500, 3000]) {
+      let previous = 0
+      for (let pv = 0; pv <= 20000; pv += 250) {
+        const { selfUsedEnergyPV } = hour({
+          energyConsumption,
+          staticPowerGeneration: pv,
+        })
+        expect(selfUsedEnergyPV).toBeGreaterThanOrEqual(previous - 1e-9)
+        expect(selfUsedEnergyPV).toBeLessThanOrEqual(energyConsumption + 1e-9)
+        previous = selfUsedEnergyPV
+      }
+    }
+  })
+
+  test('the battery covers the peaks only up to its discharge power', () => {
+    const limited = hour({
+      energyConsumption: 1500,
+      staticPowerGeneration: 0,
+      batterySoc: 10000,
+      batterySocMax: 10000,
+      maxPowerDynamicInverter: 300,
+    })
+    expect(limited.batteryDischarge).toBeLessThanOrEqual(300 + 1e-9)
+    const unlimited = hour({
+      energyConsumption: 1500,
+      staticPowerGeneration: 0,
+      batterySoc: 10000,
+      batterySocMax: 10000,
+    })
+    expect(unlimited.batteryDischarge).toBeCloseTo(1500, 6)
+  })
+})

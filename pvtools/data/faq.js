@@ -2,6 +2,11 @@
 export default [
   {
     realm: 'Neuigkeiten',
+    title: 'Genauere Berechnung für größere Anlagen (10/26)',
+    text: "Innerhalb einer Stunde schwankt der Verbrauch: Wasserkocher oder Herd erzeugen kurze Lastspitzen. Bisher konnte die PV diese Spitzen nur bis zum Stundenmittel des Verbrauchs decken, selbst wenn viel mehr Sonne da war. Dadurch wurde der Eigenverbrauch ohne Speicher zu niedrig und der Nutzen eines Speichers zu hoch berechnet, je nach Anlage um etwa 15 bis 25 %. Jetzt deckt die PV die Spitzen bis zu ihrer tatsächlichen Leistung. Deine Ergebnisse können sich deshalb ändern: mehr Autarkie ohne Speicher, etwas weniger Zusatznutzen durch den Speicher. Wie genau gerechnet wird, steht in der Datei 'functions/BERECHNUNG.md' im <a href='https://github.com/nick81nrw/PVTools/blob/main/pvtools/functions/BERECHNUNG.md'>Quellcode</a>.",
+  },
+  {
+    realm: 'Neuigkeiten',
     title: 'Neues Design und aktuellere Wetterdaten (10/26)',
     text: 'PVTools hat ein komplett neues Design mit Dark Mode bekommen. Die Ergebnisse zeigen jetzt direkt eine Empfehlung, die wichtigsten Kennzahlen und eine Energiebilanz je Speichergröße. Die Wetterdaten kommen aus PVGIS 5.3, damit stehen die Jahre 2005 bis 2023 zur Auswahl. Außerdem werden der minimale Ladezustand und die maximale Ladeleistung des Speichers jetzt korrekt berücksichtigt.',
   },
@@ -23,7 +28,7 @@ export default [
   {
     realm: 'Allgemeines',
     title: 'Wie funktioniert die Berechnung',
-    text: 'Anhand des eingetragenen Standortes werden bei PVGIS die PV-Erzeugungsdaten je Stunde für ein Jahr abgerufen (Standard 2020) und mit den Verbrauchsdaten aus dem Lastprofil und verschiedenen Batteriegrößen verrechnet.',
+    text: 'Anhand des eingetragenen Standortes werden bei PVGIS die PV-Erzeugungsdaten je Stunde für ein Jahr abgerufen (Standard 2020) und mit den Verbrauchsdaten aus dem Lastprofil und verschiedenen Batteriegrößen verrechnet. Dabei wird berücksichtigt, dass der Verbrauch innerhalb einer Stunde schwankt: Kurze Lastspitzen kann die PV nur bis zu ihrer aktuellen Leistung decken, den Rest liefert der Speicher oder das Netz.',
   },
   {
     realm: 'Allgemeines',
