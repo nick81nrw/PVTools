@@ -4,6 +4,9 @@ import {
   CONSUMPTION_PROFILES,
   DEFAULT_CONSUMPTION_PROFILE,
   getConsumptionProfile,
+  monthlySums,
+  scaleToMonths,
+  validMonthly,
 } from './consumptionProfiles.js'
 import { calculateConsumption } from './energyFlow.js'
 import { HOUR_MODELS } from './hourModels/index.js'
@@ -108,5 +111,45 @@ describe('h0 calibrated', () => {
 
   test('is reproducible', () => {
     expect(addVariability(h0)).toEqual(calibrated)
+  })
+})
+
+describe('monthly consumption', () => {
+  const h0 = getConsumptionProfile('h0').build({
+    year: 2021,
+    consumptionYear: 4000000,
+  })
+  const monthly = [500, 450, 400, 300, 250, 200, 200, 220, 260, 330, 400, 490]
+
+  test('monthlySums adds the hours of each month', () => {
+    const sums = monthlySums(h0)
+    expect(sums).toHaveLength(12)
+    expect(sums.reduce((a, b) => a + b, 0)).toBeCloseTo(sum(h0), 3)
+    expect(sums[0]).toBeGreaterThan(sums[5])
+  })
+
+  test('scaleToMonths hits every monthly value', () => {
+    const scaled = scaleToMonths(
+      h0,
+      monthly.map((kwh) => kwh * 1000),
+    )
+    monthlySums(scaled).forEach((value, i) =>
+      expect(value).toBeCloseTo(monthly[i] * 1000, 6),
+    )
+    expect(Object.keys(scaled)).toEqual(Object.keys(h0))
+  })
+
+  test('the shape within a month stays the same', () => {
+    const scaled = scaleToMonths(h0, new Array(12).fill(1000))
+    const ratio = (c) => c['20210115:12'].P / c['20210115:03'].P
+    expect(ratio(scaled)).toBeCloseTo(ratio(h0), 9)
+  })
+
+  test('validMonthly needs 12 values that are not all 0', () => {
+    expect(validMonthly(monthly)).toBe(true)
+    expect(validMonthly(monthly.slice(1))).toBe(false)
+    expect(validMonthly(new Array(12).fill(0))).toBe(false)
+    expect(validMonthly([-1, ...monthly.slice(1)])).toBe(false)
+    expect(validMonthly(null)).toBe(false)
   })
 })

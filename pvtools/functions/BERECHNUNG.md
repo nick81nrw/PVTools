@@ -16,6 +16,11 @@ lang ist, entspricht 1 W genau 1 Wh.
 | Jede Stunde mit dem gewählten Rechenmodell berechnen, Ladezustand an die nächste Stunde weitergeben | `simulateBatterySizes` → `energyFlow` → `getHourModel(id).calculate`                          | `simulation.js`, `energyFlow.js`, `hourModels/`  |
 | Jahressummen, Monatswerte, Wirtschaftlichkeit, Energiebilanz-Prüfung                                | `simulateBatterySizes`, `checkEnergyBalance`                                                  | `simulation.js`                                  |
 
+Sind im Modus „Jahresverbrauch“ Monatswerte eingegeben, wird das Lastprofil
+mit ihrer Summe erzeugt und anschließend jeder Monat auf seinen Wert skaliert
+(`scaleToMonths` in `consumptionProfiles.js`). Die Form innerhalb des Monats
+bleibt dabei erhalten.
+
 ## Rechenmodelle
 
 Wie eine einzelne Stunde zwischen PV, Speicher und Netz aufgeteilt wird,
@@ -262,6 +267,15 @@ sich erst der größere Schritt lohnt (z. B. wegen hoher Grundkosten).
 
 Nicht berücksichtigt sind Finanzierung, entgangene Zinsen, Alterung des
 Speichers und steigende Strompreise.
+
+## Speichernutzung
+
+- **Vollzyklen pro Jahr** = entnommene Energie ÷ Speichergröße
+  (`fullCycles`).
+- **Ladezustand min / max** = niedrigster und höchster Ladezustand im Jahr in
+  % der Speichergröße (`socMinPercent`, `socMaxPercent`).
+- Der Stunden-Export enthält den Ladezustand zu Beginn (`batterySoc`) und am
+  Ende (`newBatterySoc`) jeder Stunde.
 
 ## Bekannte Vereinfachungen
 

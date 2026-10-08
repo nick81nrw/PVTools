@@ -19,8 +19,42 @@
         unit="kWh/a"
         :min="0"
         :step="100"
+        :disabled="monthlyActive"
         :hint="`Wird mit dem Lastprofil „${profileLabel}“ auf die Stunden des Jahres verteilt (abhängig vom Rechenmodell)`"
       />
+
+      <div v-if="monthlyActive" class="mt-3">
+        <p class="mb-2 text-xs text-muted">
+          Verbrauch je Monat, z. B. von deinen Zählerständen. Vorbelegt mit der
+          Verteilung des Lastprofils; die Summe ist der Jahresverbrauch.
+        </p>
+        <div class="grid grid-cols-3 gap-2">
+          <NumberField
+            v-for="(month, index) in MONTHS"
+            :key="month"
+            v-model="input.monthlyConsumption[index]"
+            :label="month"
+            unit="kWh"
+            :min="0"
+            :step="10"
+          />
+        </div>
+        <button
+          type="button"
+          class="mt-2 text-xs font-medium text-brand hover:underline"
+          @click="disableMonthly"
+        >
+          Nur Jahresverbrauch verwenden
+        </button>
+      </div>
+      <button
+        v-else
+        type="button"
+        class="mt-2 text-xs font-medium text-brand hover:underline"
+        @click="enableMonthly"
+      >
+        Verbrauch je Monat eingeben (optional)
+      </button>
     </div>
 
     <div v-else class="mt-4 space-y-3">
@@ -125,11 +159,14 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Check, Download, TriangleAlert, Upload } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
-import { getConsumptionProfile } from '../../functions/consumptionProfiles.js'
+import {
+  getConsumptionProfile,
+  monthlySums,
+} from '../../functions/consumptionProfiles.js'
 import { getHourModel } from '../../functions/hourModels/index.js'
 import {
   FILL_METHODS,
@@ -156,6 +193,59 @@ const profileLabel = computed(
   () =>
     getConsumptionProfile(getHourModel(input.hourModel).consumptionProfile)
       .label,
+)
+
+const monthlyActive = computed(
+  () =>
+    input.monthlyConsumptionEnabled &&
+    Array.isArray(input.monthlyConsumption) &&
+    input.monthlyConsumption.length === 12,
+)
+
+const MONTHS = [
+  'Jan',
+  'Feb',
+  'Mär',
+  'Apr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Dez',
+]
+
+/** monthly values with the shape of the load profile and the yearly value */
+const enableMonthly = () => {
+  const profile = getConsumptionProfile('h0').build({
+    year: input.year,
+    consumptionYear: 1,
+  })
+  const shares = monthlySums(profile)
+  const total = shares.reduce((sum, value) => sum + value, 0)
+  input.monthlyConsumption = shares.map((share) =>
+    Math.round((input.yearlyConsumption * share) / total),
+  )
+  input.monthlyConsumptionEnabled = true
+}
+
+const disableMonthly = () => {
+  input.monthlyConsumptionEnabled = false
+}
+
+// the yearly value is the sum of the months while they are used
+watch(
+  () => monthlyActive.value && [...input.monthlyConsumption],
+  (monthly) => {
+    if (monthly) {
+      input.yearlyConsumption = monthly.reduce(
+        (sum, value) => sum + (Number(value) || 0),
+        0,
+      )
+    }
+  },
 )
 
 const dragging = ref(false)

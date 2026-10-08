@@ -51,7 +51,7 @@
 <script setup>
 import { Sparkles } from 'lucide-vue-next'
 
-import { batteryLabel, eur, kwh, pct, years } from '../../lib/format.js'
+import { batteryLabel, eur, kwh, num, pct, years } from '../../lib/format.js'
 
 defineProps({
   sizes: { type: Array, required: true },
@@ -81,6 +81,12 @@ const columns = [
     key: 'costSavingsBattery',
     label: 'davon Speicher',
     format: (v) => eur(v),
+    batteryOnly: true,
+  },
+  {
+    key: 'fullCycles',
+    label: 'Zyklen/a',
+    format: (v) => num(v),
     batteryOnly: true,
   },
   { key: 'amortization', label: 'Amort. Anlage', format: (v) => payback(v) },
