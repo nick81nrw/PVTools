@@ -110,6 +110,8 @@
 
     <KpiGrid v-if="selected" :item="selected" :baseline="baseline" />
 
+    <ConsumersCard v-if="selected?.consumers" :item="selected" />
+
     <div v-if="selected" class="grid gap-4 xl:grid-cols-2">
       <section class="card p-4 sm:p-5">
         <SectionTitle
@@ -197,6 +199,7 @@ import { DEFAULT_HOUR_MODEL } from '../../functions/hourModels/index.js'
 import { batteryLabel, eur, kwh, num, years } from '../../lib/format.js'
 import { RATINGS } from '../../lib/rating.js'
 import BatteryStepsCard from './BatteryStepsCard.vue'
+import ConsumersCard from './ConsumersCard.vue'
 import SectionTitle from '../ui/SectionTitle.vue'
 import DetailsCard from './DetailsCard.vue'
 import EnergySplit from './EnergySplit.vue'

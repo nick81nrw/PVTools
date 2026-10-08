@@ -214,6 +214,81 @@ Ergebnis:
 
 Geht eine davon nicht auf, zeigt die Oberfläche eine Warnung.
 
+## Wärmepumpe und E-Auto (Beta): `loads/`
+
+Große Verbraucher werden getrennt vom Haushaltsstrom gerechnet
+(`buildLoads` in `loads/index.js`), einmal pro Berechnung und für alle
+Speichergrößen gleich. Sie laufen innerhalb einer Stunde **gleichmäßig** und
+sitzen im Modell „Lastverteilung“ als fester Sockel auf jeder Laststufe des
+Haushalts (`flatConsumption`, `flatConsumptionNoBattery`). Die PV versorgt
+zuerst den Haushalt, dann die Wärmepumpe, dann das Auto. Der Hausspeicher
+versorgt die Wärmepumpe, aber **nicht** das Auto. Das Modell „Klassisch“ kennt
+keine Sockel; dort werden die Verbraucher zum Stundenverbrauch addiert.
+
+### Wärmepumpe (`loads/heatPump.js`)
+
+1. **Heizwärme** je Stunde ∝ Gradstunden `max(0, Heizgrenze − T)`. `T` ist das
+   Mittel der letzten 24 Stunden (Trägheit des Gebäudes). Die
+   Außentemperatur liefert PVGIS für Standort und Wetterjahr, kalte und dunkle
+   Tage hängen also wie in der Realität zusammen.
+2. **Wärmebedarf** aus Wohnfläche × 50 / 90 / 150 kWh/m² (Neubau / saniert /
+   unsaniert) plus Warmwasser 1.000 kWh pro Person (inkl. Speicher- und
+   Leitungsverluste), verteilt mit einem Tagesgang (morgens und abends).
+3. **Strom = Wärme ÷ COP**, `COP = 3 + 0,1 · (T − 2)` (mindestens 1,5), für
+   Warmwasser 25 % niedriger. Die Werte werden so skaliert, dass im Jahr die
+   Jahresarbeitszahl (Standard 3,5) herauskommt.
+4. Ist der Stromverbrauch der Wärmepumpe bekannt, wird die Kurve darauf
+   skaliert.
+
+### E-Auto (`loads/electricVehicle.js`)
+
+- **Tagesbedarf an der Wallbox** = km/Jahr ÷ 365 × Verbrauch × Anteil zu Hause
+  ÷ 90 % Ladewirkungsgrad (Standard: 12.000 km, 18 kWh/100 km, 80 % → 5,3 kWh
+  pro Tag, 1.920 kWh pro Jahr).
+- Das Auto hat einen eigenen Akku (Standard 60 kWh) mit Ladestand.
+  **Pendler** fahren um 7 Uhr los und sind Montag bis Freitag bis 17 Uhr weg.
+  **Tagsüber zu Hause**: eine Fahrt am Vormittag, zurück um 12 Uhr.
+- **Sofort laden**: sobald das Auto da ist, mit voller Leistung (Standard
+  11 kW), bis der Akku wieder voll ist.
+- **Mit PV-Überschuss**: geladen wird nur, was sonst eingespeist oder
+  abgeregelt würde, und erst ab 1,4 kW (kleinste Ladeleistung einer
+  Wallbox). Fällt der Akku unter die Reserve (30 % bzw. mindestens zwei
+  Tagesbedarfe), lädt das Auto aus dem Netz bis zur Reserve nach. Der
+  Überschuss wird ohne Hausspeicher bestimmt: Das Auto hat Vorrang.
+
+### Plausibilitätsprüfung
+
+Köln, Wetterjahr 2010, 10 kWp Süd, Haushalt 4.000 kWh (H0 kalibriert),
+Wärmepumpe 140 m² saniert mit 3 Personen, E-Auto mit Standardwerten. Anteil
+aus PV und Speicher je Verbraucher:
+
+| Fall                              | Verbrauch | ohne Speicher | 5 kWh | 10 kWh |
+| --------------------------------- | --------- | ------------- | ----- | ------ |
+| Wärmepumpe                        | 4.457 kWh | 21 %          | 31 %  | 36 %   |
+| E-Auto, Pendler, sofort           | 1.920 kWh | 17 %          | 17 %  | 17 %   |
+| E-Auto, Pendler, PV-Überschuss    | 1.878 kWh | 70 %          | 70 %  | 70 %   |
+| E-Auto, tagsüber zu Hause, sofort | 1.920 kWh | 50 %          | 50 %  | 50 %   |
+| E-Auto, zu Hause, PV-Überschuss   | 1.880 kWh | 96 %          | 96 %  | 96 %   |
+
+Wärmepumpe je Monat: Januar 20 %, Februar 14 %, Juni bis August je 1–2 %,
+Dezember 21 % des Jahres; größte Stundenleistung 2,4 kW.
+
+Bewertung:
+
+- Wärmepumpe: Die Verteilung über das Jahr und der PV-Anteil von gut 20 %
+  ohne Speicher liegen im Bereich, der für Wärmepumpen mit PV üblicherweise
+  genannt wird. Ein Speicher hilft der Wärmepumpe deutlich weniger als dem
+  Haushalt, weil im Winter kaum Überschuss da ist.
+- E-Auto: Sofortladen bringt bei Pendlern wenig PV-Strom. Mit Überschussladen
+  kommt ein großer Teil aus PV, vor allem am Wochenende im Sommerhalbjahr; im
+  Winter lädt das Auto überwiegend aus dem Netz.
+- „Tagsüber zu Hause“ mit Überschussladen ist eine **Obergrenze**: Das Auto
+  steht im Modell immer zur Verfügung, und die PV-Leistung gilt innerhalb der
+  Stunde als konstant. Wechselnde Bewölkung senkt den Anteil in der Realität.
+- Die Energiebilanz geht in allen Fällen auf. Gemessene Daten zu
+  Wärmepumpen und E-Autos lagen für diese Prüfung nicht vor, deshalb ist die
+  Funktion als Beta gekennzeichnet.
+
 ## Wirtschaftlichkeit des Speichers: `batteryEconomics.js`
 
 ### Speicherpreis

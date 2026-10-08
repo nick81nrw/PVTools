@@ -1,6 +1,6 @@
 <template>
   <StepCard
-    step="04"
+    step="05"
     title="Kosten & Tarife"
     subtitle="Vorbelegt mit Richtwerten – gern anpassen"
   >

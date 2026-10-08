@@ -15,7 +15,11 @@
     <div v-if="consumptionMode === 'profile'" class="mt-4">
       <NumberField
         v-model="input.yearlyConsumption"
-        label="Jährlicher Stromverbrauch"
+        :label="
+          input.heatPumpEnabled || input.evEnabled
+            ? 'Haushaltsstrom pro Jahr (ohne WP/Auto)'
+            : 'Jährlicher Stromverbrauch'
+        "
         unit="kWh/a"
         :min="0"
         :step="100"
