@@ -5,6 +5,10 @@ import {
   analyzeConsumptionCsv,
   buildConsumption,
 } from '../functions/consumptionImport.js'
+import {
+  DEFAULT_HOUR_MODEL,
+  getHourModel,
+} from '../functions/hourModels/index.js'
 import { resolveLimits } from '../functions/simulation.js'
 
 // the storage keys and shapes are kept from the previous version, so saved
@@ -38,6 +42,8 @@ export const DEFAULT_INPUT = {
   feedInMode: 'none',
   maxPowerFeedIn: 0,
   feedInPercent: 60,
+  // how one hour is calculated, see functions/hourModels/index.js
+  hourModel: DEFAULT_HOUR_MODEL,
   amortizationYears: 20,
   linearDegrationModules: 0.5,
   linearConsumptionChange: 0.5, // negative = less need
@@ -279,6 +285,7 @@ async function calculate() {
         peakPower: totalPeakPower.value,
         consumption: sizes[0].consumptionYear,
         hours,
+        hourModel: getHourModel(plainInput.hourModel),
         duration: performance.now() - startedAt,
       },
     })

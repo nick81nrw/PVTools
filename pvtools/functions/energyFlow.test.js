@@ -3,7 +3,9 @@ import {
   calculateConsumption,
   normalizeHourlyRadiation,
   mergePowerGeneration,
+  shiftUtcToGermanTime,
 } from './energyFlow.js'
+import { calcHourWithLoadDistribution } from './hourModels/loadDistribution.js'
 
 import seriescalc from './seriescalc.json'
 import seriescalc2 from './seriescalc2.json'
@@ -412,3 +414,95 @@ describe('merge powergeneration arrays', () => {
 //     })
 
 // })
+
+describe('calcHourWithLoadDistribution', () => {
+  const hour = (params) =>
+    calcHourWithLoadDistribution({
+      regressionDb,
+      batterySoc: 0,
+      batterySocMin: 0,
+      batterySocMax: 0,
+      ...params,
+    })
+
+  test('large PV covers the whole consumption (previously ~25 % from grid)', () => {
+    const data = hour({ energyConsumption: 500, staticPowerGeneration: 10000 })
+    expect(data.selfUsedEnergyPV).toBeCloseTo(500, 6)
+    expect(data.gridUsedEnergy).toBeCloseTo(0, 6)
+  })
+
+  test('also for consumption above the regression database', () => {
+    const data = hour({ energyConsumption: 8000, staticPowerGeneration: 60000 })
+    expect(data.selfUsedEnergyPV).toBeCloseTo(8000, 6)
+  })
+
+  test('PV below the smallest load level is used completely', () => {
+    const data = hour({ energyConsumption: 1500, staticPowerGeneration: 50 })
+    // a tiny share of the hour has a load below 50 W
+    expect(data.selfUsedEnergyPV + data.lossesPvGeneration).toBeCloseTo(50, 1)
+    expect(data.feedInEnergyGrid).toBeLessThan(0.05)
+  })
+
+  test('load peaks above the PV power come from the grid', () => {
+    const data = hour({ energyConsumption: 500, staticPowerGeneration: 500 })
+    expect(data.gridUsedEnergy).toBeGreaterThan(0)
+    expect(data.feedInEnergyGrid).toBeGreaterThan(0)
+  })
+
+  test('more PV never reduces the self consumption', () => {
+    for (const energyConsumption of [100, 500, 1500, 3000]) {
+      let previous = 0
+      for (let pv = 0; pv <= 20000; pv += 250) {
+        const { selfUsedEnergyPV } = hour({
+          energyConsumption,
+          staticPowerGeneration: pv,
+        })
+        expect(selfUsedEnergyPV).toBeGreaterThanOrEqual(previous - 1e-9)
+        expect(selfUsedEnergyPV).toBeLessThanOrEqual(energyConsumption + 1e-9)
+        previous = selfUsedEnergyPV
+      }
+    }
+  })
+
+  test('the battery covers the peaks only up to its discharge power', () => {
+    const limited = hour({
+      energyConsumption: 1500,
+      staticPowerGeneration: 0,
+      batterySoc: 10000,
+      batterySocMax: 10000,
+      maxPowerDynamicInverter: 300,
+    })
+    expect(limited.batteryDischarge).toBeLessThanOrEqual(300 + 1e-9)
+    const unlimited = hour({
+      energyConsumption: 1500,
+      staticPowerGeneration: 0,
+      batterySoc: 10000,
+      batterySocMax: 10000,
+    })
+    expect(unlimited.batteryDischarge).toBeCloseTo(1500, 6)
+  })
+})
+
+describe('shiftUtcToGermanTime', () => {
+  const local = shiftUtcToGermanTime(normalizedHR, 2020)
+  const total = (values) => Object.values(values).reduce((s, v) => s + v.P, 0)
+
+  test('keeps every hour of the year and the energy', () => {
+    expect(Object.keys(local)).toHaveLength(8784)
+    expect(total(local)).toBeCloseTo(total(normalizedHR), 6)
+  })
+
+  test('shifts by 1 hour in winter and 2 hours in summer', () => {
+    expect(local['20200115:13'].P).toBe(normalizedHR['20200115:12'].P)
+    expect(local['20200615:13'].P).toBe(normalizedHR['20200615:11'].P)
+  })
+
+  test('handles the clock changes', () => {
+    // 29.03.2020: 02:00 local does not exist, 25.10.2020: 02:00 twice
+    expect(local['20200329:02'].P).toBe(0)
+    expect(local['20200329:03'].P).toBe(normalizedHR['20200329:01'].P)
+    expect(local['20201025:02'].P).toBe(
+      normalizedHR['20201025:00'].P + normalizedHR['20201025:01'].P,
+    )
+  })
+})

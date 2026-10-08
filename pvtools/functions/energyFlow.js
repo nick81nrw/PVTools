@@ -1,3 +1,5 @@
+import { getHourModel } from './hourModels/index.js'
+
 /**
  * @return {Object) Functions: energyFlow, calculateConsumption, normalizeHourlyRadiation
  *
@@ -21,6 +23,7 @@ Parameters object:
     maxPowerLoadBattery (optional): 2300 (watts)
     maxPowerFeedIn (optional): 8500 (watts) for feedIn regulations (70% rule in germany)
     dayTime (optional): to identify this time
+    hourModel (optional): id of the hour model, see hourModels/index.js (default: loadDistribution)
 Return object:
     newBatterySoc: 3560 (watthours)
     selfUsagePowerPv: 3550 (watthours) PV-power, that used for own consumption
@@ -57,6 +60,7 @@ const energyFlow = ({
   maxPowerFeedIn,
   dayTime,
   regressionDb,
+  hourModel,
 }) => {
   let missedInverterPower = 0,
     missedBatteryPower = 0
@@ -88,7 +92,7 @@ const energyFlow = ({
     missedFeedInPowerGrid,
     batteryCharge,
     batteryDischarge,
-  } = regressionCalc({
+  } = getHourModel(hourModel).calculate({
     regressionDb,
     energyConsumption,
     staticPowerGeneration: energyGeneration,
@@ -337,6 +341,54 @@ const normalizeHourlyRadiation = (hourlyRadiationArray) => {
   return normRadiation
 }
 
+/** last Sunday of a month (0 = January) at 01:00 UTC, when the clock changes */
+const lastSundayUtc = (year, month) => {
+  const last = new Date(Date.UTC(year, month + 1, 0, 1))
+  return last.getTime() - last.getUTCDay() * 86400000
+}
+
+/**
+ * PVGIS returns the hours in UTC, but the load profiles and imported
+ * consumption values use German local time (CET, CEST from the last Sunday in
+ * March to the last Sunday in October). Without shifting, the PV curve would
+ * be 1 hour (winter) or 2 hours (summer) too early compared to the load.
+ *
+ * The local hour that is skipped in spring and the hour of New Year's night
+ * that comes from the previous UTC year get 0 Wh (both are at night); in
+ * autumn the doubled night hour is summed.
+ *
+ * @param {Object} hourly normalized PVGIS values {"20200101:00": {P, temperature}, ...} in UTC
+ * @param {number} year the simulated year
+ * @return {Object} the same values keyed by German local time
+ */
+const shiftUtcToGermanTime = (hourly, year) => {
+  const summerStart = lastSundayUtc(year, 2)
+  const summerEnd = lastSundayUtc(year, 9)
+  const pad = (value) => String(value).padStart(2, '0')
+  const local = {}
+  for (const [key, value] of Object.entries(hourly)) {
+    const utc = Date.UTC(
+      +key.slice(0, 4),
+      +key.slice(4, 6) - 1,
+      +key.slice(6, 8),
+      +key.slice(9, 11),
+    )
+    const offset = utc >= summerStart && utc < summerEnd ? 2 : 1
+    const date = new Date(utc + offset * 3600000)
+    if (date.getUTCFullYear() !== year) continue
+    const localKey = `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}:${pad(date.getUTCHours())}`
+    if (local[localKey])
+      local[localKey] = { ...local[localKey], P: local[localKey].P + value.P }
+    else local[localKey] = { ...value }
+  }
+  let previous = null
+  for (const key of generateDayTimeOrder(year)) {
+    if (!local[key]) local[key] = { P: 0, temperature: previous?.temperature }
+    previous = local[key]
+  }
+  return local
+}
+
 /**
  * merge powerGeneration to one summerized object
  * @param  {Array[Object]} powerGenerationArray An Array with power generation e.g. two: [ {"20200101:00":{P:20}, "20200101:01":{P:30.5}, ...}, {...} ]
@@ -412,257 +464,12 @@ const generateDayTimeValues = ({ consumption, powerGeneration, year }) => {
   }, [])
 }
 
-const createRegression = ({ energyConsumption }) => {
-  const multiplicator = 8
-  const resulution = Math.max(
-    Math.floor((energyConsumption * multiplicator) / 100 / 100) * 100,
-    100,
-  )
-  const regressionKey = Math.floor(energyConsumption / resulution) * resulution
-
-  const sigma1 = energyConsumption * 0.195
-  const mu1 = energyConsumption / 3 + 50
-  const sigma2 = energyConsumption * 0.1
-  // const sigma2 = Math.max( -energyConsumption * (50/2000) + 500, 300 )
-  const mu2 = energyConsumption + energyConsumption / 10
-
-  // const powers = new Array(100).fill(0).map((e,i)=> i* resulution)
-  const powers = new Array((regressionKey / resulution) * multiplicator)
-    .fill(0)
-    .map((e, i) => i * resulution)
-
-  const unnorm = powers.map((power) => {
-    const val =
-      (1 / (sigma1 * Math.sqrt(2 * Math.PI))) *
-        Math.exp(1) ** (-0.5 * ((power - mu1) / sigma1) ** 2) +
-      (1 / (sigma2 * Math.sqrt(2 * Math.PI))) *
-        Math.exp(1) ** (-0.5 * ((power - mu2) / sigma2) ** 2)
-    return val
-  })
-  const sumUnnorm = unnorm.reduce((acc, curr) => acc + curr, 0)
-  const regression = unnorm.reduce((acc, curr, i) => {
-    acc[powers[i]] = curr * (1 / sumUnnorm)
-    return acc
-  }, {})
-
-  return { regression, resulution, info: { sigma1, sigma2, mu1, mu2 } }
-}
-
-/**
- * Stores PV surplus in the battery (limited by free capacity and charging
- * power), the rest is fed into the grid (limited by the feed-in limit)
- */
-const chargeBattery = ({
-  surplus,
-  batterySoc,
-  batterySocMax,
-  batteryLoadEfficiency,
-  maxBatteryLoad,
-  maxPowerFeedIn,
-}) => {
-  const freeCapacity = Math.max(batterySocMax - batterySoc, 0)
-  const batteryCharge = Math.max(
-    Math.min(surplus, freeCapacity / batteryLoadEfficiency, maxBatteryLoad),
-    0,
-  )
-  const feedInEnergyGridBase = surplus - batteryCharge
-  const feedInEnergyGrid = Math.min(feedInEnergyGridBase, maxPowerFeedIn)
-  return {
-    batteryCharge,
-    newBatterySoc: batterySoc + batteryCharge * batteryLoadEfficiency,
-    lossesLoadBattery: batteryCharge * (1 - batteryLoadEfficiency),
-    feedInEnergyGrid,
-    missedFeedInPowerGrid: feedInEnergyGridBase - feedInEnergyGrid,
-  }
-}
-
-const regressionCalc = ({
-  regressionDb,
-  energyConsumption,
-  staticPowerGeneration = 0,
-  maxPowerStaticInverter = 0,
-  maxPowerDynamicInverter = 0,
-  batterySoc = 0,
-  batteryUnloadEfficiency = 1,
-  batteryLoadEfficiency = 1,
-  batterySocMin = 0,
-  batterySocMax,
-  maxPowerLoadBattery = 0,
-  maxPowerFeedIn = 9999999,
-}) => {
-  const maxBatteryLoad =
-    maxPowerLoadBattery > 0 ? maxPowerLoadBattery : Infinity
-
-  let freePowerDynamicGeneration = 0
-  if (maxPowerDynamicInverter > 0)
-    freePowerDynamicGeneration = maxPowerDynamicInverter
-  else if (maxPowerStaticInverter - staticPowerGeneration > 0)
-    freePowerDynamicGeneration = maxPowerStaticInverter - staticPowerGeneration
-  else freePowerDynamicGeneration = 99999999
-
-  if (!(energyConsumption > 0)) {
-    // no consumption in this hour: all generation is stored or fed in
-    const charged = chargeBattery({
-      surplus: Math.max(staticPowerGeneration, 0),
-      batterySoc,
-      batterySocMax,
-      batteryLoadEfficiency,
-      maxBatteryLoad,
-      maxPowerFeedIn,
-    })
-    return {
-      selfUsedEnergy: 0,
-      selfUsedEnergyPV: 0,
-      selfUsedEnergyBattery: 0,
-      gridUsedEnergy: 0,
-      lossesUnloadBattery: 0,
-      lossesPvGeneration: 0,
-      batteryDischarge: 0,
-      ...charged,
-      losses: charged.lossesLoadBattery,
-    }
-  }
-
-  const multiplicator = Math.min(energyConsumption, staticPowerGeneration)
-
-  const staticInverterEfficiency = calcInverterEfficiency({
-    maxPowerGenerationInverter: maxPowerStaticInverter,
-    power: staticPowerGeneration,
-  })
-  // const lastRegression = Object.keys(regressionDb)[Object.keys(regressionDb).length-1]
-  const regressionKey = Math.floor(energyConsumption / 50) * 50
-  const regressionBigConsumption = !regressionDb[regressionKey]
-    ? createRegression({ energyConsumption })
-    : null
-  const regression = regressionDb[regressionKey]
-    ? regressionDb[regressionKey]
-    : regressionBigConsumption.regression
-
-  const powerDelta = regressionBigConsumption
-    ? Math.floor(regressionBigConsumption.resulution / 2)
-    : 25 // use the mid of two regressen keys. e.g. 50,100,150 > use 75,125,175
-
-  const {
-    usedEnergyPv,
-    usedEnergyPvBase,
-    usedEnergyBattery,
-    usedEnergyBatteryBase,
-    usedPv,
-  } = Object.keys(regression).reduce(
-    (acc, curr) => {
-      const power = parseInt(curr)
-      const value = regression[curr]
-      const usedPv = Math.min((power + powerDelta) / multiplicator, 1)
-      const usedEnergyPvBase = usedPv * value * multiplicator
-      const usedEnergyPv =
-        usedPv * value * staticInverterEfficiency * multiplicator
-
-      const splitConsumption = value * energyConsumption
-      const energyForBattery = splitConsumption - usedEnergyPv
-      const usedBattery = Math.min(
-        freePowerDynamicGeneration / (power + powerDelta),
-        1,
-      )
-
-      const usedEnergyBatteryBase = usedPv * value * staticPowerGeneration
-      const usedEnergyBattery = usedBattery * energyForBattery
-
-      return {
-        usedEnergyPv: acc.usedEnergyPv + usedEnergyPv,
-        usedEnergyPvBase: acc.usedEnergyPvBase + usedEnergyPvBase,
-        usedEnergyBattery: acc.usedEnergyBattery + usedEnergyBattery,
-        usedEnergyBatteryBase:
-          acc.usedEnergyBatteryBase + usedEnergyBatteryBase,
-        usedPv: acc.usedPv + usedPv,
-      }
-    },
-    {
-      usedEnergyPv: 0,
-      usedEnergyPvBase: 0,
-      usedEnergyBattery: 0,
-      usedEnergyBatteryBase: 0,
-      usedPv: 0,
-    },
-  )
-
-  const selfUsedEnergyPV = usedEnergyPv
-  const lossesPvGeneration = usedEnergyPvBase - selfUsedEnergyPV
-  const overflowPv = Math.max(staticPowerGeneration - usedEnergyPvBase, 0)
-
-  // discharge, the battery must not go below its minimum state of charge
-  const usableBatteryEnergy = Math.max(batterySoc - batterySocMin, 0)
-  const batteryDischarge = Math.min(usedEnergyBattery, usableBatteryEnergy)
-  const selfUsedEnergyBattery = batteryDischarge * batteryUnloadEfficiency
-  const lossesUnloadBattery = batteryDischarge - selfUsedEnergyBattery
-
-  const {
-    batteryCharge,
-    newBatterySoc,
-    lossesLoadBattery,
-    feedInEnergyGrid,
-    missedFeedInPowerGrid,
-  } = chargeBattery({
-    surplus: overflowPv,
-    batterySoc: batterySoc - batteryDischarge,
-    batterySocMax,
-    batteryLoadEfficiency,
-    maxBatteryLoad,
-    maxPowerFeedIn,
-  })
-
-  const selfUsedEnergy = selfUsedEnergyBattery + selfUsedEnergyPV
-  const gridUsedEnergy = energyConsumption - selfUsedEnergy
-  const losses = lossesLoadBattery + lossesUnloadBattery + lossesPvGeneration
-
-  return {
-    selfUsedEnergy,
-    selfUsedEnergyPV,
-    usedEnergyPvBase,
-    gridUsedEnergy,
-    selfUsedEnergyBattery,
-    feedInEnergyGrid,
-    lossesUnloadBattery,
-    lossesLoadBattery,
-    lossesPvGeneration,
-    missedFeedInPowerGrid,
-    losses,
-    newBatterySoc,
-    batteryCharge,
-    batteryDischarge,
-    staticInverterEfficiency,
-    usedPv,
-    usedEnergyBatteryBase,
-  }
-}
-
-const calcInverterEfficiency = ({ maxPowerGenerationInverter, power }) => {
-  const inverterEfficiency = {
-    0: 0.8667,
-    10: 0.8667,
-    20: 0.9103,
-    30: 0.9207,
-    50: 0.9295,
-    75: 0.9291,
-    101: 0.9304,
-  }
-
-  if (!maxPowerGenerationInverter || maxPowerGenerationInverter == 0) {
-    return inverterEfficiency[101]
-  }
-  const usedPower = Math.min(power / maxPowerGenerationInverter, 1) * 100
-  const getCorrectEfficiencyKey =
-    Object.keys(inverterEfficiency).find((val) => val >= usedPower) || 0
-
-  return inverterEfficiency[getCorrectEfficiencyKey]
-}
-
 export {
   energyFlow,
   calculateConsumption,
   normalizeHourlyRadiation,
   mergePowerGeneration,
+  shiftUtcToGermanTime,
   generateDayTimeValues,
   generateDayTimeOrder,
-  regressionCalc,
-  createRegression,
 }

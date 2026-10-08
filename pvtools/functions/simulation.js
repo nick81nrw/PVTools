@@ -122,6 +122,7 @@ export const simulateBatterySizes = ({
         batteryUnloadEfficiency: input.batteryUnloadEfficiency / 100,
         dayTime: genConsumption.dayTime,
         regressionDb,
+        hourModel: input.hourModel,
       }
       if (inverterPower > 0)
         energyFlowObj.maxPowerGenerationInverter = inverterPower

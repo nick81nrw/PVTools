@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`simulateBatterySizes > key figures stay unchanged 1`] = `
+exports[`legacy hour model > key figures stay unchanged 1`] = `
 [
   {
     "amortization": 9.5063,
@@ -56,6 +56,67 @@ exports[`simulateBatterySizes > key figures stay unchanged 1`] = `
     "selfSufficiencyRate": 86.2035,
     "selfUseRate": 52.5458,
     "selfUsedEnergy": 4311.5622,
+    "size": 12000,
+  },
+]
+`;
+
+exports[`simulateBatterySizes > key figures stay unchanged 1`] = `
+[
+  {
+    "amortization": 8.5341,
+    "batteryAmortization": 0,
+    "consumptionYear": 5001.6086,
+    "costSavings": 1171.8313,
+    "costSavingsBattery": 0,
+    "fedInPower": 5969.9051,
+    "generationYear": 8205.3406,
+    "gridUsedEnergy": 2944.0478,
+    "selfSufficiencyRate": 41.138,
+    "selfUseRate": 25.0759,
+    "selfUsedEnergy": 2057.5607,
+    "size": 1,
+  },
+  {
+    "amortization": 8.2305,
+    "batteryAmortization": 6.0733,
+    "consumptionYear": 5001.6086,
+    "costSavings": 1336.4866,
+    "costSavingsBattery": 164.6553,
+    "fedInPower": 5246.5653,
+    "generationYear": 8205.3406,
+    "gridUsedEnergy": 2235.1025,
+    "selfSufficiencyRate": 55.3123,
+    "selfUseRate": 33.7159,
+    "selfUsedEnergy": 2766.506,
+    "size": 2000,
+  },
+  {
+    "amortization": 8.2532,
+    "batteryAmortization": 7.4383,
+    "consumptionYear": 5001.6086,
+    "costSavings": 1575.151,
+    "costSavingsBattery": 403.3197,
+    "fedInPower": 4198.0993,
+    "generationYear": 8205.3406,
+    "gridUsedEnergy": 1207.501,
+    "selfSufficiencyRate": 75.8577,
+    "selfUseRate": 46.2395,
+    "selfUsedEnergy": 3794.1075,
+    "size": 6000,
+  },
+  {
+    "amortization": 9.4129,
+    "batteryAmortization": 11.3643,
+    "consumptionYear": 5001.6086,
+    "costSavings": 1699.7985,
+    "costSavingsBattery": 527.9672,
+    "fedInPower": 3648.8875,
+    "generationYear": 8205.3406,
+    "gridUsedEnergy": 670.3767,
+    "selfSufficiencyRate": 86.5968,
+    "selfUseRate": 52.7855,
+    "selfUsedEnergy": 4331.2318,
     "size": 12000,
   },
 ]

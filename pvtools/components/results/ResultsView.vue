@@ -11,6 +11,10 @@
       <span>{{ kwh(results.meta.consumption) }}/a</span>
       <span>·</span>
       <span>wetterjahr {{ results.meta.year }}</span>
+      <template v-if="results.meta.hourModel.id !== DEFAULT_HOUR_MODEL">
+        <span>·</span>
+        <span class="text-pv">modell: {{ results.meta.hourModel.label }}</span>
+      </template>
     </div>
 
     <div
@@ -145,7 +149,8 @@
     </section>
 
     <p class="font-mono text-[11px] text-muted">
-      $ pvgis v5.3 · sarah3 · {{ num(results.meta.hours) }} h simuliert ·
+      $ pvgis v5.3 · sarah3 · modell {{ results.meta.hourModel.id }} ·
+      {{ num(results.meta.hours) }} h simuliert ·
       {{ results.sizes.length }} speichergrößen ·
       {{ num(results.meta.duration / 1000, 1) }} s
     </p>
@@ -157,6 +162,7 @@ import { computed } from 'vue'
 import { RefreshCw, Sparkles } from 'lucide-vue-next'
 
 import { useCalculator } from '../../composables/useCalculator.js'
+import { DEFAULT_HOUR_MODEL } from '../../functions/hourModels/index.js'
 import { batteryLabel, kwh, num, years } from '../../lib/format.js'
 import SectionTitle from '../ui/SectionTitle.vue'
 import DetailsCard from './DetailsCard.vue'
