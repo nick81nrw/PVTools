@@ -1,5 +1,6 @@
 import { batteryPrice } from './batteryEconomics.js'
 import { energyFlow } from './energyFlow.js'
+import { buildLoads } from './loads/index.js'
 
 /**
  * Simulates one year of energy flows for every battery size and derives the
@@ -101,6 +102,33 @@ export const simulateBatterySizes = ({
 
   const batterySizesWithNoBattery = [1, ...batterySizes]
 
+  const limitParams = {}
+  if (inverterPower > 0) limitParams.maxPowerGenerationInverter = inverterPower
+  if (input.maxPowerGenerationBattery > 0)
+    limitParams.maxPowerGenerationBattery = input.maxPowerGenerationBattery
+  if (input.maxPowerLoadBattery > 0)
+    limitParams.maxPowerLoadBattery = input.maxPowerLoadBattery
+  if (feedInLimit < Infinity) limitParams.maxPowerFeedIn = feedInLimit
+
+  // heat pump and car (beta), the same for every battery size; the surplus
+  // for charging the car is what would be fed in or curtailed without battery
+  const loads = buildLoads(powerGenAndConsumption, input, (i, flat) => {
+    const hour = powerGenAndConsumption[i]
+    const flow = energyFlow({
+      energyGeneration: hour.P,
+      energyConsumption: hour.consumption,
+      flatConsumption: flat.heatPump,
+      flatConsumptionNoBattery: flat.evGrid,
+      batterySoc: 0,
+      batterySocMin: 0,
+      batterySocMax: 0,
+      regressionDb,
+      hourModel: input.hourModel,
+      ...limitParams,
+    })
+    return flow.feedInEnergyGrid + flow.missedFeedInPowerGrid
+  })
+
   let BatterySizeResults = batterySizesWithNoBattery.map((size) => {
     const minSocWithoutBattery = 1
     let newSoc =
@@ -109,7 +137,7 @@ export const simulateBatterySizes = ({
         : (size * input.batterySocMinPercent) / 100
     const startSoc = newSoc
 
-    let energyFlowData = powerGenAndConsumption.map((genConsumption) => {
+    let energyFlowData = powerGenAndConsumption.map((genConsumption, i) => {
       const energyFlowObj = {
         energyGeneration: genConsumption.P,
         energyConsumption: genConsumption.consumption,
@@ -124,6 +152,11 @@ export const simulateBatterySizes = ({
         dayTime: genConsumption.dayTime,
         regressionDb,
         hourModel: input.hourModel,
+      }
+      if (loads) {
+        energyFlowObj.flatConsumption = loads.heatPump[i]
+        energyFlowObj.flatConsumptionNoBattery = loads.evGrid[i]
+        energyFlowObj.pvDirectConsumption = loads.evSurplus[i]
       }
       if (inverterPower > 0)
         energyFlowObj.maxPowerGenerationInverter = inverterPower
@@ -285,8 +318,31 @@ export const simulateBatterySizes = ({
         : 0,
     }
 
+    // consumption by consumer in kWh, selfUsed = from PV and battery
+    const kwhOf = (key) => sumOf(energyFlowData, key) / 1000
+    const consumers = loads
+      ? {
+          household: {
+            consumption: kwhOf('householdConsumption'),
+            selfUsed: kwhOf('householdSelfUsed'),
+          },
+          heatPump: {
+            consumption: kwhOf('flatConsumption'),
+            selfUsed: kwhOf('flatSelfUsed'),
+          },
+          ev: {
+            consumption:
+              kwhOf('flatConsumptionNoBattery') + kwhOf('pvDirectConsumption'),
+            selfUsed:
+              kwhOf('flatNoBatterySelfUsed') + kwhOf('pvDirectConsumption'),
+            fromSurplus: kwhOf('pvDirectConsumption'),
+          },
+        }
+      : null
+
     return {
       size,
+      consumers,
       ...batteryUsage,
       balance: checkEnergyBalance(energyFlowData, startSoc),
       batteryCharge: sumOf(energyFlowData, 'batteryCharge') / 1000,

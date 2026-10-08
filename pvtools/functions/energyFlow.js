@@ -61,6 +61,9 @@ const energyFlow = ({
   dayTime,
   regressionDb,
   hourModel,
+  flatConsumption = 0,
+  flatConsumptionNoBattery = 0,
+  pvDirectConsumption = 0,
 }) => {
   let missedInverterPower = 0,
     missedBatteryPower = 0
@@ -78,6 +81,14 @@ const energyFlow = ({
     energyGeneration = maxPowerGenerationInverter
   }
 
+  // energy taken directly from the PV surplus (e.g. car charged with surplus)
+  const pvDirect = Math.min(Math.max(pvDirectConsumption, 0), energyGeneration)
+  energyGeneration -= pvDirect
+
+  const model = getHourModel(hourModel)
+  const householdConsumption = energyConsumption
+  const flatTotal = flatConsumption + flatConsumptionNoBattery
+
   let {
     selfUsedEnergy,
     selfUsedEnergyPV,
@@ -92,9 +103,17 @@ const energyFlow = ({
     missedFeedInPowerGrid,
     batteryCharge,
     batteryDischarge,
-  } = getHourModel(hourModel).calculate({
+    flatSelfUsed: modelFlatSelfUsed,
+    flatNoBatterySelfUsed: modelFlatNoBatterySelfUsed,
+  } = model.calculate({
     regressionDb,
-    energyConsumption,
+    energyConsumption: model.supportsFlatLoads
+      ? energyConsumption
+      : energyConsumption + flatTotal,
+    flatConsumption: model.supportsFlatLoads ? flatConsumption : 0,
+    flatConsumptionNoBattery: model.supportsFlatLoads
+      ? flatConsumptionNoBattery
+      : 0,
     staticPowerGeneration: energyGeneration,
     maxPowerStaticInverter: maxPowerGenerationInverter,
     maxPowerDynamicInverter: maxPowerGenerationBattery,
@@ -107,14 +126,32 @@ const energyFlow = ({
     batteryUnloadEfficiency,
   })
 
+  // models without flat loads: split the self used energy by consumption
+  const totalWithoutDirect = householdConsumption + flatTotal
+  const shareOf = (value) =>
+    totalWithoutDirect > 0 ? (selfUsedEnergy * value) / totalWithoutDirect : 0
+  const flatSelfUsed = model.supportsFlatLoads
+    ? modelFlatSelfUsed
+    : shareOf(flatConsumption)
+  const flatNoBatterySelfUsed = model.supportsFlatLoads
+    ? modelFlatNoBatterySelfUsed
+    : shareOf(flatConsumptionNoBattery)
+
   return {
     dayTime: dayTime ? dayTime : '',
     batterySoc,
     newBatterySoc,
-    energyConsumption,
+    energyConsumption: totalWithoutDirect + pvDirect,
+    householdConsumption,
+    flatConsumption,
+    flatConsumptionNoBattery,
+    pvDirectConsumption: pvDirect,
+    householdSelfUsed: selfUsedEnergy - flatSelfUsed - flatNoBatterySelfUsed,
+    flatSelfUsed,
+    flatNoBatterySelfUsed,
     powerProduction,
-    selfUsedEnergy,
-    selfUsedEnergyPV,
+    selfUsedEnergy: selfUsedEnergy + pvDirect,
+    selfUsedEnergyPV: selfUsedEnergyPV + pvDirect,
     selfUsedEnergyBattery,
     feedInEnergyGrid,
     // batteryLoad: batteryLoadEnergy,
