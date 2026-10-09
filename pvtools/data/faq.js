@@ -2,6 +2,11 @@
 export default [
   {
     realm: 'Neuigkeiten',
+    title: 'Was wäre, wenn sich die Preise ändern? (10/26)',
+    text: 'Unter den Ergebnissen kannst du jetzt Strompreis, Einspeisevergütung und Speicherpreis mit Schiebereglern verändern. Die Empfehlung wird sofort neu bewertet, ohne neue Berechnung. Eine Tabelle zeigt auf einen Blick, welche Speichergröße sich bei welchem Strompreis und Speicherpreis lohnt.',
+  },
+  {
+    realm: 'Neuigkeiten',
     title: 'Wärmepumpe und E-Auto (Beta, 10/26)',
     text: "Im neuen Schritt 'Wärmepumpe & E-Auto' kannst du große Verbraucher zum Haushaltsstrom hinzufügen. Die Wärmepumpe wird nach der Außentemperatur an deinem Standort verteilt, das E-Auto nach deinem Ladeverhalten – auf Wunsch mit PV-Überschussladen. Die Ergebnisse zeigen, wie viel jeder Verbraucher aus PV und Speicher bekommt. Die Funktion ist neu und noch als Beta gekennzeichnet.",
   },

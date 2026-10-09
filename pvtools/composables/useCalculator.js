@@ -355,6 +355,8 @@ async function calculate() {
         recommendation,
         sentences: recommendationSentences(recommendation),
         lifetime: plainInput.batteryLifetime,
+        // the input of this calculation, for the price sensitivity
+        input: plainInput,
         prices: {
           electricity: plainInput.consumptionCosts,
           feedIn: plainInput.feedInCompensation,
