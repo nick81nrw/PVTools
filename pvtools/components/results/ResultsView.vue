@@ -108,6 +108,13 @@
       @select="selectedSize = $event"
     />
 
+    <PriceSensitivityCard
+      v-if="results.economics.steps.length"
+      :sizes="results.sizes"
+      :input="results.economics.input"
+      :current-size="recommendedSize"
+    />
+
     <KpiGrid v-if="selected" :item="selected" :baseline="baseline" />
 
     <ConsumersCard v-if="selected?.consumers" :item="selected" />
@@ -200,6 +207,7 @@ import { batteryLabel, eur, kwh, num, years } from '../../lib/format.js'
 import { RATINGS } from '../../lib/rating.js'
 import BatteryStepsCard from './BatteryStepsCard.vue'
 import ConsumersCard from './ConsumersCard.vue'
+import PriceSensitivityCard from './PriceSensitivityCard.vue'
 import SectionTitle from '../ui/SectionTitle.vue'
 import DetailsCard from './DetailsCard.vue'
 import EnergySplit from './EnergySplit.vue'

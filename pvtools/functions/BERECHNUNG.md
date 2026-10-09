@@ -340,6 +340,20 @@ sich erst der größere Schritt lohnt (z. B. wegen hoher Grundkosten).
 > amortisieren sich nach 9 Jahren. Die Erweiterung von 5 auf 10 kWh bringt nur
 > noch 609 kWh und amortisiert sich nach 14,1 Jahren – ein Grenzfall.
 
+### Preis-Sensitivität (`priceSensitivity.js`)
+
+Die Energiemengen hängen nicht von den Preisen ab. Für andere Preise wird
+deshalb nicht neu simuliert, sondern nur neu gerechnet:
+
+```
+Ersparnis = selbst genutzt × Strompreis + eingespeist × Einspeisevergütung
+```
+
+Der Speicherpreis wird mit einem Faktor skaliert (Grundkosten, Preis je kWh
+und eigene Angebote gleichermaßen). `economicsFor` liefert Stufen und
+Empfehlung für die Preise der Schieberegler, `recommendationGrid` die
+empfohlene Größe für jede Kombination aus Strompreis und Speicherpreis.
+
 Nicht berücksichtigt sind Finanzierung, entgangene Zinsen, Alterung des
 Speichers und steigende Strompreise.
 
